@@ -439,7 +439,7 @@ function resolve_row_date(array $row, array $meta, DateTimeZone $timezone, DateT
 function parse_date_value($value, DateTimeZone $timezone)
 {
     if ($value instanceof DateTimeInterface) {
-        return DateTimeImmutable::createFromInterface($value);
+        return DateTimeImmutable::createFromInterface($value)->setTime(0, 0, 0);
     }
 
     if ($value === NULL) {
@@ -455,7 +455,15 @@ function parse_date_value($value, DateTimeZone $timezone)
         $serial = (float) $text;
         if ($serial > 0 && $serial < 90000) {
             $raw_ts = ($serial - 25569) * 86400;
-            return (new DateTimeImmutable('@' . (int) $raw_ts))->setTimezone($timezone);
+            $m = (int) gmdate('n', (int) $raw_ts);
+            $d = (int) gmdate('j', (int) $raw_ts);
+            $y = (int) gmdate('Y', (int) $raw_ts);
+            if ($d <= 12) {
+                return (new DateTimeImmutable(sprintf('%04d-%02d-%02d', $y, $d, $m), $timezone))->setTime(0, 0, 0);
+            }
+            $base = new DateTimeImmutable('1899-12-30', $timezone);
+            $days = (int) floor($serial);
+            return $base->modify('+' . $days . ' days')->setTime(0, 0, 0);
         }
     }
 
@@ -490,20 +498,13 @@ function parse_date_value($value, DateTimeZone $timezone)
     foreach ($patterns as $pattern) {
         $parsed = DateTimeImmutable::createFromFormat('!' . $pattern, $text, $timezone);
         if ($parsed instanceof DateTimeImmutable) {
-            if (strpos($pattern, 'H') === false && strpos($pattern, 'i') === false) {
-                return $parsed->setTime(0, 0, 0);
-            }
-            return $parsed;
+            return $parsed->setTime(0, 0, 0);
         }
     }
 
     $timestamp = strtotime($text);
     if ($timestamp !== false) {
-        $dt = (new DateTimeImmutable('@' . $timestamp))->setTimezone($timezone);
-        if (!preg_match('/\d{1,2}:\d{2}/', $text)) {
-            return $dt->setTime(0, 0, 0);
-        }
-        return $dt;
+        return (new DateTimeImmutable('@' . $timestamp))->setTimezone($timezone)->setTime(0, 0, 0);
     }
 
     return NULL;
