@@ -18,12 +18,9 @@ user_guide_src/cilexer/pycilexer.egg-info/*
 /vendor/
 
 # Local RPA runtime data
-rpa/*/.env
 rpa/*/__pycache__/
 rpa/*/logs/
 rpa/*/screenshots/
-rpa/*/downloads/
-rpa/*/archive/
 
 # IDE Files
 #-------------------------
