@@ -1,0 +1,231 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>IRL 5 (Bagian 2) : Development Dashboard & Implementasi Fitur Terbangun</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+  body {
+    background-color: #F0F4F8;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 10px;
+  }
+  .slide-container {
+    width: 1333px;
+    height: 750px;
+    background: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    position: relative;
+    padding: 22px 28px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.07);
+    overflow: hidden;
+  }
+  .main-header {
+    background: #10528A;
+    color: #FFFFFF;
+    padding: 10px 22px;
+    font-size: 17.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    display: inline-block;
+    width: 84%;
+    margin-bottom: 18px;
+    white-space: nowrap;
+  }
+  .grid-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    height: calc(100% - 65px);
+  }
+  .pill-center {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+  .pill-header {
+    background: #0E4D82;
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 6px 36px;
+    border-radius: 20px;
+    letter-spacing: 0.4px;
+    text-align: center;
+  }
+
+  .feature-column {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .feature-card {
+    background: #F8FAFC;
+    border: 1px solid #CBD5E1;
+    border-left: 4px solid #0E4D82;
+    border-radius: 5px;
+    padding: 10px 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .feature-card.alt {
+    border-left-color: #0288D1;
+  }
+  .feature-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #0E4D82;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .feature-desc {
+    font-size: 11px;
+    color: #1E293B;
+    line-height: 1.45;
+  }
+  .tag {
+    display: inline-block;
+    font-size: 9.5px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: #E0F2FE;
+    color: #0369A1;
+    margin-left: auto;
+  }
+  .tag.green {
+    background: #DCFCE7;
+    color: #15803D;
+  }
+</style>
+</head>
+<body>
+
+<div class="slide-container">
+  <div class="main-header">
+    IRL 5 (BAGIAN 2) : DEVELOPMENT DASHBOARD & IMPLEMENTASI FITUR TERBANGUN
+  </div>
+
+  <div class="grid-layout">
+    <!-- Left Column: Frontend SPA & Public UX -->
+    <div class="feature-column">
+      <div class="pill-center">
+        <div class="pill-header">DASHBOARD PUBLIK & ARSITEKTUR SPA</div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-title">
+          <span>1. Arsitektur Single Page Application (SPA)</span>
+          <span class="tag green">AKTIF</span>
+        </div>
+        <div class="feature-desc">
+          Dibangun menggunakan CodeIgniter 3 di backend serta Vanilla JS + CSS3 modern di frontend. Menghasilkan antarmuka yang sangat responsif, stabil, bebas lag, dan optimal untuk layar monitor TV pabrik maupun browser desktop.
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-title">
+          <span>2. Instant Server-Side Pre-Hydration</span>
+          <span class="tag">0ms DELAY</span>
+        </div>
+        <div class="feature-desc">
+          Menyematkan payload data awal secara langsung ke variabel DOM (<code>INITIAL_DASHBOARD_PAYLOAD</code>) saat HTML disajikan. Mengeliminasi efek blank screen dan loading spinner saat halaman pertama kali diakses.
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-title">
+          <span>3. Multi-Delivery Scope Switcher</span>
+          <span class="tag">1, 2, 4, 6 DELIVERY</span>
+        </div>
+        <div class="feature-desc">
+          Memungkinkan pengguna beralih fleksibel antara cakupan 1, 2, 4, atau 6 delivery. Pilihan periode aktif disimpan otomatis ke dalam browser cookie (<code>heatDeliveryCount</code>) untuk kenyamanan pengguna.
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-title">
+          <span>4. Dynamic Excel Report Exporter</span>
+          <span class="tag green">DYNAMIC .XLS</span>
+        </div>
+        <div class="feature-desc">
+          Tombol ekspor laporan Material To Load yang menghasilkan file spreadsheet (.xls) terformat rapi yang menyesuaikan label periode aktif yang sedang dipilih secara dinamis.
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-title">
+          <span>5. Wall-Clock Aligned Auto-Refresh</span>
+          <span class="tag">:00 & :30 SYNC</span>
+        </div>
+        <div class="feature-desc">
+          Mekanisme fetch data otomatis yang tersinkronisasi presisi dengan jam dinding pada menit :00 dan :30 setiap jam, dilengkapi visual live pulse indicator untuk memastikan data selalu mutakhir.
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Admin Panel & Analytics Engine -->
+    <div class="feature-column">
+      <div class="pill-center">
+        <div class="pill-header">PANEL ADMIN TERPADU & ENGINE ANALYTICS</div>
+      </div>
+
+      <div class="feature-card alt">
+        <div class="feature-title">
+          <span>1. Panel Admin Terpadu GM (Protected Session)</span>
+          <span class="tag">SECURE AUTH</span>
+        </div>
+        <div class="feature-desc">
+          Modul administrasi terlindung autentikasi session portal (<code>tbl_login</code>) dengan sidebar navigasi interaktif tanpa reload untuk manajemen konfigurasi sentral sistem.
+        </div>
+      </div>
+
+      <div class="feature-card alt">
+        <div class="feature-title">
+          <span>2. Manajemen Katalog Style SMV</span>
+          <span class="tag green">CUSTOM SMV</span>
+        </div>
+        <div class="feature-desc">
+          Antarmuka komprehensif dengan pagination, search bar filter, input nilai Standard Minute Value (SMV) per style artikel, dan toggle visibilitas style yang ditampilkan di dashboard publik.
+        </div>
+      </div>
+
+      <div class="feature-card alt">
+        <div class="feature-title">
+          <span>3. Mode Direct Aktual & Override Kapasitas</span>
+          <span class="tag">HYBRID CALC</span>
+        </div>
+        <div class="feature-desc">
+          Kemampuan beralih fleksibel antara input manual angka Direct Aktual oleh supervisor atau mengandalkan rumus kalkulasi otomatis sistem.
+        </div>
+      </div>
+
+      <div class="feature-card alt">
+        <div class="feature-title">
+          <span>4. Kalender Hari Kerja & Manajemen Shift</span>
+          <span class="tag green">INTERACTIVE UI</span>
+        </div>
+        <div class="feature-desc">
+          Antarmuka kalender visual interaktif untuk mengatur hari kerja penuh (1), libur (0), setengah hari (0.5), dan seperempat hari (0.25) per periode delivery aktif.
+        </div>
+      </div>
+
+      <div class="feature-card alt">
+        <div class="feature-title">
+          <span>5. Mesin Evaluasi Analytics & Action Plan (CAP)</span>
+          <span class="tag">AI INSIGHT</span>
+        </div>
+        <div class="feature-desc">
+          Sistem cerdas yang mengevaluasi kepatuhan delivery lampau, memberikan status kondisi operasional (Good / Watch / Risk), serta merumuskan Corrective Action Plan harian secara otomatis.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

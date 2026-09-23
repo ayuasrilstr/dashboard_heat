@@ -1,6 +1,6 @@
 # Dashboard GM
 
-Dashboard GM adalah aplikasi dashboard internal berbasis web untuk memantau data produksi, terutama modul **Heat Transfer**. Web ini membaca hasil download RPA dari APS, Engage, dan Accessories, lalu menggabungkannya menjadi indikator dashboard seperti output, balance, ready to load, kapasitas harian, dan prioritas order.
+Dashboard GM adalah aplikasi dashboard internal berbasis web untuk memantau data produksi, terutama modul **Heat Transfer**. Web ini membaca hasil download RPA dari APS, Engage, dan Accessories, lalu menggabungkannya menjadi indikator dashboard seperti output, balance, ready to load, demand harian, dan prioritas order.
 
 ## Dibuat menggunakan
 
@@ -8,31 +8,37 @@ Dashboard GM adalah aplikasi dashboard internal berbasis web untuk memantau data
 - **HTML, CSS, dan JavaScript** untuk tampilan dashboard.
 - **Python** untuk RPA downloader.
 - **Playwright Python** untuk RPA berbasis browser seperti Engage dan Accessories.
-- **Windows GUI automation** untuk RPA APS melalui aplikasi IOS-APS.
+- **Windows GUI automation** untuk RPA APS melalui aplikasi IOS-APS di server share UNC.
 - **XAMPP/Apache** sebagai server lokal.
 - **Excel `.xlsx`** sebagai media pertukaran data dari RPA ke dashboard.
 
-## Cara pasang
+## Cara pasang dan Akses URL
 
-1. Download CodeIgniter 3 secara manual.
+1. Pastikan server Apache & MySQL aktif di XAMPP.
 2. Web CodeIgniter berada di `web/application` dan `web/system`.
-3. RPA berada di `rpa/engage-rpa`, `rpa/aps-rpa`, dan `rpa/accessories-rpa`.
-4. Buka lewat XAMPP:
-
-```text
-http://localhost/dashboard_gm/index.php/dashboard_heat
-```
+3. Database utama dashboard berada di MySQL `db_dashboardgm`.
+4. Akses URL:
+   - **Portal GM**: `http://localhost/dashboard_gm/index.php/dashboard` (atau root `http://localhost/dashboard_gm/`)
+   - **Dashboard Heat Transfer**: `http://localhost/dashboard_gm/index.php/dashboard_heat`
+   - **Admin Panel Dashboard**: `http://localhost/dashboard_gm/index.php/dashboard_heat/admin`
 
 ## File utama
 
-- `web/application/controllers/Dashboard.php` sebagai hub dashboard.
-- `web/application/controllers/Dashboard_base.php` sebagai base controller dashboard.
-- `web/application/controllers/Dashboard_heat.php` sebagai modul Heat.
-- `web/application/models/Dashboard_model.php` untuk data Heat saat ini.
-- `web/application/views/dashboards/heat/index.php` untuk view Heat.
-- `web/application/config/routes.php`
+- `web/application/controllers/Dashboard.php`: Landing page portal GM dan perutean akses Dashboard / Admin.
+- `web/application/controllers/Dashboard_base.php`: Base controller dashboard (helper URL, response JSON API).
+- `web/application/controllers/Dashboard_heat.php`: Controller utama modul Heat Transfer, admin panel, dan endpoint API (status, SMV, analytics settings, workdays, download).
+- `web/application/models/Dashboard_model.php`: Core data logic, parser APS & Accessories, koneksi MySQL Engage/History, kalkulasi SMV, kalender, dan analytics.
+- `web/application/views/dashboard_portal.php`: View landing portal GM dan form login admin.
+- `web/application/views/dashboard_admin.php`: View panel admin terpadu (Overview, Summary, SMV & Direct Aktual, Kalender, Analytics, Data Sources, Notes).
+- `web/application/views/dashboards/heat/index.php`: View utama Dashboard Heat Transfer dengan instant server-side pre-hydration.
+- `web/application/config/dashboard.php`: Konfigurasi path data, tabel user portal (`tbl_login`), dan kredensial kalender.
+- `web/application/config/database.php`: Konfigurasi koneksi database MySQL (`dashboard_heat_history` pada `db_dashboardgm`).
+- `web/application/cache/dashboard_heat_style_smv.json`: Cache konfigurasi nilai SMV per style.
+- `web/application/cache/dashboard_heat_analytics_settings.json`: Cache konfigurasi kartu analytics, bahasa, dan direct actual.
+- `web/application/cache/dashboard_heat_holidays.json`: Cache konfigurasi hari libur dan kalender kerja.
+- `dist/RPA_Master.exe`: Launcher standalone pipeline RPA tanpa terminal.
 
-Mapping fitur per file/fungsi ada di `CODE_FEATURE_MAP.md`.
+Mapping detail fitur per file/fungsi terdokumentasi lengkap di `CODE_FEATURE_MAP.md`.
 
 ## Pola modul dashboard
 
@@ -56,7 +62,7 @@ Contoh URL:
 Tombol `Run Download` pada dashboard menjalankan master scheduler:
 
 ```text
-python rpa/scheduler.py --once
+dist/RPA_Master.exe --once
 ```
 
 Scheduler menjalankan RPA secara berurutan:
@@ -89,33 +95,24 @@ File ini dibuat tetap agar download berikutnya menimpa data lama dan folder serv
 
 ### Engage
 
-Engage RPA login ke web Engage, membuka report warehouse, lalu mengambil data per kombinasi storage dan direction. Default periode download adalah **10 hari terakhir termasuk hari ini**.
+Engage RPA login ke portal warehouse Engage via Playwright browser, membuka menu report warehouse, lalu mengambil data transaksi untuk storage `32` dan `32a` dengan `direction = 0` (arah gabungan inflow & outflow). Pada eksekusi otomatis scheduler, data ditarik berdasarkan tanggal acuan (`reference_date`, yaitu hari ini atau H-1 untuk run penutup tengah malam).
 
-Output file:
-
-```text
-rpa/engage-rpa/downloads/32_inflow.xlsx
-rpa/engage-rpa/downloads/32a_inflow.xlsx
-rpa/engage-rpa/downloads/32a_outflow.xlsx
-```
-
-Masing-masing file mewakili satu filter:
-
-- `32_inflow.xlsx`: Storage `32`, Direction `1`
-- `32a_inflow.xlsx`: Storage `32a`, Direction `1`
-- `32a_outflow.xlsx`: Storage `32a`, Direction `2`
+Setelah data report ditarik, Engage RPA menyimpan file cadangan Excel (`32_engage.xlsx` dan `32a_engage.xlsx`) di folder `rpa/engage-rpa/downloads/`, lalu otomatis memicu helper PHP untuk sinkronisasi ke database MySQL:
+- `sync_engage_transactions.php`: Melakukan upsert data transaksi mentah ke tabel `tb_engage_transactions` (untuk hari berjalan dan mendatang) dan `tb_engage_archieve` (arsip lampau dengan retensi 90 hari).
+- `sync_engage_daily_history.php`: Menghitung dan menyimpan ringkasan harian input, output, dan ready quantity ke tabel `engage_daily_history`.
+- Script cadangan: `sync_excel_engage.py` (sinkronisasi file Excel Engage ke MySQL) dan `backfill_past_7_days.py` (pengisian data historis 7 hari terakhir).
 
 ### APS
 
-APS RPA membuka aplikasi IOS-APS, login, mengisi filter JO, lalu export Excel. Periode Delivery Date saat ini adalah dari **awal bulan lalu** sampai **akhir 2 bulan ke depan**.
+APS RPA membuka aplikasi IOS-APS dari network share server `\\172.23.1.10\ios-aps\IOS-APS.exe` (atau shortcut lokal), menangani dialog peringatan keamanan Windows, melakukan login otomatis (username, password, dan klik tombol Login), membuka menu JO Tracking Report, mengisi filter rentang Delivery Date dari **awal bulan lalu** sampai **akhir 2 bulan ke depan**, merefresh data dengan deteksi stabilitas layar serta penanganan popup otomatis, lalu mengekspor hasil ke Excel.
 
-Output file:
+File disimpan ke:
 
 ```text
 rpa/aps-rpa/downloads/JO.xlsx
 ```
 
-File APS juga dibuat tetap supaya setiap download terbaru menggantikan file sebelumnya.
+RPA mampu menangani penyimpanan langsung dari dialog Save As APS maupun Save As (F12) melalui jendela Microsoft Excel 2010, lalu menutup spreadsheet dan aplikasi APS secara bersih. File `JO.xlsx` dibuat tetap (overwrite) supaya setiap download terbaru menggantikan data sebelumnya tanpa memenuhi kapasitas penyimpanan.
 
 ## Cara dashboard Heat membaca data
 
@@ -125,101 +122,122 @@ Model utama ada di:
 web/application/models/Dashboard_model.php
 ```
 
-Dashboard Heat membaca file RPA berikut:
+Dashboard Heat membaca data dari sumber berikut:
 
 ```text
-APS         : rpa/aps-rpa/downloads/JO.xlsx
-Accessories : rpa/accessories-rpa/downloads/CONTROLIST.xlsx
-Engage      : rpa/engage-rpa/downloads/32_inflow.xlsx
-              rpa/engage-rpa/downloads/32a_inflow.xlsx
-              rpa/engage-rpa/downloads/32a_outflow.xlsx
+APS         : File Excel rpa/aps-rpa/downloads/JO.xlsx
+Accessories : File Excel rpa/accessories-rpa/downloads/CONTROLIST.xlsx
+Engage      : Database MySQL (Tabel tb_engage_transactions & tb_engage_archieve)
 ```
 
-Data dianggap lengkap jika file APS, `32a_inflow`, dan `32a_outflow` tersedia serta header Excel bisa dibaca. Accessories bersifat tambahan untuk menghitung order yang sudah completed.
+Data dianggap lengkap jika file APS tersedia dan data Engage di database MySQL dapat dibaca. Di dashboard, `Qty` positif dihitung sebagai input dan `Qty` negatif dihitung sebagai output. Accessories bersifat tambahan untuk menghitung order yang sudah completed.
+
 
 ## Fitur aplikasi
 
-### 1. Dashboard Heat Transfer
+### 1. Portal GM (`/dashboard`)
 
-Halaman utama dashboard Heat Transfer tersedia di:
+Halaman gerbang utama (landing portal) yang bersih dan responsif di:
+
+```text
+http://localhost/dashboard_gm/index.php/dashboard
+```
+
+Fitur pada Portal:
+- **Akses Cepat Dashboard Publik**: Langsung membuka Dashboard Heat Transfer tanpa login.
+- **Login Admin Modal**: Akses terautentikasi ke Panel Admin GM dengan memvalidasi username dan password ke tabel database (`tbl_login`).
+- **Session Protected**: Pengguna admin yang telah login diarahkan ke `/dashboard_heat/admin`.
+
+---
+
+### 2. Dashboard Heat Transfer (`/dashboard_heat`)
+
+Halaman monitoring produksi utama yang didesain interaktif dan modern:
 
 ```text
 http://localhost/dashboard_gm/index.php/dashboard_heat
 ```
 
-Fitur yang ditampilkan:
+Fitur Utama:
+- **Instant Pre-Hydration (Fast Load)**: Data awal disuntikkan langsung oleh controller via server-side JSON payload (`initial_dashboard_payload`). Halaman langsung terisi data seketika saat dibuka tanpa kedip atau popup loading yang lama.
+- **Pilihan Periode Delivery (1, 2, 4, 6 Delivery)**: Pengguna dapat memilih rentang monitoring antara 1, 2, 4, atau 6 periode delivery. Pilihan ini disimpan otomatis di browser via cookie `heatDeliveryCount`.
+- **Kartu Ringkasan KPI**:
+  - `Total Output`: Akumulasi output aktual dari database Engage.
+  - `Balance Qty`: Sisa kuantitas yang belum terpenuhi pada periode delivery aktif.
+  - `Balance Breakdown`: Distribusi balance per periode delivery.
+- **Visualisasi Grafik Interaktif**:
+  - `Target vs Aktual`: Perbandingan kuantitas rencana (PDK) dari APS terhadap realisasi output Engage.
+  - `Ready TO Production`: Grafik batang kelompok yang memisahkan material siap produksi berdasarkan kesiapan aksesoris (**Completed** dan **Uncompleted**) per periode delivery.
+  - `KAPASITAS vs OUT vs IN`: Grafik harian yang membandingkan target kapasitas harian (**Kapasitas** = *Balance Qty / Sisa Hari Kerja* berupa garis merah) terhadap realisasi batang produksi (**OUT**) dan material masuk (**IN**).
+- **Tabel Material To Load & Export Excel**:
+  - Menampilkan daftar order aktif untuk periode delivery yang dipilih.
+  - Tombol **Export Excel** (`/dashboard_heat/download_material_to_load?delivery_count=...`) yang otomatis menyertakan label periode aktif saat ini.
+- **Top Priority Orders**: Daftar order mendesak yang diprioritaskan berdasarkan tanggal delivery terdekat.
+- **Monitoring Analytics & Action Plan (CAP)**:
+  - Kartu indikator performa: `Production Status`, `Output Achievement`, `Data Accuracy`, `Ready Coverage`, dll.
+  - Insight manajemen otomatis dan Action Plan rekomendasi penanganan kendala produksi.
+- **Auto-Refresh Sinkron Jam Dinding (Setiap 30 Menit)**: Tampilan dashboard melakukan pembaruan otomatis (auto-refresh) setiap **30 menit sekali** tepat pada menit `:00` dan `:30` setiap jam (sinkron jam dinding) melalui `scheduleNextAlignedRefresh()`, sehingga layar monitor/dashboard display selalu menyajikan data termutakhir tanpa perlu reload manual.
+- **Status Sinkronisasi & Run Download**:
+  - Menampilkan waktu pembaruan terakhir masing-masing file data.
+  - Tombol **Run Download** untuk memicu scheduler RPA secara on-demand.
 
-- **Total Output**: total output produksi dari data Engage/RPA.
-- **Balance Qty**: sisa qty yang belum selesai dari periode delivery aktif.
-- **Balance Breakdown**: breakdown balance per periode delivery.
-- **QTY PDK vs Output**: grafik perbandingan plan PDK dan output.
-- **Ready To Load**: grafik qty ready per periode delivery.
-- **Kapasitas vs Output**: grafik output harian, input, kapasitas, dan gap/surplus.
-- **Top Priority Orders**: daftar order prioritas berdasarkan delivery terdekat.
-- **Last Update**: status data terbaru dan ringkasan kapasitas/output terakhir.
-- **Run Download**: menjalankan scheduler RPA satu kali dari web.
-- **Kalender kerja**: mengatur hari libur, setengah hari, seperempat hari, dan Minggu kerja.
-- **Analytics**: card ringkas, detail card, management insight, dan pilihan card yang ingin ditampilkan.
+---
 
-### 2. Run Download
+### 3. Panel Admin Terpadu GM (`/dashboard_heat/admin`)
 
-Tombol `Run Download` memanggil endpoint `dashboard_heat/api/run-download`, lalu menjalankan:
+Halaman kontrol sentral khusus supervisor dan manajemen untuk mengatur parameter operasional dan konfigurasi dashboard. Memerlukan autentikasi portal.
 
-```text
-python rpa/scheduler.py --once
-```
+Navigasi Sidebar Admin Panel:
+1. **Overview**: Ringkasan performa real-time, status data source, dan shortcut aksi penting.
+2. **Summary**: Analisis metrik output, balance, demand harian, dan pencapaian target produksi.
+3. **SMV & Direct Aktual (Style SMV Catalog)**:
+   - **Style SMV**: Mengatur nilai Standard Minute Value (SMV) per nomor style baju/produk. SMV digunakan untuk menghitung kapasitas menit kerja dan beban kerja per style.
+   - **Show in Dashboard Toggle**: Menentukan style mana saja yang akan ditampilkan sebagai running styles di dashboard.
+   - **Bulk Actions**: Tombol praktis untuk mengaktifkan atau menonaktifkan seluruh style sekaligus.
+   - **Direct Aktual Mode**: Toggle untuk menggunakan nilai input Direct Aktual atau kalkulasi formula standar.
+   - Data tersimpan otomatis di cache `web/application/cache/dashboard_heat_style_smv.json`.
+4. **Kalender Kerja**:
+   - Pengaturan hari kerja dan hari libur visual.
+   - Mendukung tipe: **Holiday** (0 hari), **Half Day** (0.5 hari), **Quarter Day** (0.25 hari), dan **Work Day** (menjadikan hari Minggu sebagai hari kerja aktif).
+   - Data tersimpan di `web/application/cache/dashboard_heat_holidays.json`.
+5. **Analytics Settings**:
+   - Pemilihan kartu analytics yang ingin diaktifkan di dashboard publik (visible cards).
+   - Pengaturan bahasa tampilan: **Bahasa Indonesia (`id`)** atau **English (`en`)**.
+   - Data tersimpan di `web/application/cache/dashboard_heat_analytics_settings.json`.
+6. **Data Sources**:
+   - Monitoring ketersediaan dan timestamp file `JO.xlsx`, `CONTROLIST.xlsx`, serta tabel MySQL Engage.
+   - Tombol unduh langsung untuk file Excel sumber.
+7. **Catatan Operasional**: Dokumentasi internal mengenai formula dan acuan ambang batas metrik.
 
-Urutan downloader:
+---
 
-1. Accessories RPA
-2. Engage RPA
-3. APS RPA
+### 4. Master RPA Scheduler & Standalone Launcher (`dist/RPA_Master.exe`)
 
-Output downloader dipakai sebagai input dashboard.
+Untuk memastikan kestabilan dan kemudahan operasional di server tanpa perlu membuka terminal atau mengelola command prompt:
 
-### 3. Kalender kerja
+- **Executable Mandiri**: Dikompilasi ke `dist/RPA_Master.exe`. Cukup dijalankan dengan klik ganda di Windows.
+- **Penjadwalan Otomatis per 1,5 Jam (90 Menit)**:
+  - Seluruh downloader RPA (Accessories, Engage, dan APS) dijalankan bersama secara berurutan setiap **1,5 jam sekali (90 menit)** mulai pukul **07:00 hingga 22:00** dan ditutup tepat pada pukul **00:00** (tengah malam) untuk merekap data harian.
+  - Jadwal tetap harian: `07:00`, `08:30`, `10:00`, `11:30`, `13:00`, `14:30`, `16:00`, `17:30`, `19:00`, `20:30`, `22:00`, dan `00:00`.
+- **Eksekusi Sekali (On-Demand)**:
+  ```text
+  dist/RPA_Master.exe --once
+  ```
+  Opsi ini juga dipanggil secara otomatis oleh tombol `Run Download` pada dashboard web.
+- **Process Lock**: Dilengkapi file lock `rpa/logs/scheduler.lock` agar proses scheduler tidak berjalan ganda jika proses sebelumnya belum selesai.
 
-Kalender kerja disimpan di:
+---
 
-```text
-web/application/cache/dashboard_heat_holidays.json
-```
+### 5. Integrasi Sinkronisasi Database MySQL Engage
 
-Jenis tanggal:
-
-- **Holiday**: dihitung `0` hari kerja.
-- **Half day**: dihitung `0.5` hari kerja.
-- **Quarter day**: dihitung `0.25` hari kerja.
-- **Work day**: dipakai untuk membuat hari Minggu tetap dihitung sebagai hari kerja.
-
-Edit kalender membutuhkan login. Setelah modal kalender atau Analytics Display ditutup, session login di-reset agar akses berikutnya wajib login ulang.
-
-### 4. Analytics Display
-
-Analytics Display adalah menu untuk memilih card Analytics yang ditampilkan. Menu ini membutuhkan login.
-
-Default card saat ini:
-
-- `Production Status`
-- `Output Achievement`
-- `Data Accuracy`
-
-Card lain tetap tersedia di menu pilihan, antara lain:
-
-- `Monitoring Coverage`
-- `Source Sync`
-- `Data Update`
-- `Ready Coverage`
-- `Req. Daily Output`
-- `Total Ready Load`
-- `Avg Daily Output`
-- `Avg Daily Capacity`
-- `Capacity Gap / Capacity Surplus`
-- `Sequence Issues`
-- `Critical Orders`
-- Card CAP/prevention/handling yang dipilih manual
-
-Card yang memiliki isi sama tidak ditampilkan sebagai opsi terpisah. Contoh: `Data Reliability` digabung ke `Data Accuracy`, dan `Plan Completion` digabung ke `Output Achievement`.
+Engage RPA kini terintegrasi langsung dengan database MySQL lokal:
+- Mengunduh report warehouse Engage terbaru.
+- Menjalankan helper script PHP:
+  - `rpa/engage-rpa/sync_engage_transactions.php`: Melakukan upsert data transaksi ke tabel `tb_engage_transactions` (berjalan) dan `tb_engage_archieve` (arsip lama).
+  - `rpa/engage-rpa/sync_engage_daily_history.php`: Menghitung dan menyimpan ringkasan harian input, output, dan ready qty ke tabel `engage_daily_history`.
+- Skrip pendukung tambahan:
+  - `rpa/engage-rpa/sync_excel_engage.py`: Script sinkronisasi file Excel Engage ke MySQL.
+  - `rpa/engage-rpa/backfill_past_7_days.py`: Script untuk mengisi ulang data histori 7 hari terakhir.
 
 ## Sumber data dan asal angka
 
@@ -240,43 +258,23 @@ Dipakai untuk:
 - Period delivery seperti `MID June` atau `END June`.
 - Prioritas order berdasarkan tanggal delivery.
 
-### Engage 32a Outflow
+### Engage Database (MySQL)
 
-File:
+Tabel:
 
 ```text
-rpa/engage-rpa/downloads/32a_outflow.xlsx
+tb_engage_transactions
+tb_engage_archieve
+engage_daily_history
 ```
 
 Dipakai untuk:
 
-- Output aktual Heat Transfer.
-- Output per order.
-- Output per hari untuk grafik kapasitas vs output.
-- Total output dashboard.
-
-### Engage 32a Inflow
-
-File:
-
-```text
-rpa/engage-rpa/downloads/32a_inflow.xlsx
-```
-
-Dipakai untuk:
-
-- Input/masuk ke area 32a.
-- Data pembanding pada grafik kapasitas vs output.
-
-### Engage 32 Inflow
-
-File:
-
-```text
-rpa/engage-rpa/downloads/32_inflow.xlsx
-```
-
-Dipakai sebagai data pendukung alur warehouse/produksi.
+- Input dan output aktual Heat Transfer yang diambil secara query langsung dari tabel database MySQL.
+- `Qty` positif dihitung sebagai input.
+- `Qty` negatif dihitung sebagai output.
+- Total output dashboard dan riwayat harian diambil dari tabel database.
+- Catatan: File excel `32_engage.xlsx` dan `32a_engage.xlsx` di folder `rpa/engage-rpa/downloads/` tetap diunduh oleh RPA Engage sebagai cadangan dan untuk mendeteksi update timestamp file, namun kalkulasi utama dashboard membaca langsung dari database MySQL.
 
 ### Accessories Controlist
 
@@ -309,7 +307,7 @@ Model `Dashboard_model.php` mengubah file RPA menjadi struktur utama berikut:
 
 ## Perhitungan utama
 
-### 1. QTY PDK vs Output
+### 1. Target vs Aktual (QTY PDK vs Output)
 
 Periode delivery dibentuk dari delivery date APS:
 
@@ -350,15 +348,15 @@ Ready To Load = qty order/periode yang sudah tersedia/ready berdasarkan gabungan
 
 Nilai ini ditampilkan per periode delivery.
 
-### 5. Capacity Harian
+### 5. Demand Harian
 
-Capacity dihitung dari balance delivery aktif dan sisa hari kerja:
+Demand dihitung dari balance delivery aktif dan sisa hari kerja:
 
 ```text
-Daily Capacity = balance delivery aktif / sisa hari kerja delivery aktif
+Daily Demand = balance delivery aktif / sisa hari kerja delivery aktif
 ```
 
-Data capacity dipakai untuk grafik `Kapasitas vs Output`.
+Data demand dipakai untuk grafik `Demand vs Output`.
 
 ### 6. Avg Daily Output
 
@@ -368,27 +366,27 @@ Avg Daily Output = total output harian / jumlah hari yang punya output atau capa
 
 Sumber output harian berasal dari Engage 32a Outflow.
 
-### 7. Avg Daily Capacity
+### 7. Avg Daily Demand
 
 ```text
-Avg Daily Capacity = total capacity harian / jumlah hari yang punya output atau capacity
+Avg Daily Demand = total demand harian / jumlah hari yang punya output atau demand
 ```
 
-### 8. Capacity Gap / Surplus
+### 8. Demand Gap / Surplus
 
 ```text
-Capacity Gap = total capacity - total daily output
+Demand Gap = total demand - total daily output
 ```
 
 Interpretasi:
 
-- Jika hasil positif, masih ada gap kapasitas tersedia.
+- Jika hasil positif, masih ada gap demand tersedia.
 - Jika hasil negatif, output lebih besar dari capacity dan ditampilkan sebagai surplus.
 
 ### 9. Ready Coverage
 
 ```text
-Ready Coverage Days = Total Ready Load / Avg Daily Capacity
+Ready Coverage Days = Total Ready Load / Avg Daily Demand
 ```
 
 Status:
@@ -500,7 +498,7 @@ Artinya 5 dari 5 file sumber dashboard tersedia.
 
 ### 15. Monitoring Coverage
 
-Monitoring Coverage menunjukkan modul dashboard yang masuk scope monitoring, bukan kapasitas produksi.
+Monitoring Coverage menunjukkan modul dashboard yang masuk scope monitoring, bukan demand produksi.
 
 Scope saat ini:
 
@@ -601,8 +599,8 @@ Contoh mapping:
 | `Req. Daily Output` | kebutuhan output harian dan balance |
 | `Total Ready Load` | total ready dari ready-to-load |
 | `Avg Daily Output` | rata-rata output harian |
-| `Avg Daily Capacity` | rata-rata kapasitas harian |
-| `Capacity Gap / Surplus` | selisih capacity dan output |
+| `Avg Daily Demand` | rata-rata demand harian |
+| `Demand Gap / Surplus` | selisih demand dan output |
 | `Sequence Issues` | jumlah issue urutan data |
 | `Critical Orders` | jumlah order kritis |
 
@@ -645,4 +643,4 @@ Di Analytics Display, CAP bisa dipilih manual sebagai card/tindak lanjut.
 - Data Accuracy bukan audit seluruh data, tetapi validasi sequence antar periode delivery.
 - Source Sync hanya memeriksa ketersediaan source, bukan menjamin seluruh isi file benar.
 - Monitoring Coverage menunjukkan area yang dipantau, bukan achievement produksi.
-- Cache dashboard berada di `web/application/cache/dashboard_heat_data.json`; jika data terlihat tidak berubah, cek cache, source timestamp, dan log scheduler.
+- Riwayat demand dan qty disimpan di tabel MySQL `dashboard_heat_history` (database `db_dashboardgm`); jika data terlihat tidak berubah, cek status database MySQL, file backup di folder downloads, dan log scheduler.

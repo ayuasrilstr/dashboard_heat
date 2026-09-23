@@ -1,0 +1,412 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>IRL 5 : Development Dashboard, Integrasi Database, serta Pengujian Koneksi Data Real-Time (Versi Manajemen)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+  body {
+    background-color: #F0F4F8;
+    display: flex;
+    justify-content: center; flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 10px;
+  }
+  .slide-container {
+    width: 1333px;
+    height: 750px;
+    background: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    position: relative;
+    padding: 22px 28px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.07);
+    overflow: hidden;
+  }
+  .main-header {
+    background: #10528A;
+    color: #FFFFFF;
+    padding: 10px 22px;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    display: inline-block;
+    width: 84%;
+    margin-bottom: 18px;
+    white-space: nowrap;
+  }
+  .grid-layout {
+    display: grid;
+    grid-template-columns: 570px 1fr;
+    gap: 34px;
+    height: calc(100% - 65px);
+  }
+  .pill-center {
+    display: flex;
+    justify-content: center; flex-direction: column;
+    margin-bottom: 14px;
+  }
+  .pill-header {
+    background: #0E4D82;
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 6px 36px;
+    border-radius: 20px;
+    letter-spacing: 0.4px;
+    text-align: center;
+  }
+  .left-col {
+    display: flex;
+    flex-direction: column;
+  }
+  .diagram-flow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+  .sources-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    width: 100%;
+  }
+  .source-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .src-parent-box {
+    border: 1px solid #64748B;
+    background: #FFFFFF;
+    padding: 7px 4px;
+    width: 100%;
+    font-size: 12px;
+    font-weight: 700;
+    color: #1E293B;
+    text-align: center;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .src-child-box {
+    border: 1px solid #94A3B8;
+    background: #F8FAFC;
+    padding: 6px 4px;
+    width: 90%;
+    font-size: 10px;
+    color: #475569;
+    text-align: center;
+    margin-top: -1px;
+    line-height: 1.35;
+  }
+  .arrow-merge-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 4px 0;
+  }
+  .arrow-down-icon {
+    color: #0E4D82;
+    font-size: 20px;
+    font-weight: bold;
+    line-height: 1;
+  }
+  .engine-box {
+    border: 1.5px solid #0E4D82;
+    background: #FFFFFF;
+    padding: 8px 16px;
+    width: 86%;
+    border-radius: 4px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+  }
+  .engine-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #0E4D82;
+    margin-bottom: 2px;
+  }
+  .engine-sub {
+    font-size: 10.2px;
+    color: #334155;
+  }
+  .db-storage-row {
+    display: flex;
+    align-items: center;
+    justify-content: center; flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    margin-top: 4px;
+  }
+  .db-cylinder-icon {
+    width: 130px;
+    height: 60px;
+    border: 1.5px solid #0E4D82;
+    border-radius: 12px / 20px;
+    background: #FFFFFF;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; flex-direction: column;
+    font-size: 11px;
+    font-weight: 700;
+    color: #0E4D82;
+    text-align: center;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.06);
+  }
+  .db-sub-labels {
+    font-size: 10.2px;
+    color: #334155;
+    line-height: 1.55;
+  }
+  .keterangan-section {
+    margin-top: 14px;
+  }
+  .keterangan-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0E4D82;
+    margin-bottom: 7px;
+  }
+  .keterangan-list {
+    list-style: none;
+  }
+  .keterangan-list li {
+    font-size: 10.5px;
+    color: #1E293B;
+    line-height: 1.45;
+    margin-bottom: 6px;
+    position: relative;
+    padding-left: 14px;
+  }
+  .keterangan-list li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: #0E4D82;
+    font-weight: bold;
+    font-size: 14px;
+  }
+  .keterangan-list strong {
+    color: #0F172A;
+  }
+
+  /* Right Column */
+  .right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .test-table {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .test-header-row {
+    display: grid;
+    grid-template-columns: 180px 24px 210px 24px 210px;
+    align-items: center;
+    justify-content: center; flex-direction: column;
+  }
+  .sub-pill {
+    color: #FFFFFF;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 8px;
+    border-radius: 14px;
+    text-align: center;
+    letter-spacing: 0.3px;
+  }
+  .pill-cyan { background: #0288D1; }
+  .pill-green { background: #2E7D32; }
+  .pill-amber { background: #FB8C00; }
+
+  .test-data-row {
+    display: grid;
+    grid-template-columns: 180px 24px 210px 24px 210px;
+    align-items: center;
+    justify-content: center; flex-direction: column;
+  }
+  .data-box {
+    border: 1px solid #CBD5E1;
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 10.2px;
+    text-align: center;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center; flex-direction: column;
+    line-height: 1.35;
+  }
+  .box-blue { background: #E0F2FE; border-color: #BAE6FD; color: #0369A1; font-weight: 600; }
+  .box-green { background: #DCFCE7; border-color: #BBF7D0; color: #15803D; }
+  .box-amber { background: #FEF3C7; border-color: #FDE68A; color: #92400E; font-weight: 600; }
+  .flow-arrow {
+    text-align: center;
+    color: #0E4D82;
+    font-size: 16px;
+    font-weight: bold;
+  }
+
+  .dashboard-bullets {
+    list-style: none;
+    padding: 0 4px;
+  }
+  .dashboard-bullets li {
+    font-size: 10.5px;
+    color: #1E293B;
+    line-height: 1.45;
+    margin-bottom: 5px;
+    position: relative;
+    padding-left: 14px;
+  }
+  .dashboard-bullets li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: #0E4D82;
+    font-weight: bold;
+    font-size: 14px;
+  }
+  .dashboard-bullets strong {
+    color: #0F172A;
+  }
+</style>
+</head>
+<body>
+
+<div class="slide-container">
+  <div class="main-header">
+    IRL 5 : DEVELOPMENT DASHBOARD, INTEGRASI DATABASE, SERTA PENGUJIAN KONEKSI DATA REAL-TIME
+  </div>
+
+  <div class="grid-layout">
+    <!-- Left Column: Integrasi Database -->
+    <div class="left-col">
+      <div class="pill-center">
+        <div class="pill-header">INTEGRASI DATABASE</div>
+      </div>
+
+      <div class="diagram-flow">
+        <div class="sources-grid">
+          <div class="source-unit">
+            <div class="src-parent-box">Data Aksesoris</div>
+            <div class="src-child-box">Status Kelengkapan<br><span style="color:#64748B;">Otomatis dari CIUROX</span></div>
+          </div>
+          <div class="source-unit">
+            <div class="src-parent-box">Rencana Produksi</div>
+            <div class="src-child-box">Target Order & Delivery<br><span style="color:#64748B;">Otomatis dari APS</span></div>
+          </div>
+          <div class="source-unit">
+            <div class="src-parent-box">Aktual Gudang</div>
+            <div class="src-child-box">Mutasi Masuk & Keluar<br><span style="color:#64748B;">Otomatis dari Engage</span></div>
+          </div>
+        </div>
+
+        <div class="arrow-merge-area">
+          <div class="arrow-down-icon">↓</div>
+        </div>
+
+        <div class="engine-box">
+          <div class="engine-title">Penyelarasan & Pembersihan Data Otomatis</div>
+          <div class="engine-sub">Pencocokan Job Order Antar Sistem • Pencegahan Data Ganda • Validasi Kesiapan Material</div>
+        </div>
+
+        <div class="arrow-merge-area">
+          <div class="arrow-down-icon">↓</div>
+        </div>
+
+        <div class="db-storage-row">
+          <div class="db-cylinder-icon">
+            Pusat Data Terpadu<br>(Database Dashboard)
+          </div>
+          <div class="db-sub-labels">
+            <div>- - - - &gt; <strong>Data Transaksi Harian Aktif:</strong> Mutasi Hari Berjalan</div>
+            <div>- - - - &gt; <strong>Arsip Otomatis:</strong> &gt; 90 Hari Agar Sistem Tetap Ringan</div>
+            <div>- - - - &gt; <strong>Ringkasan Tren Harian:</strong> Output, Input, dan Kesiapan</div>
+            <div>- - - - &gt; <strong>Pengaturan Target & Kalender:</strong> SMV & Hari Libur Shift</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="keterangan-section">
+        <div class="keterangan-title">Keterangan :</div>
+        <ul class="keterangan-list">
+          <li><strong>Otomatis Tanpa Input Manual:</strong> Seluruh data ditarik otomatis dari CIUROX, APS, dan Engage tanpa perlu operator mengunduh atau menyalin file Excel secara manual.</li>
+          <li><strong>Data Bebas Duplikasi & Akurat:</strong> Sistem otomatis menyaring dan mencegah pencatatan ganda pada transaksi mutasi barang sehingga angka di dashboard selalu presisi.</li>
+          <li><strong>Sistem Tetap Cepat & Ringan:</strong> Transaksi lama otomatis dipindahkan ke arsip berkala sehingga pembukaan grafik dan tabel harian tetap instan dalam hitungan detik.</li>
+          <li><strong>Penyimpanan Konfigurasi Terpusat:</strong> Target produksi (SMV), jam kerja, dan hari libur tersimpan aman dan langsung diterapkan pada perhitungan kapasitas harian.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Right Column: Testing & Development -->
+    <div class="right-col">
+      <!-- Section 2: Real-Time Testing -->
+      <div>
+        <div class="pill-center">
+          <div class="pill-header">PENGUJIAN KONEKSI DATA REAL-TIME</div>
+        </div>
+
+        <div class="test-table">
+          <div class="test-header-row">
+            <div class="sub-pill pill-cyan">BAGIAN YANG DIUJI</div>
+            <div></div>
+            <div class="sub-pill pill-green">CARA PENGUJIAN</div>
+            <div></div>
+            <div class="sub-pill pill-amber">HASIL & KESIAPAN</div>
+          </div>
+
+          <!-- Row 1 -->
+          <div class="test-data-row">
+            <div class="data-box box-blue">Kecepatan Akses<br>Database Pusat</div>
+            <div class="flow-arrow">→</div>
+            <div class="data-box box-green">Uji kecepatan membaca ribuan baris data transaksi secara serentak.</div>
+            <div class="flow-arrow">→</div>
+            <div class="data-box box-amber">Sangat Cepat (&lt; 1 detik),<br>Data 100% Utuh & Valid<br><span style="color:#2E7D32; font-weight:bold;">[LULUS]</span></div>
+          </div>
+
+          <!-- Row 2 -->
+          <div class="test-data-row">
+            <div class="data-box box-blue">Otomasi Penarikan<br>Data Berkala (RPA)</div>
+            <div class="flow-arrow">→</div>
+            <div class="data-box box-green">Uji download data otomatis setiap 1,5 jam dan tombol tarik data manual.</div>
+            <div class="flow-arrow">→</div>
+            <div class="data-box box-amber">Jadwal berjalan tepat waktu,<br>Tidak ada sistem macet<br><span style="color:#2E7D32; font-weight:bold;">[LULUS]</span></div>
+          </div>
+
+          <!-- Row 3 -->
+          <div class="test-data-row">
+            <div class="data-box box-blue">Pembaruan Layar TV<br>Secara Real-Time</div>
+            <div class="flow-arrow">→</div>
+            <div class="data-box box-green">Uji refresh otomatis (:00 & :30) dan kestabilan menyala 24 jam non-stop.</div>
+            <div class="flow-arrow">→</div>
+            <div class="data-box box-amber">Layar tampil seketika (0 jeda),<br>Angka otomatis terbarui<br><span style="color:#2E7D32; font-weight:bold;">[LULUS]</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Development Dashboard -->
+      <div>
+        <div class="pill-center" style="margin-top: 4px;">
+          <div class="pill-header">DEVELOPMENT DASHBOARD</div>
+        </div>
+
+        <ul class="dashboard-bullets">
+          <li><strong>Tampilan Interaktif Layar Penuh (TV & PC):</strong> Didesain jelas dan nyaman dipantau dari kejauhan di area produksi pabrik maupun di komputer meja kerja.</li>
+          <li><strong>Layar Langsung Tampil Seketika:</strong> Informasi dan grafik langsung muncul saat halaman dibuka, tanpa menunggu lama dan tanpa layar putih kosong.</li>
+          <li><strong>Pilihan Rentang Target Fleksibel:</strong> Pengguna dapat memilih melihat target 1, 2, 4, atau 6 periode delivery secara instan sesuai kebutuhan evaluasi.</li>
+          <li><strong>Panel Pengaturan Khusus Admin:</strong> Supervisor dapat mengatur nilai target waktu (SMV) per baju, mode Direct Aktual, dan kalender hari libur operasional.</li>
+          <li><strong>Analisis & Rekomendasi Tindakan Otomatis:</strong> Sistem memberi indikator kondisi (Aman / Waspada / Risiko) serta saran tindakan jika target harian belum tercapai.</li>
+          <li><strong>Unduh Laporan Excel Sekali Klik:</strong> Tabel urutan order siap produksi (Ready to Load) dapat langsung diekspor ke file Excel yang rapi kapan saja.</li>
+          <li><strong>Pembaruan Otomatis Terjadwal:</strong> Layar otomatis memperbarui angka di menit :00 dan :30 setiap jam secara sinkron dengan jam dinding pabrik.</li>
+          <li><strong>Pencatatan Riwayat & Keamanan Data:</strong> Aktivitas penarikan data tercatat otomatis dalam log sistem untuk memastikan kestabilan informasi 24/7.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

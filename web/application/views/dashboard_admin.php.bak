@@ -1,0 +1,3321 @@
+<!doctype html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><?= html_escape($title ?? 'Dashboard GM Admin') ?></title>
+    <style>
+        :root{
+            --bg:#eef3f8;
+            --panel:#ffffff;
+            --panel-soft:#f8fbfe;
+            --ink:#102033;
+            --muted:#607287;
+            --line:#d9e3ee;
+            --brand:#176b87;
+            --brand-deep:#0f5268;
+            --accent:#7c9a42;
+            --accent-soft:#edf5dc;
+            --warn:#d97706;
+            --risk:#dc2626;
+            --ok:#16a34a;
+            --shadow:0 18px 46px rgba(16,32,51,.10);
+        }
+        *{box-sizing:border-box}
+        body{
+            margin:0;
+            min-height:100vh;
+            font-family:Segoe UI,Arial,Helvetica,sans-serif;
+            color:var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(23,107,135,.12), transparent 22%),
+                linear-gradient(180deg,#f8fbff 0,var(--bg) 100%);
+        }
+        a{color:inherit}
+        .shell{
+            min-height:100vh;
+            display:grid;
+            grid-template-columns:250px minmax(0,1fr);
+        }
+        .sidebar{
+            display:flex;
+            flex-direction:column;
+            gap:12px;
+            padding:14px;
+            border-right:1px solid rgba(217,227,238,.95);
+            background:rgba(255,255,255,.94);
+            backdrop-filter:blur(10px);
+            position:sticky;
+            top:0;
+            height:100vh;
+            overflow:auto;
+        }
+        .brand{
+            display:flex;
+            align-items:center;
+            gap:12px;
+            padding-bottom:8px;
+            border-bottom:1px solid rgba(217,227,238,.7);
+        }
+        .brand img{
+            width:42px;
+            height:42px;
+            object-fit:contain;
+        }
+        .brand h1{
+            margin:0;
+            font-size:17px;
+            line-height:1.15;
+            letter-spacing:-.02em;
+        }
+        .brand p{
+            margin:4px 0 0;
+            color:var(--muted);
+            font-size:10px;
+            line-height:1.4;
+        }
+        .user-card,.nav-card,.action-card,.stats-card,.table-card{
+            border:1px solid rgba(217,227,238,.95);
+            border-radius:12px;
+            background:#fff;
+            box-shadow:0 1px 3px rgba(16,32,51,.08);
+        }
+        .user-card{
+            padding:11px 12px;
+            display:grid;
+            gap:6px;
+        }
+        .user-card .label{
+            color:var(--muted);
+            font-size:11px;
+            font-weight:900;
+            text-transform:uppercase;
+            letter-spacing:.04em;
+        }
+        .user-card strong{
+            font-size:14px;
+        }
+        .user-card small{
+            color:var(--muted);
+            font-weight:700;
+        }
+        .nav-card{
+            padding:6px;
+            display:grid;
+            gap:4px;
+        }
+        .nav-card button{
+            border:0;
+            border-radius:10px;
+            background:transparent;
+            color:var(--muted);
+            font-size:12px;
+            font-weight:850;
+            text-align:left;
+            padding:10px 11px;
+            cursor:pointer;
+            border-left:3px solid transparent;
+        }
+        .nav-card button.active,
+        .nav-card button:hover{
+            background:rgba(23,107,135,.08);
+            color:var(--brand);
+            border-left-color:var(--brand);
+        }
+        .sidebar-footer{
+            margin-top:auto;
+            display:grid;
+            gap:10px;
+        }
+        .sidebar-footer .primary,
+        .sidebar-footer .secondary{
+            width:100%;
+            height:38px;
+            border-radius:10px;
+            border:0;
+            font-size:12px;
+            font-weight:900;
+            cursor:pointer;
+            text-decoration:none;
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+        }
+        .sidebar-footer .primary{
+            background:linear-gradient(180deg,var(--brand),var(--brand-deep));
+            color:#fff;
+        }
+        .sidebar-footer .secondary{
+            background:#fff;
+            color:var(--brand);
+            border:1px solid var(--line);
+        }
+        .content{
+            min-width:0;
+            padding:12px;
+            display:grid;
+            gap:10px;
+            align-content:start;
+            grid-auto-rows:min-content;
+        }
+        .topbar{
+            border:1px solid rgba(217,227,238,.95);
+            border-radius:12px;
+            background:#fff;
+            box-shadow:0 1px 3px rgba(16,32,51,.08);
+            padding:12px 14px;
+            display:flex;
+            gap:12px;
+            align-items:flex-start;
+            justify-content:space-between;
+        }
+        .topbar h2{
+            margin:0;
+            font-size:19px;
+            letter-spacing:-.03em;
+        }
+        .topbar p{
+            margin:3px 0 0;
+            color:var(--muted);
+            font-size:11px;
+            line-height:1.35;
+            max-width:560px;
+        }
+        .topbar-actions{
+            display:flex;
+            gap:8px;
+            flex-wrap:wrap;
+            justify-content:flex-end;
+        }
+        .topbar-actions a,
+        .topbar-actions button{
+            height:34px;
+            border-radius:8px;
+            border:0;
+            padding:0 12px;
+            font-size:12px;
+            font-weight:900;
+            cursor:pointer;
+            text-decoration:none;
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+        }
+        .topbar-actions .primary{
+            background:linear-gradient(180deg,var(--brand),var(--brand-deep));
+            color:#fff;
+        }
+        .topbar-actions .secondary{
+            background:#fff;
+            color:var(--brand);
+            border:1px solid var(--line);
+        }
+        .grid{
+            display:grid;
+            grid-template-columns:repeat(4,minmax(0,1fr));
+            gap:8px;
+        }
+        .summary-kpi-grid{
+            display:grid;
+            grid-template-columns:repeat(4,minmax(0,1fr));
+            gap:8px;
+        }
+        .stats-card{
+            padding:12px 14px;
+            display:grid;
+            gap:6px;
+            position:relative;
+            transition:transform .15s ease, box-shadow .15s ease;
+        }
+        .stats-card:hover{
+            box-shadow:0 6px 18px rgba(16,32,51,.07);
+        }
+        .stats-card .stats-label{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:6px;
+            color:var(--muted);
+            font-size:10px;
+            font-weight:900;
+            text-transform:uppercase;
+            letter-spacing:.04em;
+        }
+        .stats-card .stats-value-row{
+            display:flex;
+            align-items:baseline;
+            gap:5px;
+        }
+        .stats-card strong{
+            font-size:22px;
+            line-height:1.1;
+            letter-spacing:-.03em;
+            color:var(--ink);
+        }
+        .stats-card small{
+            color:var(--muted);
+            font-weight:700;
+            font-size:11px;
+        }
+        .stats-card .stats-sub{
+            color:var(--muted);
+            font-size:11px;
+            line-height:1.35;
+        }
+        .stats-card.highlight{
+            background:linear-gradient(180deg,#ffffff,#f0f7fb);
+            border-color:rgba(23,107,135,.3);
+        }
+        .stats-card.highlight strong{
+            color:var(--brand);
+        }
+        .stats-card.accent{
+            background:linear-gradient(180deg,#ffffff,#f5f9eb);
+            border-color:rgba(124,154,66,.3);
+        }
+        .stats-card.accent strong{
+            color:#4d661b;
+        }
+        .stats-card.warn{
+            background:linear-gradient(180deg,#ffffff,#fffbf0);
+            border-color:rgba(217,119,6,.3);
+        }
+        .stats-card.warn strong{
+            color:var(--warn);
+        }
+        .badge-pill{
+            display:inline-flex;
+            align-items:center;
+            gap:4px;
+            padding:2px 7px;
+            border-radius:999px;
+            font-size:9px;
+            font-weight:900;
+            letter-spacing:.03em;
+            text-transform:uppercase;
+            background:rgba(23,107,135,.1);
+            color:var(--brand);
+        }
+        .badge-pill.good{background:#dcfce7;color:#15803d}
+        .badge-pill.warn{background:#fef3c7;color:#b45309}
+        .badge-pill.risk{background:#fee2e2;color:#b91c1c}
+        .summary-detail-grid{
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:10px;
+        }
+        .summary-box{
+            border:1px solid rgba(217,227,238,.95);
+            border-radius:12px;
+            background:#fff;
+            box-shadow:0 1px 3px rgba(16,32,51,.08);
+            padding:14px;
+            display:grid;
+            gap:10px;
+        }
+        .summary-box h4{
+            margin:0;
+            font-size:13px;
+            font-weight:900;
+            text-transform:uppercase;
+            letter-spacing:.03em;
+            color:var(--brand);
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+        }
+        .formula-list{
+            display:grid;
+            gap:7px;
+        }
+        .formula-item{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:7px 10px;
+            border-radius:8px;
+            background:var(--panel-soft);
+            font-size:12px;
+        }
+        .formula-item span{
+            color:var(--muted);
+            font-weight:600;
+        }
+        .formula-item strong{
+            color:var(--ink);
+            font-weight:850;
+        }
+        .breakdown-table{
+            width:100%;
+            border-collapse:collapse;
+            font-size:12px;
+        }
+        .breakdown-table th{
+            text-align:left;
+            padding:8px 10px;
+            background:var(--panel-soft);
+            color:var(--muted);
+            font-size:10px;
+            font-weight:900;
+            text-transform:uppercase;
+            letter-spacing:.04em;
+            border-bottom:1px solid var(--line);
+        }
+        .breakdown-table th.num, .breakdown-table td.num{
+            text-align:right;
+        }
+        .breakdown-table td{
+            padding:8px 10px;
+            border-bottom:1px solid var(--line);
+        }
+        .progress-bar-wrap{
+            width:100%;
+            height:6px;
+            background:#e2e8f0;
+            border-radius:999px;
+            overflow:hidden;
+            margin-top:4px;
+        }
+        .progress-bar-fill{
+            height:100%;
+            background:var(--brand);
+            border-radius:999px;
+            transition:width .3s ease;
+        }
+        .topbar-scope{
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            background:var(--panel-soft);
+            border:1px solid var(--line);
+            border-radius:8px;
+            padding:3px 10px;
+            font-size:12px;
+            font-weight:700;
+        }
+        .topbar-scope input[type="date"]{
+            border:1px solid rgba(217,227,238,.9);
+            background:#fff;
+            border-radius:6px;
+            height:26px;
+            padding:0 6px;
+            font-size:12px;
+            font-weight:850;
+            color:var(--ink);
+            cursor:pointer;
+            outline:none;
+        }
+        .topbar-scope input[type="date"]:hover{
+            border-color:rgba(23,107,135,.35);
+        }
+        .period-pill{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            padding:2px 8px;
+            height:22px;
+            border-radius:5px;
+            font-size:11px;
+            font-weight:900;
+            white-space:nowrap;
+            user-select:none;
+        }
+        .period-pill.mid{background:rgba(23,107,135,.14);color:#0f5268;border:1px solid rgba(23,107,135,.22)}
+        .period-pill.end{background:rgba(135,169,34,.16);color:#4a631e;border:1px solid rgba(135,169,34,.25)}
+        .period-pill.range{background:rgba(100,116,139,.16);color:#334155;border:1px solid rgba(100,116,139,.28)}
+        .scope-spinner{
+            width:13px;
+            height:13px;
+            border:2px solid rgba(23,107,135,.2);
+            border-top-color:var(--brand);
+            border-radius:50%;
+            animation:globalSpin .8s linear infinite;
+            display:none;
+            flex-shrink:0;
+        }
+        .topbar-scope.loading .scope-spinner{
+            display:inline-block;
+        }
+        .topbar-scope.loading input[type="date"]{
+            opacity:0.6;
+            pointer-events:none;
+        }
+        .global-loading-overlay{
+            position:fixed;
+            inset:0;
+            z-index:99999;
+            display:none;
+            align-items:center;
+            justify-content:center;
+            background:rgba(248,251,255,.75);
+            backdrop-filter:blur(3px);
+        }
+        .global-loading-overlay.active{
+            display:flex;
+        }
+        .global-loading-card{
+            min-width:min(280px,86vw);
+            padding:24px 28px;
+            border:1px solid rgba(219,228,238,.95);
+            border-radius:14px;
+            background:rgba(255,255,255,.98);
+            box-shadow:0 24px 60px rgba(16,32,51,.18);
+            display:grid;
+            justify-items:center;
+            gap:10px;
+            text-align:center;
+        }
+        .global-loading-card img{
+            width:52px;
+            height:52px;
+            animation:globalSpin .9s linear infinite;
+        }
+        .global-loading-card span{
+            color:var(--brand-deep);
+            font-size:14px;
+            font-weight:900;
+            letter-spacing:.02em;
+        }
+        .global-loading-card small{
+            color:var(--muted);
+            font-size:12px;
+            font-weight:600;
+        }
+        @keyframes globalSpin{to{transform:rotate(360deg)}}
+        .chip-container{
+            display:flex;
+            flex-wrap:wrap;
+            gap:6px;
+        }
+        .style-chip{
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            padding:4px 10px;
+            border-radius:20px;
+            background:rgba(23,107,135,.08);
+            border:1px solid rgba(23,107,135,.2);
+            font-size:11px;
+            font-weight:800;
+            color:var(--brand);
+        }
+        .style-chip b{
+            background:var(--brand);
+            color:#fff;
+            padding:1px 6px;
+            border-radius:10px;
+            font-size:10px;
+        }
+        .section{
+            display:none;
+            gap:8px;
+            align-content:start;
+        }
+        .section.active{
+            display:grid;
+            align-content:start;
+        }
+        .section-head{
+            display:flex;
+            align-items:flex-end;
+            justify-content:space-between;
+            gap:10px;
+            padding:2px 2px 0;
+        }
+        .section-head h3{
+            margin:0;
+            font-size:14px;
+            text-transform:uppercase;
+            letter-spacing:.03em;
+        }
+        .section-head p{
+            margin:0;
+            color:var(--muted);
+            font-size:10px;
+            line-height:1.35;
+        }
+        .action-grid{
+            display:grid;
+            grid-template-columns:repeat(3,minmax(0,1fr));
+            gap:8px;
+        }
+        .action-card{
+            padding:11px;
+            display:grid;
+            gap:7px;
+        }
+        .action-card .tag{
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            width:max-content;
+            padding:5px 9px;
+            border-radius:999px;
+            background:rgba(23,107,135,.08);
+            color:var(--brand);
+            font-size:10px;
+            font-weight:900;
+            text-transform:uppercase;
+            letter-spacing:.04em;
+        }
+        .action-card h4{
+            margin:0;
+            font-size:14px;
+        }
+        .action-card p{
+            margin:0;
+            color:var(--muted);
+            font-size:11px;
+            line-height:1.4;
+        }
+        .action-card .buttons{
+            display:flex;
+            gap:8px;
+            flex-wrap:wrap;
+            margin-top:2px;
+        }
+        .action-card .buttons a,
+        .action-card .buttons button{
+            height:32px;
+            border-radius:8px;
+            border:0;
+            padding:0 11px;
+            font-size:12px;
+            font-weight:900;
+            cursor:pointer;
+            text-decoration:none;
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+        }
+        .action-card .buttons .primary{
+            background:linear-gradient(180deg,var(--brand),var(--brand-deep));
+            color:#fff;
+        }
+        .action-card .buttons .secondary{
+            background:#fff;
+            color:var(--brand);
+            border:1px solid var(--line);
+        }
+        .table-card{
+            padding:11px;
+            display:grid;
+            gap:8px;
+        }
+        .analytics-settings-grid{
+            display:grid;
+            grid-template-columns:repeat(2,minmax(0,1fr));
+            gap:8px;
+        }
+        .analytics-setting-card{
+            border:1px solid var(--line);
+            border-radius:10px;
+            background:var(--panel-soft);
+            padding:10px 11px;
+            display:grid;
+            gap:6px;
+        }
+        .analytics-setting-card label{
+            display:flex;
+            align-items:center;
+            gap:8px;
+            font-size:12px;
+            font-weight:850;
+            color:var(--ink);
+            cursor:pointer;
+        }
+        .analytics-setting-card small{
+            color:var(--muted);
+            font-size:10px;
+            line-height:1.35;
+        }
+        .analytics-setting-meta{
+            display:flex;
+            align-items:center;
+            gap:10px;
+            flex-wrap:wrap;
+        }
+        .analytics-setting-meta label{
+            color:var(--muted);
+            font-size:10px;
+            font-weight:900;
+            text-transform:uppercase;
+            letter-spacing:.04em;
+        }
+        .analytics-setting-meta select{
+            height:32px;
+            border:1px solid var(--line);
+            border-radius:8px;
+            background:#fff;
+            color:var(--ink);
+            font-size:12px;
+            padding:0 10px;
+            outline:none;
+        }
+        .analytics-setting-meta input{
+            height:32px;
+            border:1px solid var(--line);
+            border-radius:8px;
+            background:#fff;
+            color:var(--ink);
+            font-size:12px;
+            padding:0 10px;
+            outline:none;
+            width:140px;
+        }
+        .table-toolbar{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:10px;
+            flex-wrap:wrap;
+        }
+        .datatable-meta{
+            display:flex;
+            align-items:center;
+            gap:8px;
+            flex-wrap:wrap;
+        }
+        .datatable-meta label{
+            color:var(--muted);
+            font-size:10px;
+            font-weight:900;
+            text-transform:uppercase;
+            letter-spacing:.04em;
+        }
+        .datatable-meta input,
+        .datatable-meta select{
+            height:32px;
+            border:1px solid var(--line);
+            border-radius:8px;
+            background:#fff;
+            color:var(--ink);
+            font-size:12px;
+            padding:0 10px;
+            outline:none;
+        }
+        .datatable-meta input{
+            width:220px;
+            max-width:50vw;
+        }
+        .datatable-info{
+            color:var(--muted);
+            font-size:11px;
+            font-weight:750;
+        }
+        .table-scroll{
+            overflow:auto;
+            border:1px solid var(--line);
+            border-radius:12px;
+            background:#fff;
+        }
+        table{
+            width:100%;
+            border-collapse:collapse;
+            min-width:700px;
+        }
+        th,td{
+            padding:8px 9px;
+            border-bottom:1px solid #edf2f7;
+            font-size:12px;
+            white-space:nowrap;
+        }
+        th{
+            position:sticky;
+            top:0;
+            background:#f8fbfe;
+            color:var(--muted);
+            text-align:left;
+            font-size:10px;
+            text-transform:uppercase;
+            letter-spacing:.04em;
+        }
+        tr:last-child td{border-bottom:0}
+        .num{text-align:right}
+        .pill{
+            display:inline-flex;
+            align-items:center;
+            padding:5px 9px;
+            border-radius:999px;
+            background:var(--accent-soft);
+            color:#4c6b1f;
+            font-size:11px;
+            font-weight:900;
+            text-transform:uppercase;
+        }
+        .notice{
+            border:1px dashed rgba(23,107,135,.32);
+            border-radius:10px;
+            background:rgba(23,107,135,.05);
+            padding:10px 11px;
+            color:var(--muted);
+            font-size:11px;
+            line-height:1.45;
+        }
+        .form-card{
+            display:grid;
+            gap:12px;
+        }
+        .form-grid{
+            display:grid;
+            grid-template-columns:repeat(2,minmax(0,1fr));
+            gap:10px;
+        }
+        .field{
+            display:grid;
+            gap:7px;
+        }
+        .field label{
+            color:var(--muted);
+            font-size:10px;
+            font-weight:900;
+            text-transform:uppercase;
+            letter-spacing:.04em;
+        }
+        .field input,
+        .field textarea{
+            width:100%;
+            border:1px solid var(--line);
+            border-radius:10px;
+            background:#fff;
+            color:var(--ink);
+            font-size:12px;
+            outline:none;
+            padding:9px 10px;
+        }
+        .field input:focus,
+        .field textarea:focus{
+            border-color:rgba(23,107,135,.58);
+            box-shadow:0 0 0 3px rgba(23,107,135,.10);
+        }
+        .field textarea{
+            min-height:96px;
+            resize:vertical;
+            line-height:1.5;
+        }
+        .field .helper{
+            color:var(--muted);
+            font-size:10px;
+            line-height:1.45;
+        }
+        .save-row{
+            display:flex;
+            gap:10px;
+            align-items:center;
+            justify-content:flex-end;
+            flex-wrap:wrap;
+        }
+        .save-row .secondary,
+        .save-row .primary{
+            height:32px;
+            border-radius:8px;
+            border:0;
+            padding:0 11px;
+            font-size:12px;
+            font-weight:900;
+            cursor:pointer;
+            text-decoration:none;
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+        }
+        .save-row .primary{
+            background:linear-gradient(180deg,var(--brand),var(--brand-deep));
+            color:#fff;
+        }
+        .save-row .secondary{
+            background:#fff;
+            color:var(--brand);
+            border:1px solid var(--line);
+        }
+        .smv-table{
+            min-width:960px;
+        }
+        .smv-table td,
+        .smv-table th{
+            vertical-align:middle;
+        }
+        .smv-table td:first-child{
+            width:56px;
+        }
+        .smv-input{
+            max-width:112px;
+            text-align:right;
+        }
+        .smv-process-input{
+            max-width:80px;
+            text-align:right;
+            font-weight:700;
+        }
+        .smv-process-list{
+            display:flex;
+            flex-direction:column;
+            gap:5px;
+            align-items:flex-end;
+        }
+        .smv-process-row{
+            display:flex;
+            align-items:center;
+            gap:6px;
+            justify-content:flex-end;
+        }
+        .smv-process-label{
+            font-size:11px;
+            font-weight:700;
+            color:var(--muted);
+            min-width:26px;
+            text-align:right;
+        }
+        .smv-sub-input{
+            max-width:86px;
+            text-align:right;
+            padding:5px 8px;
+            height:30px;
+            font-size:12px;
+            font-weight:700;
+        }
+        .smv-total-badge{
+            display:inline-flex;
+            align-items:center;
+            gap:4px;
+            font-size:11px;
+            font-weight:800;
+            color:var(--brand);
+            background:rgba(23,107,135,.09);
+            padding:2px 8px;
+            border-radius:6px;
+            margin-top:2px;
+            border:1px solid rgba(23,107,135,.2);
+        }
+        .smv-toggle{
+            width:16px;
+            height:16px;
+            accent-color:var(--brand);
+        }
+        .smv-bulk-actions{
+            display:inline-flex;
+            gap:6px;
+            align-items:center;
+            margin-left:4px;
+        }
+        .smv-bulk-actions button{
+            height:32px;
+            padding:0 10px;
+            font-size:11px;
+            font-weight:800;
+            border-radius:8px;
+            border:1px solid var(--line);
+            background:#fff;
+            color:var(--brand);
+            cursor:pointer;
+            transition:background .15s, border-color .15s;
+        }
+        .smv-bulk-actions button:hover{
+            background:rgba(23,107,135,.08);
+            border-color:var(--brand);
+        }
+        .smv-table .smv-empty-row td{
+            padding:18px 12px;
+            color:var(--muted);
+            text-align:center;
+        }
+        .datatable-footer{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:10px;
+            flex-wrap:wrap;
+        }
+        .datatable-pagination{
+            display:flex;
+            gap:6px;
+            align-items:center;
+            flex-wrap:wrap;
+        }
+        .datatable-pagination button{
+            height:30px;
+            min-width:30px;
+            border:1px solid var(--line);
+            border-radius:8px;
+            background:#fff;
+            color:var(--ink);
+            font-size:12px;
+            font-weight:850;
+            cursor:pointer;
+            padding:0 10px;
+        }
+        .datatable-pagination button.active{
+            background:var(--brand);
+            color:#fff;
+            border-color:var(--brand);
+        }
+        .datatable-pagination button:disabled{
+            opacity:.45;
+            cursor:not-allowed;
+        }
+        .smv-status{
+            font-size:11px;
+            font-weight:850;
+        }
+        .smv-status.good{color:var(--ok)}
+        .smv-status.warn{color:var(--warn)}
+        .smv-status.risk{color:var(--risk)}
+        .calendar-tools{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:10px;
+            flex-wrap:wrap;
+            margin-top:2px;
+        }
+        .calendar-tools button{
+            height:30px;
+            border:1px solid var(--line);
+            border-radius:8px;
+            background:#fff;
+            color:var(--ink);
+            font-weight:850;
+            padding:0 10px;
+            cursor:pointer;
+        }
+        .calendar-month-title{
+            color:var(--ink);
+            font-size:14px;
+            font-weight:900;
+            text-transform:uppercase;
+            letter-spacing:.03em;
+        }
+        .calendar-summary{
+            display:grid;
+            grid-template-columns:repeat(4,minmax(0,1fr));
+            gap:6px;
+        }
+        .calendar-summary-item{
+            border:1px solid var(--line);
+            border-radius:8px;
+            background:var(--panel-soft);
+            padding:8px 9px;
+        }
+        .calendar-summary-item span{
+            display:block;
+            color:var(--muted);
+            font-size:9px;
+            font-weight:850;
+            text-transform:uppercase;
+        }
+        .calendar-summary-item b{
+            display:block;
+            margin-top:4px;
+            color:var(--ink);
+            font-size:13px;
+            font-weight:900;
+        }
+        .calendar-summary-item small{
+            display:block;
+            margin-top:3px;
+            color:var(--muted);
+            font-size:9px;
+            font-weight:750;
+        }
+        .calendar-grid{
+            display:grid;
+            grid-template-columns:repeat(7,minmax(0,1fr));
+            gap:3px;
+        }
+        .calendar-head{
+            padding:3px 2px;
+            color:var(--muted);
+            font-size:10px;
+            font-weight:900;
+            text-align:center;
+            text-transform:uppercase;
+        }
+        .calendar-day{
+            min-height:62px;
+            border:1px solid var(--line);
+            border-radius:8px;
+            background:#fff;
+            color:var(--ink);
+            display:grid;
+            grid-template-rows:auto 1fr;
+            align-items:start;
+            padding:7px;
+            text-align:left;
+            cursor:pointer;
+        }
+        .calendar-day b{
+            font-size:12px;
+            font-weight:900;
+        }
+        .calendar-day span{
+            align-self:end;
+            color:var(--muted);
+            font-size:9px;
+            font-weight:800;
+            text-transform:uppercase;
+            line-height:1.2;
+        }
+        .calendar-day.out{opacity:.38}
+        .calendar-day.sunday{background:#fff7f7}
+        .calendar-day.work{border-color:#bbf7d0;background:#f0fdf4;color:#166534}
+        .calendar-day.half{border-color:#fed7aa;background:#fff7ed;color:#9a3412}
+        .calendar-day.quarter{border-color:#bfdbfe;background:#eff6ff;color:#1d4ed8}
+        .calendar-day.holiday{border-color:#fecaca;background:#fee2e2;color:#991b1b}
+        .calendar-day.today{box-shadow:inset 0 0 0 2px var(--brand)}
+        .calendar-legend{
+            display:flex;
+            gap:8px;
+            align-items:center;
+            margin-top:8px;
+            color:var(--muted);
+            font-size:11px;
+            font-weight:750;
+            flex-wrap:wrap;
+        }
+        .calendar-legend i{
+            width:9px;
+            height:9px;
+            border-radius:3px;
+            display:inline-block;
+            margin-right:5px;
+            vertical-align:-1px;
+        }
+        .legend-sunday{background:#fff7f7;border:1px solid var(--line)}
+        .legend-work{background:#f0fdf4;border:1px solid #bbf7d0}
+        .legend-half{background:#fff7ed;border:1px solid #fed7aa}
+        .legend-quarter{background:#eff6ff;border:1px solid #bfdbfe}
+        .legend-off{background:#fee2e2;border:1px solid #fecaca}
+        .calendar-help{
+            margin-top:6px;
+            color:var(--muted);
+            font-size:11px;
+            font-weight:750;
+        }
+        .modal-backdrop{
+            position:fixed;
+            inset:0;
+            display:none;
+            align-items:center;
+            justify-content:center;
+            padding:10px;
+            background:rgba(16,32,51,.52);
+            backdrop-filter:blur(3px);
+            z-index:1200;
+        }
+        .modal-backdrop.open{display:flex}
+        .detail-modal{
+            width:min(980px,96vw);
+            max-height:calc(100vh - 24px);
+            overflow:auto;
+            border-radius:12px;
+            border:1px solid rgba(217,227,238,.95);
+            background:rgba(255,255,255,.98);
+            box-shadow:0 8px 24px rgba(16,32,51,.16);
+        }
+        .modal-head{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:10px;
+            padding:10px 12px 0;
+        }
+        .modal-head h3{
+            margin:0;
+            font-size:14px;
+            text-transform:uppercase;
+            letter-spacing:.03em;
+        }
+        .modal-close{
+            width:30px;
+            height:30px;
+            border:0;
+            border-radius:8px;
+            background:#f1f5f9;
+            color:var(--muted);
+            font-size:18px;
+            line-height:1;
+            cursor:pointer;
+        }
+        .modal-body{
+            padding:10px 12px 12px;
+            display:grid;
+            gap:8px;
+        }
+        @media (max-width: 1180px){
+            .shell{grid-template-columns:1fr}
+            .sidebar{
+                border-right:0;
+                border-bottom:1px solid rgba(217,227,238,.95);
+                position:static;
+                height:auto;
+            }
+            .grid,.summary-kpi-grid,.action-grid,.form-grid,.calendar-summary,.summary-detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+        }
+        @media (max-width: 720px){
+            .content{padding:10px}
+            .topbar{padding:10px;flex-direction:column;align-items:flex-start}
+            .topbar-actions{justify-content:flex-start}
+            .grid,.summary-kpi-grid,.action-grid,.form-grid,.calendar-summary,.summary-detail-grid{grid-template-columns:1fr}
+            .calendar-grid{gap:4px}
+            .calendar-day{min-height:62px;padding:6px}
+        }
+    </style>
+</head>
+<body>
+<?php
+$user = isset($user) && is_array($user) ? $user : array();
+$user_name = !empty($user['full_name']) ? $user['full_name'] : (!empty($user['username']) ? $user['username'] : 'Administrator');
+$user_role = !empty($user['role']) ? $user['role'] : 'admin';
+$dashboard_data = isset($initial_dashboard_payload['dashboard_data']) && is_array($initial_dashboard_payload['dashboard_data'])
+    ? $initial_dashboard_payload['dashboard_data']
+    : array();
+$holiday_settings = isset($dashboard_data['holiday_settings']) && is_array($dashboard_data['holiday_settings'])
+    ? $dashboard_data['holiday_settings']
+    : array('holidays' => array(), 'half_days' => array(), 'quarter_days' => array(), 'work_days' => array());
+$style_catalog = isset($style_smv_catalog['styles']) && is_array($style_smv_catalog['styles']) ? $style_smv_catalog['styles'] : array();
+$style_smv_catalog = isset($style_smv_catalog) && is_array($style_smv_catalog) ? $style_smv_catalog : array('styles' => array());
+$selected_date = isset($selected_date) && !empty($selected_date) ? $selected_date : date('Y-m-d');
+if (is_numeric($selected_date)) {
+    $selected_date = date('Y-m-d');
+}
+
+$kpis = isset($dashboard_data['kpis']) && is_array($dashboard_data['kpis']) ? $dashboard_data['kpis'] : array();
+$initial_total_output = isset($kpis['total_output']) ? (float) $kpis['total_output'] : 0;
+$initial_balance_qty = isset($kpis['balance_qty']) ? (float) $kpis['balance_qty'] : 0;
+$initial_balance_qty_ofc = isset($kpis['balance_qty_with_ofc']) ? (float) $kpis['balance_qty_with_ofc'] : $initial_balance_qty;
+$initial_remaining_days = isset($kpis['prod_days_left']) ? (float) $kpis['prod_days_left'] : (isset($kpis['remaining_days']) ? (float) $kpis['remaining_days'] : 0);
+
+$initial_active_smv = array();
+if (!empty($style_smv_catalog['running_styles']) && is_array($style_smv_catalog['running_styles'])) {
+    foreach ($style_smv_catalog['running_styles'] as $s) {
+        if (isset($s['smv']) && is_numeric($s['smv']) && (float) $s['smv'] > 0) {
+            $initial_active_smv[] = $s;
+        }
+    }
+} elseif (!empty($style_catalog) && is_array($style_catalog)) {
+    foreach ($style_catalog as $s) {
+        if (!empty($s['show_in_dashboard']) && isset($s['smv']) && is_numeric($s['smv']) && (float) $s['smv'] > 0) {
+            $initial_active_smv[] = $s;
+        }
+    }
+}
+$initial_smv_nums = array();
+foreach ($initial_active_smv as $s) {
+    $initial_smv_nums[] = (float) $s['smv'];
+}
+$initial_avg_smv = count($initial_smv_nums) > 0 ? (array_sum($initial_smv_nums) / count($initial_smv_nums)) : null;
+$initial_direct_actual = isset($analytics_settings['direct_actual']) && $analytics_settings['direct_actual'] !== NULL && $analytics_settings['direct_actual'] !== '' ? (float) $analytics_settings['direct_actual'] : null;
+
+$initial_balance_breakdown = !empty($dashboard_data['balance_breakdown']) && is_array($dashboard_data['balance_breakdown'])
+    ? $dashboard_data['balance_breakdown']
+    : (!empty($dashboard_data['qty_pdk_vs_output']) && is_array($dashboard_data['qty_pdk_vs_output']) ? $dashboard_data['qty_pdk_vs_output'] : array());
+
+$source_label = !empty($dashboard_data['source']) ? $dashboard_data['source'] : 'RPA Engage';
+$source_updated_at = !empty($dashboard_data['source_updated_at']) ? $dashboard_data['source_updated_at'] : '';
+?>
+<div class="global-loading-overlay" id="globalLoadingOverlay" aria-live="polite" aria-busy="true">
+    <div class="global-loading-card">
+        <img alt="Loading" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%23176b87' stroke-width='6' stroke-linecap='round'%3E%3Cpath opacity='.2' d='M32 8a24 24 0 1 1 0 48a24 24 0 1 1 0-48'/%3E%3Cpath d='M32 8a24 24 0 0 1 24 24'/%3E%3C/g%3E%3C/svg%3E">
+        <span id="globalLoadingText">Memuat Data Periode...</span>
+        <small>Menyesuaikan data PDK, output, dan SMV style</small>
+    </div>
+</div>
+<div class="shell">
+    <aside class="sidebar">
+        <div class="brand">
+            <img src="<?= html_escape(base_url('web/Assets/img/unnamed.png')) ?>" alt="Logo Dashboard GM">
+            <div>
+                <h1>Dashboard GM Admin</h1>
+                <p>Panel kerja untuk pengelolaan kalender, riwayat, dan analytics.</p>
+            </div>
+        </div>
+
+        <div class="user-card">
+            <div class="label">Login Aktif</div>
+            <strong><?= html_escape($user_name) ?></strong>
+            <small>Role: <?= html_escape($user_role) ?></small>
+        </div>
+
+        <nav class="nav-card" aria-label="Navigasi admin">
+            <button type="button" class="active" data-section="overviewSection">Overview</button>
+            <button type="button" data-section="summarySection">Summary</button>
+            <button type="button" data-section="style-smv">SMV &amp; Direct Aktual</button>
+            <button type="button" data-section="workdays">Kalender</button>
+            <button type="button" data-section="analytics">Analytics</button>
+            <button type="button" data-section="data">Data</button>
+            <button type="button" data-section="notes">Catatan</button>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a class="primary" href="<?= html_escape($dashboard_url ?? '#') ?>">Buka Dashboard Publik</a>
+            <button type="button" class="secondary" id="logoutButton">Logout Admin</button>
+        </div>
+    </aside>
+
+    <main class="content">
+        <header class="topbar">
+            <div>
+                <h2>Panel Admin</h2>
+                <p>
+                    Pengelolaan operasional, SMV style, kalender kerja, dan ringkasan performa produksi.
+                </p>
+            </div>
+            <div class="topbar-actions">
+                <div class="topbar-scope" title="Pilih rentang tanggal periode untuk melihat ringkasan">
+                    <span class="scope-spinner" aria-hidden="true"></span>
+                    <label for="adminDateFrom">From:</label>
+                    <input type="date" id="adminDateFrom" value="<?= html_escape($selected_date_from ?? date('Y-m-01')) ?>">
+                    <label for="adminDateTo">To:</label>
+                    <input type="date" id="adminDateTo" value="<?= html_escape($selected_date_to ?? date('Y-m-15')) ?>">
+                </div>
+                <button type="button" class="secondary" id="refreshButton">Refresh Data</button>
+                <a class="primary" href="<?= html_escape($dashboard_url ?? '#') ?>">Dashboard Publik</a>
+            </div>
+        </header>
+
+        <section class="section active" id="overviewSection">
+            <div class="section-head">
+                <div>
+                    <h3>Overview Operasional</h3>
+                    <p>Ringkasan angka performa utama dan pintasan cepat modul panel admin.</p>
+                </div>
+                <div class="topbar-actions">
+                    <button type="button" class="secondary" data-jump="summarySection">Buka Detail Summary &rarr;</button>
+                </div>
+            </div>
+
+            <div class="summary-kpi-grid">
+                <article class="stats-card highlight">
+                    <div class="stats-label">
+                        <span>Total Output</span>
+                        <span class="badge-pill good">Selesai</span>
+                    </div>
+                    <div class="stats-value-row">
+                        <strong class="kpi-total-output"><?= number_format($initial_total_output, 0, ',', '.') ?></strong>
+                        <small>Pcs</small>
+                    </div>
+                    <div class="stats-sub">Akumulasi output selesai</div>
+                </article>
+
+                <article class="stats-card warn">
+                    <div class="stats-label">
+                        <span>Balance Qty</span>
+                        <span class="badge-pill warn">Non OFC</span>
+                    </div>
+                    <div class="stats-value-row">
+                        <strong class="kpi-balance-qty"><?= number_format($initial_balance_qty, 0, ',', '.') ?></strong>
+                        <small>Pcs</small>
+                    </div>
+                    <div class="stats-sub">Sisa order produksi (tanpa OFC)</div>
+                </article>
+
+                <article class="stats-card warn">
+                    <div class="stats-label">
+                        <span>Balance Qty</span>
+                        <span class="badge-pill warn">Termasuk OFC</span>
+                    </div>
+                    <div class="stats-value-row">
+                        <strong class="kpi-balance-qty-ofc"><?= number_format($initial_balance_qty_ofc, 0, ',', '.') ?></strong>
+                        <small>Pcs</small>
+                    </div>
+                    <div class="stats-sub">Termasuk order OFC (campuran)</div>
+                </article>
+
+                <article class="stats-card">
+                    <div class="stats-label">
+                        <span>Sisa Hari Kerja</span>
+                        <span class="badge-pill">Produksi</span>
+                    </div>
+                    <div class="stats-value-row">
+                        <strong class="kpi-remaining-days"><?= number_format($initial_remaining_days, 1, ',', '.') ?></strong>
+                        <small>Hari</small>
+                    </div>
+                    <div class="stats-sub">Remaining from today</div>
+                </article>
+
+                <article class="stats-card accent">
+                    <div class="stats-label">
+                        <span>Direct Plan</span>
+                        <span class="badge-pill good">Manpower</span>
+                    </div>
+                    <div class="stats-value-row">
+                        <strong class="kpi-direct-plan">-</strong>
+                        <small>Orang</small>
+                    </div>
+                    <div class="stats-sub kpi-target-per-person">Target per orang: -</div>
+                </article>
+
+                <article class="stats-card">
+                    <div class="stats-label">
+                        <span>Direct Actual</span>
+                        <span class="badge-pill">Aktif</span>
+                    </div>
+                    <div class="stats-value-row">
+                        <strong class="kpi-direct-actual"><?= $initial_direct_actual !== null ? html_escape(rtrim(rtrim(number_format($initial_direct_actual, 2, '.', ''), '0'), '.')) : '-' ?></strong>
+                        <small>Orang</small>
+                    </div>
+                    <div class="stats-sub">Manpower aktual terdaftar</div>
+                </article>
+
+                <article class="stats-card highlight">
+                    <div class="stats-label">
+                        <span>SMV Rata-rata</span>
+                        <span class="badge-pill">Style Aktif</span>
+                    </div>
+                    <div class="stats-value-row">
+                        <strong class="kpi-avg-smv"><?= $initial_avg_smv !== null ? number_format($initial_avg_smv, 2, '.', '') : '-' ?></strong>
+                    </div>
+                    <div class="stats-sub kpi-active-styles-count"><?= count($initial_active_smv) ?> style dipilih</div>
+                </article>
+
+                <article class="stats-card">
+                    <div class="stats-label">
+                        <span>Demand Harian</span>
+                        <span class="badge-pill">Target</span>
+                    </div>
+                    <div class="stats-value-row">
+                        <strong class="kpi-daily-demand">-</strong>
+                        <small>Pcs/hari</small>
+                    </div>
+                    <div class="stats-sub">Kebutuhan output per hari</div>
+                </article>
+
+                <article class="stats-card">
+                    <div class="stats-label">
+                        <span>Kapasitas Direct</span>
+                        <span class="badge-pill" id="kpiCapacityBadge">Output</span>
+                    </div>
+                    <div class="stats-value-row">
+                        <strong class="kpi-estimated-capacity">-</strong>
+                        <small>Pcs/hari</small>
+                    </div>
+                    <div class="stats-sub kpi-capacity-gap">Estimasi vs Demand</div>
+                </article>
+            </div>
+
+            <div class="section-head" style="margin-top:6px;">
+                <div>
+                    <h3>Pintasan Modul</h3>
+                    <p>Akses cepat untuk pengaturan SMV style, kalender kerja manual, dan download file operasional.</p>
+                </div>
+            </div>
+            <div class="action-grid">
+                <article class="action-card">
+                    <span class="tag">SMV</span>
+                    <h4>Input SMV per Style</h4>
+                    <p>Isi SMV untuk setiap style yang terdeteksi dari data dashboard, lalu simpan ke database.</p>
+                    <div class="buttons">
+                        <button type="button" class="primary" data-jump="style-smv">Buka Panel SMV</button>
+                    </div>
+                </article>
+                <article class="action-card">
+                    <span class="tag">Calendar</span>
+                    <h4>Kalender Kerja</h4>
+                    <p>Atur libur, 1/2 hari, 1/4 hari, dan hari kerja melalui modal kalender.</p>
+                    <div class="buttons">
+                        <button type="button" class="primary" id="overviewOpenCalendar">Buka Kalender</button>
+                    </div>
+                </article>
+                <article class="action-card">
+                    <span class="tag">Data</span>
+                    <h4>Ringkasan Data</h4>
+                    <p>Lihat daftar prioritas dan status operasional tanpa meninggalkan panel admin.</p>
+                    <div class="buttons">
+                        <button type="button" class="primary" data-jump="data">Lihat Data Prioritas</button>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="section" id="summarySection">
+            <div class="section-head">
+                <div>
+                    <h3>Summary Operasional &amp; Produksi</h3>
+                    <p>Ringkasan menyeluruh performa output, sisa order, kebutuhan direct manpower, dan parameter SMV.</p>
+                </div>
+                <div class="topbar-actions">
+                    <div class="topbar-scope" title="Pilih rentang tanggal periode untuk melihat ringkasan">
+                        <span class="scope-spinner" aria-hidden="true"></span>
+                        <label for="summaryDateFrom">From:</label>
+                        <input type="date" id="summaryDateFrom" value="<?= html_escape($selected_date_from ?? date('Y-m-01')) ?>">
+                        <label for="summaryDateTo">To:</label>
+                        <input type="date" id="summaryDateTo" value="<?= html_escape($selected_date_to ?? date('Y-m-15')) ?>">
+                    </div>
+                    <span class="pill" id="connectionState">Online</span>
+                </div>
+            </div>
+
+            <!-- Primary KPI Grid -->
+            <div class="summary-kpi-grid" id="statsGrid">
+                <article class="stats-card highlight">
+                    <div class="stats-label">
+                        <span>Total Output</span>
+                        <span class="badge-pill good">Selesai</span>
+                    </div>
+                    <div class="stats-value-row">
+                        <strong class="kpi-total-output" id="totalOutput"><?= number_format($initial_total_output, 0, ',', '.') ?></strong>
+                        <small>Pcs</small>
+                    </div>
+                    <div class="stats-sub">Total output heat transfer selesai</div>
+                </article>
+
+                <article class="stats-card warn">
+                    <div class="stats-label">
+                        <span>Balance Qty</span>
+                        <span class="badge-pill warn">Non OFC</span>
+                    </div>
+                    <div class="stats-value-row">
+                        <strong class="kpi-balance-qty" id="balanceQty"><?= number_format($initial_balance_qty, 0, ',', '.') ?></strong>
+                        <small>Pcs</small>
+                    </div>
+                    <div class="stats-sub">Sisa order produksi (tanpa OFC)</div>
+                </article>
+
+                <article class="stats-card warn">
+                    <div class="stats-label">
+                        <span>Balance Qty</span>
+                        <span class="badge-pill warn">Termasuk OFC</span>
+                    </div>
+                    <div class="stats-value-row">
+                        <strong class="kpi-balance-qty-ofc" id="balanceQtyOfc"><?= number_format($initial_balance_qty_ofc, 0, ',', '.') ?></strong>
+                        <small>Pcs</small>
+                    </div>
+                    <div class="stats-sub">Termasuk order OFC (campuran)</div>
+                </article>
+
+                <article class="stats-card">
+                    <div class="stats-label">
+                        <span>Sisa Hari Kerja</span>
+                        <span class="badge-pill">Produksi</span>
+                    </div>
+                    <div class="stats-value-row">
+                        <strong class="kpi-remaining-days" id="remainingDays"><?= number_format($initial_remaining_days, 1, ',', '.') ?></strong>
+                        <small>Hari</small>
+                    </div>
+                    <div class="stats-sub">Sisa hari efektif kalender kerja</div>
+                </article>
+
+                <article class="stats-card accent">
+                    <div class="stats-label">
+                        <span>Direct Plan</span>
+                        <span class="badge-pill good">Manpower</span>
+                    </div>
+                    <div class="stats-value-row">
+                        <strong class="kpi-direct-plan" id="directDailyOutputVal">-</strong>
+                        <small>Orang</small>
+                    </div>
+                    <div class="stats-sub kpi-target-per-person">Target per orang: -</div>
+                </article>
+
+                <article class="stats-card">
+                    <div class="stats-label">
+                        <span>Direct Actual</span>
+                        <span class="badge-pill">Aktual</span>
+                    </div>
+                    <div class="stats-value-row">
+                        <strong class="kpi-direct-actual" id="directActualVal"><?= $initial_direct_actual !== null ? html_escape(rtrim(rtrim(number_format($initial_direct_actual, 2, '.', ''), '0'), '.')) : '-' ?></strong>
+                        <small>Orang</small>
+                    </div>
+                    <div class="stats-sub">Manpower aktual terdaftar di sistem</div>
+                </article>
+
+                <article class="stats-card highlight">
+                    <div class="stats-label">
+                        <span>SMV Rata-rata</span>
+                        <span class="badge-pill">Aktif</span>
+                    </div>
+                    <div class="stats-value-row">
+                        <strong class="kpi-avg-smv" id="avgSmvVal"><?= $initial_avg_smv !== null ? number_format($initial_avg_smv, 2, '.', '') : '-' ?></strong>
+                    </div>
+                    <div class="stats-sub kpi-active-styles-count"><?= count($initial_active_smv) ?> style dipilih</div>
+                </article>
+
+                <article class="stats-card">
+                    <div class="stats-label">
+                        <span>Target Demand</span>
+                        <span class="badge-pill">Harian</span>
+                    </div>
+                    <div class="stats-value-row">
+                        <strong class="kpi-daily-demand" id="dailyDemandVal">-</strong>
+                        <small>Pcs/hari</small>
+                    </div>
+                    <div class="stats-sub">Kebutuhan rata-rata per hari kerja</div>
+                </article>
+
+                <article class="stats-card">
+                    <div class="stats-label">
+                        <span>Kapasitas Direct</span>
+                        <span class="badge-pill" id="kpiCapacityBadgeSummary">Kapasitas</span>
+                    </div>
+                    <div class="stats-value-row">
+                        <strong class="kpi-estimated-capacity" id="estimatedCapacityVal">-</strong>
+                        <small>Pcs/hari</small>
+                    </div>
+                    <div class="stats-sub kpi-capacity-gap" id="capacityGapVal">Estimasi vs Demand</div>
+                </article>
+            </div>
+
+            <!-- Detail Analysis Grid -->
+            <div class="summary-detail-grid">
+                <div class="summary-box">
+                    <h4>
+                        <span>Perhitungan Direct Manpower</span>
+                        <button type="button" class="primary" style="height:26px;font-size:11px;padding:0 8px;border-radius:6px;border:0;background:var(--brand);color:#fff;cursor:pointer;" data-jump="style-smv">Kelola SMV &rarr;</button>
+                    </h4>
+                    <div class="formula-list">
+                        <div class="formula-item">
+                            <span>Jam Kerja Hari Ini</span>
+                            <strong id="summaryWorkingHours">- Jam</strong>
+                        </div>
+                        <div class="formula-item">
+                            <span>Target Output per Orang</span>
+                            <strong id="summaryTargetPerPerson">- pcs/hari</strong>
+                        </div>
+                        <div class="formula-item">
+                            <span>Formula Target per Orang</span>
+                            <strong style="font-size:11px;color:var(--muted);">((1 * 60 / SMV) &times; Jam) &times; 70%</strong>
+                        </div>
+                        <div class="formula-item">
+                            <span>Kebutuhan Direct Plan</span>
+                            <strong id="summaryDirectPlanCalculation">- Orang</strong>
+                        </div>
+                        <div class="formula-item">
+                            <span>Direct Actual Terinput</span>
+                            <strong id="summaryDirectActualCalculation">- Orang</strong>
+                        </div>
+                        <div class="formula-item">
+                            <span>Selisih Kapasitas vs Demand</span>
+                            <strong id="summaryDirectGap">-</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="summary-box">
+                    <h4>
+                        <span>Style SMV Berjalan (APS)</span>
+                        <span class="badge-pill good" id="summaryRunningStyleBadge"><?= count($initial_active_smv) ?> Style</span>
+                    </h4>
+                    <p style="margin:0;color:var(--muted);font-size:11px;">Style berikut aktif berjalan di APS pada periode ini (tanpa OFC) dan diperhitungkan dalam SMV rata-rata dashboard.</p>
+                    <div class="chip-container" id="summaryRunningStylesList">
+                        <?php if (!empty($initial_active_smv)): ?>
+                            <?php foreach ($initial_active_smv as $s): ?>
+                                <div class="style-chip">
+                                    <span><?= html_escape(isset($s['style']) ? $s['style'] : '-') ?></span>
+                                    <b>SMV <?= number_format((float) (isset($s['smv']) ? $s['smv'] : 0), 2, '.', '') ?></b>
+                                    <?php if (!empty($s['process_smvs']) && count($s['process_smvs']) > 1): ?>
+                                        <small style="font-size:10px;color:var(--muted);font-weight:700;">(<?= count($s['process_smvs']) ?> proses: <?= implode(' + ', array_map(function($v) { return number_format((float)$v, 2, '.', ''); }, $s['process_smvs'])) ?>)</small>
+                                    <?php elseif (!empty($s['process_count'])): ?>
+                                        <small style="font-size:10px;color:var(--muted);font-weight:700;">(<?= (int) $s['process_count'] ?> proses)</small>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <div style="color:var(--muted);font-size:11px;padding:8px 0;">Tidak ada style berjalan di APS pada periode ini.</div>
+                        <?php endif; ?>
+                    </div>
+                    <div style="margin-top:auto;padding-top:8px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;">
+                        <span>Sumber: <b id="summarySourceLabel"><?= html_escape($source_label) ?></b></span>
+                        <span>Update: <b id="summarySourceUpdated"><?= html_escape($source_updated_at ? $source_updated_at : '-') ?></b></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Balance Breakdown per Date Period -->
+            <div class="table-card">
+                <div class="section-head" style="padding:0 0 4px 0;">
+                    <div>
+                        <h4 style="margin:0;font-size:13px;font-weight:900;text-transform:uppercase;color:var(--ink);">Rincian Balance per Periode Tanggal</h4>
+                        <p style="margin:2px 0 0 0;color:var(--muted);font-size:11px;">Distribusi Target, Aktual, dan sisa balance untuk setiap periode tanggal.</p>
+                    </div>
+                </div>
+                <div class="table-scroll">
+                    <table class="breakdown-table">
+                        <thead>
+                            <tr>
+                                <th style="width:40px;">No.</th>
+                                <th>Periode Tanggal</th>
+                                <th class="num">Total Target</th>
+                                <th class="num">Total Aktual</th>
+                                <th class="num">Balance Qty</th>
+                                <th style="width:200px;">Progress Pencapaian</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summaryBreakdownRows">
+                            <?php if (!empty($initial_balance_breakdown)): ?>
+                                <?php foreach ($initial_balance_breakdown as $bIdx => $bRow): ?>
+                                    <?php
+                                        $bPdk = isset($bRow['pdk']) ? (float) $bRow['pdk'] : 0;
+                                        $bOut = isset($bRow['output']) ? (float) $bRow['output'] : 0;
+                                        $bBal = isset($bRow['balance']) ? (float) $bRow['balance'] : max(0, $bPdk - $bOut);
+                                        $bPct = $bPdk > 0 ? min(100, max(0, round(($bOut / $bPdk) * 100, 1))) : 0;
+                                    ?>
+                                    <tr>
+                                        <td><?= (int) ($bIdx + 1) ?></td>
+                                        <td><strong><?= html_escape(isset($bRow['label']) ? $bRow['label'] : '-') ?></strong></td>
+                                        <td class="num"><?= number_format($bPdk, 0, ',', '.') ?> pcs</td>
+                                        <td class="num" style="color:var(--brand);font-weight:800;"><?= number_format($bOut, 0, ',', '.') ?> pcs</td>
+                                        <td class="num" style="color:var(--warn);font-weight:800;"><?= number_format($bBal, 0, ',', '.') ?> pcs</td>
+                                        <td>
+                                            <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;">
+                                                <span><?= $bPct ?>%</span>
+                                                <small style="color:var(--muted);"><?= number_format($bOut, 0, ',', '.') ?> / <?= number_format($bPdk, 0, ',', '.') ?></small>
+                                            </div>
+                                            <div class="progress-bar-wrap">
+                                                <div class="progress-bar-fill" style="width:<?= $bPct ?>%;"></div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="6" style="text-align:center;color:var(--muted);padding:14px;">Data periode belum tersedia.</td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="style-smv">
+            <div class="section-head">
+                <div>
+                    <h3>SMV per Style</h3>
+                    <p>Daftar style otomatis diambil dari data dashboard. Admin hanya perlu mengisi SMV per style lalu menyimpan ke database.</p>
+                </div>
+                <span class="pill" id="smvCountPill"><?= (int) count($style_catalog) ?> Style</span>
+            </div>
+
+            <div class="table-card form-card">
+                <div class="notice">
+                    SMV per style disimpan sebagai master data. Perhitungan target dan kapasitas bulanan otomatis mendeteksi style yang sedang berjalan berdasarkan data APS periode aktif (tanpa OFC).
+                </div>
+                <div class="table-toolbar">
+                    <div class="datatable-meta">
+                        <label for="smvSearch">Search</label>
+                        <input type="search" id="smvSearch" placeholder="Cari style">
+                        <label for="smvPageSize">Rows</label>
+                        <select id="smvPageSize">
+                            <option value="10">10</option>
+                            <option value="15">15</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                    </div>
+                    <div class="datatable-info" id="smvTableInfo">-</div>
+                </div>
+                <div class="table-scroll">
+                    <table class="smv-table" id="smvDataTable">
+                        <thead>
+                            <tr>
+                                <th style="width:56px;">No.</th>
+                                <th>Style</th>
+                                <th style="width:140px;" class="num">Jumlah Proses</th>
+                                <th style="width:220px;" class="num">SMV per Proses</th>
+                            </tr>
+                        </thead>
+                        <tbody id="smvRows">
+                            <?php if ($style_catalog): ?>
+                                <?php foreach ($style_catalog as $index => $row): ?>
+                                    <?php
+                                        $row_style = isset($row['style']) ? $row['style'] : '';
+                                        $p_smvs = isset($row['process_smvs']) && is_array($row['process_smvs']) ? $row['process_smvs'] : array();
+                                        if (empty($p_smvs) && isset($row['smv']) && $row['smv'] !== NULL && (float) $row['smv'] > 0) {
+                                            $p_smvs = array((float) $row['smv']);
+                                        }
+                                        $p_count = isset($row['process_count']) && $row['process_count'] !== NULL && (int) $row['process_count'] > 0
+                                            ? (int) $row['process_count']
+                                            : (count($p_smvs) > 0 ? count($p_smvs) : 1);
+                                        $row_total_smv = !empty($p_smvs) ? array_sum($p_smvs) : (isset($row['smv']) && $row['smv'] !== NULL ? (float) $row['smv'] : NULL);
+                                    ?>
+                                    <tr data-style-row="<?= html_escape($row_style) ?>">
+                                        <td class="num smv-row-number"><?= (int) ($index + 1) ?></td>
+                                        <td>
+                                            <div style="font-weight:850;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                                                <span><?= html_escape($row_style !== '' ? $row_style : '-') ?></span>
+                                                <?php if (!empty($row['is_running'])): ?>
+                                                    <span class="badge-pill good" style="font-size:10px;padding:2px 7px;">Aktif di APS</span>
+                                                <?php else: ?>
+                                                    <span class="badge-pill" style="font-size:10px;padding:2px 7px;color:var(--muted);background:var(--panel-soft);border:1px solid var(--line);">Tersimpan di Master Data</span>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div style="color:var(--muted);font-size:11px;margin-top:3px;">
+                                                <?= !empty($row['is_running']) ? 'Sedang berjalan pada periode aktif (tanpa OFC)' : 'Tersimpan permanen (otomatis aktif jika order berjalan lagi)' ?>
+                                            </div>
+                                        </td>
+                                        <td class="num">
+                                            <input
+                                                type="number"
+                                                step="1"
+                                                min="1"
+                                                max="10"
+                                                class="smv-input smv-process-input"
+                                                data-process-style="<?= html_escape($row_style) ?>"
+                                                value="<?= (int) $p_count ?>"
+                                                placeholder="1"
+                                            >
+                                        </td>
+                                        <td class="num">
+                                            <div class="smv-process-list" data-smv-container="<?= html_escape($row_style) ?>">
+                                                <?php for ($p = 0; $p < max(1, $p_count); $p++): ?>
+                                                    <div class="smv-process-row">
+                                                        <span class="smv-process-label"><?= $p_count > 1 ? 'P' . ($p + 1) : 'SMV' ?></span>
+                                                        <input
+                                                            type="number"
+                                                            step="0.01"
+                                                            min="0.001"
+                                                            class="smv-input smv-sub-input"
+                                                            data-style="<?= html_escape($row_style) ?>"
+                                                            data-process-idx="<?= $p ?>"
+                                                            value="<?= isset($p_smvs[$p]) ? html_escape(rtrim(rtrim(number_format((float) $p_smvs[$p], 3, '.', ''), '0'), '.')) : '' ?>"
+                                                            placeholder="0.00"
+                                                        >
+                                                    </div>
+                                                <?php endfor; ?>
+                                                <?php if ($p_count > 1): ?>
+                                                    <div class="smv-total-badge" data-total-for="<?= html_escape($row_style) ?>">Total: <b><?= $row_total_smv !== NULL ? rtrim(rtrim(number_format((float) $row_total_smv, 3, '.', ''), '0'), '.') : '0.00' ?></b></div>
+                                                <?php endif; ?>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                            <tr class="smv-empty-row" id="smvEmptyRow" style="<?= $style_catalog ? 'display:none;' : '' ?>">
+                                <td colspan="4">Tidak ada style yang bisa ditampilkan dari data dashboard.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="datatable-footer">
+                    <div class="datatable-info" id="smvPageInfo">-</div>
+                    <div class="datatable-pagination" id="smvPagination"></div>
+                </div>
+                <div class="analytics-setting-meta" style="margin-top:2px;">
+                    <label for="directActualInput">Direct Actual</label>
+                    <input type="number" id="directActualInput" min="0" step="1" placeholder="0"
+                        value="<?= $initial_direct_actual !== null ? html_escape(rtrim(rtrim(number_format((float)$initial_direct_actual, 2, '.', ''), '0'), '.')) : '' ?>">
+                </div>
+                <div class="notice">
+                    Direct Actual akan disimpan bersama SMV dan dipakai untuk menampilkan Direct di dashboard heat.
+                </div>
+                <div class="save-row">
+                    <span id="smvMessage" class="helper" style="margin-right:auto;"></span>
+                    <button type="button" class="secondary" id="smvResetButton">Reset Tampilan</button>
+                    <button type="button" class="primary" id="smvSaveButton">Simpan SMV</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="workdays">
+            <div class="section-head">
+                <div>
+                    <h3 hidden>Hari Kerja Manual</h3>
+                    <p>Kalender kerja dipindah ke modal agar halaman admin tetap bersih. Klik tombol untuk membuka kalender dan atur tanggal di sana.</p>
+                </div>
+                <div class="topbar-actions">
+                    <button type="button" class="secondary" id="workdayOpenButtonInline">Buka Kalender</button>
+                </div>
+            </div>
+            <div class="notice">
+                Kalender ini tetap menyimpan data yang sama seperti sebelumnya. Perubahannya hanya pada tampilan: sekarang dibuka lewat modal, bukan ditanam langsung di halaman.
+            </div>
+        </section>
+
+        <section class="section" id="analytics">
+            <div class="section-head">
+                <div>
+                    <h3>Analytics Display</h3>
+                    <p>Atur card analytics dan bahasa default yang dipakai dashboard heat. Setting ini disimpan di server, bukan hanya di browser.</p>
+                </div>
+                <span class="pill" id="analyticsUpdatedPill">Default</span>
+            </div>
+
+            <div class="table-card form-card">
+                <div class="notice">
+                    Pilihan di bawah akan dipakai sebagai default tampilan analytics untuk dashboard publik. User masih bisa punya preferensi lokal di browser, tetapi admin panel tetap jadi sumber utama.
+                </div>
+                <div class="analytics-setting-meta">
+                    <label for="analyticsLanguageSelect">Bahasa</label>
+                    <select id="analyticsLanguageSelect">
+                        <option value="id">Indonesia</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+                <div class="analytics-settings-grid" id="analyticsCards"></div>
+                <div class="save-row">
+                    <span id="analyticsMessage" class="helper" style="margin-right:auto;"></span>
+                    <button type="button" class="secondary" id="analyticsResetButton">Reset Default</button>
+                    <button type="button" class="primary" id="analyticsSaveButton">Simpan Analytics</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="data">
+            <div class="section-head">
+                <div>
+                    <h3>Data Ringkas</h3>
+                    <p>Daftar berikut membantu admin melihat order prioritas tanpa harus membuka layar dashboard penuh.</p>
+                </div>
+                <div class="topbar-actions">
+                    <a class="secondary" href="<?= html_escape($download_url ?? '#') ?>">Download Excel</a>
+                    <a class="secondary" href="<?= html_escape($material_to_load_download_url ?? '#') ?>">Material to Load</a>
+                </div>
+            </div>
+
+            <div class="table-card">
+                <div class="notice">
+                    Panel ini tetap membaca data dashboard yang sama. Bedanya, layout-nya dibuat seperti web admin biasa:
+                    ada sidebar, topbar, kartu ringkasan, dan menu aksi.
+                </div>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>Order</th>
+                                <th>Style</th>
+                                <th>Tanggal</th>
+                                <th class="num">Qty Ready</th>
+                                <th>Source</th>
+                            </tr>
+                        </thead>
+                        <tbody id="priorityRows">
+                            <?php if (!empty($dashboard_data['material_to_load']) && is_array($dashboard_data['material_to_load'])): ?>
+                                <?php foreach (array_slice($dashboard_data['material_to_load'], 0, 8) as $index => $row): ?>
+                                    <tr>
+                                        <td><?= (int) ($index + 1) ?></td>
+                                        <td><?= html_escape(isset($row['order']) ? $row['order'] : '-') ?></td>
+                                        <td><?= html_escape(isset($row['style']) ? $row['style'] : '-') ?></td>
+                                        <td><?= html_escape(isset($row['delivery']) ? $row['delivery'] : '-') ?></td>
+                                        <td class="num"><?= number_format((float) (isset($row['qty_ready']) ? $row['qty_ready'] : 0), 0, ',', '.') ?></td>
+                                        <td><?= html_escape(isset($row['source']) ? $row['source'] : '-') ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="6" style="padding:16px;color:var(--muted);text-align:center;">Tidak ada data prioritas.</td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="notes">
+            <div class="section-head">
+                <div>
+                    <h3>Catatan</h3>
+                    <p>Area ini bisa kita perluas lagi kalau Anda mau tambah menu master data, user management, atau laporan.</p>
+                </div>
+            </div>
+            <div class="notice">
+                Kalau Anda ingin tampilan admin yang lebih lengkap, langkah berikutnya biasanya:
+                menu sidebar untuk Master Data, Kalender, Riwayat, Analytics, dan Logout.
+            </div>
+        </section>
+    </main>
+</div>
+
+<div class="modal-backdrop" id="workdayModal" role="dialog" aria-modal="true" aria-labelledby="workdayModalTitle">
+    <section class="detail-modal">
+        <div class="modal-head">
+            <h3 id="workdayModalTitle" hidden>Hari Kerja Manual</h3>
+            <button type="button" class="modal-close" id="workdayModalClose" aria-label="Tutup kalender">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="notice" hidden>
+                Pilih tanggal langsung di kalender seperti konsep awal. Klik tanggal untuk mengubah status libur, 1/2 hari, 1/4 hari, atau hari kerja.
+            </div>
+
+            <div class="calendar-tools">
+                <button type="button" id="workdayPrevButton">Sebelumnya</button>
+                <div class="calendar-month-title" id="workdayCalendarTitle">-</div>
+                <button type="button" id="workdayNextButton">Berikutnya</button>
+            </div>
+
+            <div class="calendar-summary" id="workdaySummary">
+                <div class="calendar-summary-item">
+                    <span>Libur</span>
+                    <b id="countHoliday">0</b>
+                    <small>Hari libur</small>
+                </div>
+                <div class="calendar-summary-item">
+                    <span>1/2 Hari</span>
+                    <b id="countHalf">0</b>
+                    <small>Status setengah hari</small>
+                </div>
+                <div class="calendar-summary-item">
+                    <span>1/4 Hari</span>
+                    <b id="countQuarter">0</b>
+                    <small>Status seperempat hari</small>
+                </div>
+                <div class="calendar-summary-item">
+                    <span>Hari Kerja</span>
+                    <b id="countWork">0</b>
+                    <small>Hari kerja manual</small>
+                </div>
+            </div>
+
+            <div class="calendar-grid" id="workdayCalendar"></div>
+
+            <div class="calendar-legend">
+                <span><i class="legend-sunday"></i>Minggu/off</span>
+                <span><i class="legend-work"></i>Kerja</span>
+                <span><i class="legend-half"></i>1/2 Hari</span>
+                <span><i class="legend-quarter"></i>1/4 Hari</span>
+                <span><i class="legend-off"></i>Libur</span>
+            </div>
+
+            <div class="calendar-help">Klik tanggal untuk mengganti status. Setiap klik akan memutar status mengikuti urutan libur -> 1/2 hari -> 1/4 hari -> kerja.</div>
+
+            <div class="save-row">
+                <span id="workdayMessage" class="helper" style="margin-right:auto;"></span>
+                <button type="button" class="secondary" id="workdayClearButton">Kosongkan</button>
+                <button type="button" class="primary" id="workdaySaveButton">Simpan Hari Kerja</button>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+    const urls = {
+        status: <?= json_encode($status_url ?? '') ?>,
+        portalLogout: <?= json_encode($portal_logout_url ?? '') ?>,
+        dashboard: <?= json_encode($dashboard_url ?? '') ?>,
+        saveStyleSmv: <?= json_encode($save_style_smv_url ?? '') ?>,
+        saveWorkdays: <?= json_encode($save_workdays_url ?? '') ?>,
+        saveAnalyticsSettings: <?= json_encode($save_analytics_settings_url ?? '') ?>,
+    };
+
+    const initialPayload = <?= json_encode($initial_dashboard_payload ?? array()) ?>;
+    const initialHolidaySettings = <?= json_encode($holiday_settings ?? array('holidays' => array(), 'half_days' => array(), 'quarter_days' => array(), 'work_days' => array())) ?>;
+    const initialAnalyticsSettings = <?= json_encode($analytics_settings ?? array('visible_cards' => array('production_status', 'output_achievement', 'data_accuracy'), 'language' => 'id', 'direct_actual' => NULL)) ?>;
+    const analyticsCardDefinitions = [
+        {key:'production_status', label:'Production Status', note:'Status utama area produksi.'},
+        {key:'output_achievement', label:'Output Achievement', note:'Perbandingan output terhadap total PDK.'},
+        {key:'data_accuracy', label:'Data Accuracy', note:'Akurasi urutan dan validasi data.'},
+        {key:'ready_to_load', label:'Ready to Load & Coverage', note:'Total qty ready to load beserta cakupan hari.'},
+        {key:'avg_daily_capacity', label:'Avg. Daily Demand', note:'Rata-rata demand harian.'},
+        {key:'critical_orders', label:'Critical Orders', note:'Order prioritas yang kritis.'},
+    ];
+    const monthNames = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    const weekdayNames = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+    let selectedDateFrom = <?= json_encode($selected_date_from ?? ($selected_date ?? date('Y-m-01'))) ?>;
+    let selectedDateTo = <?= json_encode($selected_date_to ?? ($selected_date ?? date('Y-m-15'))) ?>;
+    let selectedDate = selectedDateFrom;
+    let currentDashboard = initialPayload?.dashboard_data || null;
+    let currentStyleCatalog = initialPayload?.style_smv_catalog || <?= json_encode($style_smv_catalog ?? array('styles' => array())) ?>;
+    let currentServerTime = initialPayload?.server_time || null;
+    let analyticsSettingsState = {
+        visible_cards: Array.isArray(initialAnalyticsSettings?.visible_cards) ? initialAnalyticsSettings.visible_cards : ['production_status', 'output_achievement', 'data_accuracy'],
+        language: initialAnalyticsSettings?.language === 'en' ? 'en' : 'id',
+    };
+    // Seed directActualState from the input value that was pre-filled by PHP (most reliable source)
+    const _directActualInput = document.getElementById('directActualInput');
+    let directActualState = (function() {
+        const fromInput = _directActualInput ? String(_directActualInput.value || '').trim() : '';
+        if (fromInput !== '') return Number(fromInput);
+        const fromSettings = initialAnalyticsSettings?.direct_actual;
+        if (fromSettings !== null && fromSettings !== undefined && fromSettings !== '') return Number(fromSettings);
+        return null;
+    })();
+    let calendarCursor = new Date();
+    calendarCursor.setDate(1);
+    let calendarState = {
+        holidays: new Set(Array.isArray(initialHolidaySettings?.holidays) ? initialHolidaySettings.holidays : []),
+        halfDays: new Set(Array.isArray(initialHolidaySettings?.half_days) ? initialHolidaySettings.half_days : []),
+        quarterDays: new Set(Array.isArray(initialHolidaySettings?.quarter_days) ? initialHolidaySettings.quarter_days : []),
+        workDays: new Set(Array.isArray(initialHolidaySettings?.work_days) ? initialHolidaySettings.work_days : []),
+    };
+
+    function fmt(value) {
+        const number = Number(value) || 0;
+        return number.toLocaleString('id-ID');
+    }
+
+    function fmtDecimal(value, decimals = 2) {
+        const number = Number(value);
+        if (!Number.isFinite(number)) return '-';
+        return number.toLocaleString('id-ID', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: decimals,
+        });
+    }
+
+    function esc(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function balanceValue(data) {
+        return Number(data?.kpis?.balance_qty || 0);
+    }
+
+    function isoDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function monthTitle(date) {
+        return `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+    }
+
+    function calendarLabel(iso) {
+        if (calendarState.holidays.has(iso)) return 'Libur';
+        if (calendarState.halfDays.has(iso)) return '1/2 Hari';
+        if (calendarState.quarterDays.has(iso)) return '1/4 Hari';
+        if (calendarState.workDays.has(iso)) return 'Kerja';
+        return 'Default';
+    }
+
+    function clearCalendarSelection(iso) {
+        calendarState.holidays.delete(iso);
+        calendarState.halfDays.delete(iso);
+        calendarState.quarterDays.delete(iso);
+        calendarState.workDays.delete(iso);
+    }
+
+    function updateCalendarSummary() {
+        document.getElementById('countHoliday').textContent = fmt(calendarState.holidays.size);
+        document.getElementById('countHalf').textContent = fmt(calendarState.halfDays.size);
+        document.getElementById('countQuarter').textContent = fmt(calendarState.quarterDays.size);
+        document.getElementById('countWork').textContent = fmt(calendarState.workDays.size);
+    }
+
+    function selectedStyleSmvSummary(catalog) {
+        let items = [];
+        if (Array.isArray(catalog?.running_styles) && catalog.running_styles.length) {
+            items = catalog.running_styles;
+        } else if (Array.isArray(catalog?.styles)) {
+            items = catalog.styles.filter(s => (s.is_running || s.show_in_dashboard) && Number(s.smv) > 0);
+        }
+
+        const smvValues = items
+            .map(item => Number(item?.smv))
+            .filter(value => Number.isFinite(value) && value > 0);
+
+        if (!smvValues.length) {
+            return null;
+        }
+
+        const total = smvValues.reduce((sum, value) => sum + value, 0);
+        return {
+            items: items,
+            count: smvValues.length,
+            total: total,
+            average: total / smvValues.length,
+        };
+    }
+
+    function isSaturdayWorkday(dashboard, targetDate = null) {
+        const calendar = dashboard?.management_analytics?.details?.daily_requirement?.period_calendar || {};
+        const satHours = Number(calendar?.working_hours_saturday);
+        const d = targetDate ? new Date(targetDate) : (currentServerTime ? new Date(currentServerTime) : new Date());
+        const iso = isoDate(d);
+
+        if (calendarState.workDays.has(iso)) return true;
+        if (calendarState.holidays.has(iso)) return false;
+        if (Number.isFinite(satHours)) return satHours > 0;
+        return false;
+    }
+
+    function currentWorkingHours(dashboard = {}, targetDate = null) {
+        const d = targetDate ? new Date(targetDate) : (currentServerTime ? new Date(currentServerTime) : new Date());
+        const dayOfWeek = d.getDay();
+        const iso = isoDate(d);
+
+        if (calendarState.holidays.has(iso)) return 0;
+        const satWorkday = isSaturdayWorkday(dashboard, d);
+
+        if (dayOfWeek === 0) {
+            if (calendarState.workDays.has(iso)) return satWorkday ? 7 : 8;
+            if (calendarState.halfDays.has(iso)) return (satWorkday ? 7 : 8) * 0.5;
+            if (calendarState.quarterDays.has(iso)) return (satWorkday ? 7 : 8) * 0.25;
+            return 0;
+        }
+
+        if (dayOfWeek === 6) {
+            if (!satWorkday || calendarState.holidays.has(iso)) return 0;
+            if (calendarState.halfDays.has(iso)) return 2.5;
+            if (calendarState.quarterDays.has(iso)) return 1.25;
+            return 5;
+        }
+
+        const baseHours = satWorkday ? 7 : 8;
+        if (calendarState.halfDays.has(iso)) return baseHours * 0.5;
+        if (calendarState.quarterDays.has(iso)) return baseHours * 0.25;
+        return baseHours;
+    }
+
+    function calculateDirectRequirement(dashboard, targetDate = null) {
+        const db = dashboard || currentDashboard || initialPayload?.dashboard_data || {};
+        const styleSummary = selectedStyleSmvSummary(currentStyleCatalog);
+        const rawDirectActual = directActualState
+            ?? db?.analytics_settings?.direct_actual
+            ?? initialAnalyticsSettings?.direct_actual;
+
+        const directActual = (rawDirectActual === null || rawDirectActual === undefined || rawDirectActual === '' || isNaN(Number(rawDirectActual)))
+            ? 0
+            : Number(rawDirectActual);
+
+        let parsedDate = null;
+        if (targetDate instanceof Date) {
+            parsedDate = targetDate;
+        } else if (typeof targetDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(targetDate)) {
+            parsedDate = new Date(targetDate + 'T12:00:00');
+        } else if (targetDate) {
+            parsedDate = new Date(targetDate);
+        }
+
+        const smv = Number(styleSummary?.average) || 0;
+        const workingHours = currentWorkingHours(db, parsedDate);
+        const satWorkday = isSaturdayWorkday(db, parsedDate);
+
+        const targetPerPerson = smv > 0 && workingHours > 0 ? ((1 * 60 / smv) * workingHours) * 0.70 : 0;
+        const capacity = Math.round(targetPerPerson * directActual);
+
+        const analyticsDetails = db?.management_analytics?.details || {};
+        const balanceQty = Number(
+            db?.kpis?.balance_qty ??
+            analyticsDetails?.daily_requirement?.balance_qty ??
+            analyticsDetails?.output?.balance_qty ?? 0
+        );
+        const daysLeft = Number(
+            db?.kpis?.prod_days_left ??
+            db?.kpis?.remaining_days ??
+            analyticsDetails?.daily_requirement?.period_days_left ??
+            analyticsDetails?.daily_requirement?.prod_days_left ?? 0
+        );
+        const rows = db?.output_vs_capacity || [];
+        let todayDemand = 0;
+        if (rows.length > 0) {
+            const todayDate = currentServerTime ? new Date(currentServerTime) : new Date();
+            const todayDay = todayDate.getDate();
+            const todayRow = rows.find(r => {
+                const m = String(r?.label || '').match(/^0?(\d+)/);
+                return m && parseInt(m[1], 10) === todayDay;
+            }) || rows[rows.length - 1];
+
+            if (todayRow) {
+                todayDemand = Number(todayRow.daily_demand ?? todayRow.demand ?? (todayRow.sisa_hari_kerja > 0 ? Math.round(todayRow.total_demand / todayRow.sisa_hari_kerja) : 0)) || 0;
+            }
+        }
+
+        const demand = todayDemand > 0 ? todayDemand : (
+            Number(analyticsDetails?.daily_requirement?.period_required_daily_output ?? analyticsDetails?.daily_requirement?.required_daily_output)
+            || (daysLeft > 0 ? (balanceQty / daysLeft) : 0)
+        );
+        const directPlan = targetPerPerson > 0 ? (demand / targetPerPerson) : 0;
+
+        return {
+            hasCapacity: smv > 0 && directActual > 0,
+            capacity: capacity,
+            directActual: directActual,
+            smv: smv,
+            styleCount: styleSummary?.count || 0,
+            workingHours: workingHours,
+            isSatWorkday: satWorkday,
+            targetPerPerson: targetPerPerson,
+            demand: demand,
+            direct: directPlan,
+            gap: capacity - demand
+        };
+    }
+
+    function renderRunningStylesSummary(catalog) {
+        const container = document.getElementById('summaryRunningStylesList');
+        const badge = document.getElementById('summaryRunningStyleBadge');
+        if (!container) return;
+
+        let items = [];
+        if (Array.isArray(catalog?.running_styles) && catalog.running_styles.length) {
+            items = catalog.running_styles;
+        } else if (Array.isArray(catalog?.styles)) {
+            items = catalog.styles.filter(s => Boolean(s.is_running || s.show_in_dashboard));
+        }
+
+        if (badge) {
+            badge.textContent = `${items.length} Style`;
+        }
+
+        if (!items.length) {
+            container.innerHTML = '<div style="color:var(--muted);font-size:11px;padding:8px 0;">Tidak ada style berjalan di APS pada periode ini.</div>';
+            return;
+        }
+
+        container.innerHTML = items.map(s => {
+            let procText = '';
+            if (Array.isArray(s.process_smvs) && s.process_smvs.length > 1) {
+                procText = `(${s.process_smvs.length} proses: ${s.process_smvs.map(v => fmtDecimal(v, 2)).join(' + ')})`;
+            } else if (s.process_count) {
+                procText = `(${s.process_count} proses)`;
+            }
+            return `
+            <div class="style-chip">
+                <span>${esc(s.style || '-')}</span>
+                <b>SMV ${s.smv ? fmtDecimal(s.smv, 2) : '-'}</b>
+                ${procText ? `<small style="font-size:10px;color:var(--muted);font-weight:700;">${procText}</small>` : ''}
+            </div>
+            `;
+        }).join('');
+    }
+
+    function renderBalanceBreakdown(rows) {
+        const tbody = document.getElementById('summaryBreakdownRows');
+        if (!tbody) return;
+
+        const items = Array.isArray(rows) ? rows : [];
+        if (!items.length) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:14px;">Data periode belum tersedia.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = items.map((row, idx) => {
+            const pdk = Number(row.pdk) || 0;
+            const out = Number(row.output) || 0;
+            const bal = row.balance !== undefined ? Number(row.balance) : Math.max(0, pdk - out);
+            const pct = pdk > 0 ? Math.min(100, Math.max(0, Math.round((out / pdk) * 1000) / 10)) : 0;
+            return `
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td><strong>${esc(row.label || '-')}</strong></td>
+                    <td class="num">${fmt(pdk)} pcs</td>
+                    <td class="num" style="color:var(--brand);font-weight:800;">${fmt(out)} pcs</td>
+                    <td class="num" style="color:var(--warn);font-weight:800;">${fmt(bal)} pcs</td>
+                    <td>
+                        <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;">
+                            <span>${pct}%</span>
+                            <small style="color:var(--muted);">${fmt(out)} / ${fmt(pdk)}</small>
+                        </div>
+                        <div class="progress-bar-wrap">
+                            <div class="progress-bar-fill" style="width:${pct}%;"></div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function renderPriorityRows(rows) {
+        const tbody = document.getElementById('priorityRows');
+        if (!tbody) return;
+        const items = (rows || []).slice(0, 10);
+        if (!items.length) {
+            tbody.innerHTML = '<tr><td colspan="6" style="padding:16px;color:var(--muted);text-align:center;">Tidak ada data prioritas.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = items.map((row, index) => `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${esc(row.order || '-')}</td>
+                <td>${esc(row.style || '-')}</td>
+                <td>${esc(row.delivery || '-')}</td>
+                <td class="num">${fmt(Number(row.qty_ready) || 0)}</td>
+                <td>${esc(row.source || '-')}</td>
+            </tr>
+        `).join('');
+    }
+
+    function renderStats(payload) {
+        const dashboard = payload?.dashboard_data || {};
+        const kpis = dashboard?.kpis || {};
+        const latestCapacity = (dashboard?.output_vs_capacity || []).slice(-1)[0] || {};
+        const directData = calculateDirectRequirement(dashboard);
+
+        currentDashboard = dashboard;
+        if (payload?.server_time) {
+            currentServerTime = payload.server_time;
+        }
+
+        const totalOutput = Math.round(Number(kpis.total_output || 0));
+        const balanceQty = Math.round(Number(kpis.balance_qty || 0));
+        const balanceQtyOfc = Math.round(Number(kpis.balance_qty_with_ofc ?? kpis.balance_qty ?? 0));
+        const remainingDays = Number(kpis.prod_days_left ?? kpis.remaining_days ?? 0);
+
+        // Update all elements with class or ID
+        document.querySelectorAll('.kpi-total-output').forEach(el => el.textContent = fmt(totalOutput));
+        document.querySelectorAll('.kpi-balance-qty').forEach(el => el.textContent = fmt(balanceQty));
+        document.querySelectorAll('.kpi-balance-qty-ofc').forEach(el => el.textContent = fmt(balanceQtyOfc));
+        document.querySelectorAll('.kpi-remaining-days').forEach(el => el.textContent = Number(remainingDays).toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 1}));
+
+        // Direct Plan
+        const directPlanText = (directData && directData.direct > 0) ? fmt(Math.ceil(directData.direct)) : '-';
+        document.querySelectorAll('.kpi-direct-plan').forEach(el => el.textContent = directPlanText);
+
+        // Target per person
+        const targetPerPersonText = (directData && directData.targetPerPerson > 0)
+            ? `Target per orang: ${fmt(Math.ceil(directData.targetPerPerson))} pcs/hari`
+            : 'Target per orang: -';
+        document.querySelectorAll('.kpi-target-per-person').forEach(el => el.textContent = targetPerPersonText);
+
+        // Direct Actual
+        const directActualText = (directData && directData.directActual > 0)
+            ? fmtDecimal(directData.directActual, 2)
+            : (directActualState !== null && directActualState !== undefined ? fmtDecimal(directActualState, 2) : '-');
+        document.querySelectorAll('.kpi-direct-actual').forEach(el => el.textContent = directActualText);
+
+        // SMV Average
+        const avgSmvText = (directData && directData.smv > 0) ? fmtDecimal(directData.smv, 2) : '-';
+        document.querySelectorAll('.kpi-avg-smv').forEach(el => el.textContent = avgSmvText);
+        document.querySelectorAll('.kpi-active-styles-count').forEach(el => el.textContent = `${directData?.styleCount || 0} style dipilih`);
+
+        // Demand Harian
+        const dailyDemandText = (directData && directData.demand > 0) ? fmt(Math.round(directData.demand)) : '-';
+        document.querySelectorAll('.kpi-daily-demand').forEach(el => el.textContent = dailyDemandText);
+
+        // Estimated Capacity & Gap
+        const estCapText = (directData && directData.capacity > 0) ? fmt(directData.capacity) : '-';
+        document.querySelectorAll('.kpi-estimated-capacity').forEach(el => el.textContent = estCapText);
+
+        const gapText = (directData && directData.hasCapacity)
+            ? `Gap: ${directData.gap >= 0 ? '+' : ''}${fmt(directData.gap)} pcs (${directData.gap >= 0 ? 'Surplus' : 'Defisit'})`
+            : 'Estimasi vs Demand';
+        document.querySelectorAll('.kpi-capacity-gap').forEach(el => el.textContent = gapText);
+
+        const capBadge = document.getElementById('kpiCapacityBadge');
+        if (capBadge && directData && directData.hasCapacity) {
+            capBadge.className = `badge-pill ${directData.gap >= 0 ? 'good' : 'warn'}`;
+            capBadge.textContent = directData.gap >= 0 ? 'Surplus' : 'Defisit';
+        }
+        const capBadgeSum = document.getElementById('kpiCapacityBadgeSummary');
+        if (capBadgeSum && directData && directData.hasCapacity) {
+            capBadgeSum.className = `badge-pill ${directData.gap >= 0 ? 'good' : 'warn'}`;
+            capBadgeSum.textContent = directData.gap >= 0 ? 'Surplus' : 'Defisit';
+        }
+
+        // Summary Formula Box
+        const whEl = document.getElementById('summaryWorkingHours');
+        if (whEl) whEl.textContent = `${directData ? directData.workingHours : 8} Jam`;
+
+        const tppEl = document.getElementById('summaryTargetPerPerson');
+        if (tppEl) tppEl.textContent = (directData && directData.targetPerPerson > 0) ? `${fmt(Math.ceil(directData.targetPerPerson))} pcs/orang/hari` : '- pcs/hari';
+
+        const dpcEl = document.getElementById('summaryDirectPlanCalculation');
+        if (dpcEl) dpcEl.textContent = (directData && directData.direct > 0) ? `${fmt(Math.ceil(directData.direct))} Orang (Demand: ${fmt(Math.round(directData.demand))} pcs)` : '- Orang';
+
+        const dacEl = document.getElementById('summaryDirectActualCalculation');
+        if (dacEl) dacEl.textContent = (directData && directData.directActual > 0) ? `${fmtDecimal(directData.directActual, 2)} Orang (Kapasitas: ${fmt(directData.capacity)} pcs)` : '- Orang';
+
+        const dgapEl = document.getElementById('summaryDirectGap');
+        if (dgapEl) {
+            if (directData && directData.hasCapacity) {
+                const isSurplus = directData.gap >= 0;
+                dgapEl.textContent = `${isSurplus ? '+' : ''}${fmt(directData.gap)} pcs/hari (${isSurplus ? 'Surplus Kapasitas' : 'Defisit Kapasitas'})`;
+                dgapEl.style.color = isSurplus ? 'var(--ok)' : 'var(--risk)';
+            } else {
+                dgapEl.textContent = '-';
+                dgapEl.style.color = '';
+            }
+        }
+
+        // Running Styles & Balance Breakdown
+        renderRunningStylesSummary(currentStyleCatalog);
+        renderBalanceBreakdown(dashboard?.balance_breakdown || dashboard?.qty_pdk_vs_output || []);
+
+        // Status info
+        const srcLabel = document.getElementById('summarySourceLabel');
+        if (srcLabel) srcLabel.textContent = dashboard?.source || 'RPA Engage';
+
+        const srcUpdated = document.getElementById('summarySourceUpdated');
+        if (srcUpdated) srcUpdated.textContent = dashboard?.source_updated_at || '-';
+
+        const calStatus = document.getElementById('calendarStatus');
+        if (calStatus) calStatus.textContent = payload?.calendar_authenticated ? 'Active' : 'Inactive';
+
+        const srvTime = document.getElementById('serverTime');
+        if (srvTime) srvTime.textContent = payload?.server_time ? `Updated ${payload.server_time}` : '-';
+
+        const connState = document.getElementById('connectionState');
+        if (connState) connState.textContent = latestCapacity?.label ? 'Online' : 'Ready';
+    }
+
+    async function loadStatus(showOverlay = false) {
+        const overlay = document.getElementById('globalLoadingOverlay');
+        const loadingText = document.getElementById('globalLoadingText');
+        if (showOverlay) {
+            if (loadingText) loadingText.textContent = 'Memperbarui Data...';
+            if (overlay) overlay.classList.add('active');
+            document.querySelectorAll('.topbar-scope').forEach(div => div.classList.add('loading'));
+            document.body.style.cursor = 'wait';
+        }
+        try {
+            const response = await fetch(`${urls.status}?from=${encodeURIComponent(selectedDateFrom)}&to=${encodeURIComponent(selectedDateTo)}`, {cache:'no-store'});
+            const data = await response.json();
+            currentDashboard = data?.dashboard_data || null;
+            if (currentDashboard?.selected_period) {
+                updatePeriodPills(selectedDateFrom, selectedDateTo, currentDashboard.selected_period, currentDashboard.period_type);
+            }
+            if (data?.style_smv_catalog) {
+                currentStyleCatalog = data.style_smv_catalog;
+            }
+            if (data?.analytics_settings && Object.prototype.hasOwnProperty.call(data.analytics_settings, 'direct_actual')) {
+                directActualState = data.analytics_settings.direct_actual === null || data.analytics_settings.direct_actual === undefined || data.analytics_settings.direct_actual === '' ? null : Number(data.analytics_settings.direct_actual);
+                renderDirectActualInput();
+            }
+            renderStats(data);
+            if (currentDashboard?.material_to_load || currentDashboard?.top_priority_orders) {
+                renderPriorityRows(currentDashboard.material_to_load || currentDashboard.top_priority_orders || []);
+            }
+        } catch (error) {
+            const conn = document.getElementById('connectionState');
+            if (conn) conn.textContent = 'Offline';
+        } finally {
+            if (showOverlay) {
+                if (overlay) overlay.classList.remove('active');
+                document.querySelectorAll('.topbar-scope').forEach(div => div.classList.remove('loading'));
+                document.body.style.cursor = '';
+            }
+        }
+    }
+
+    const monthShortNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+    function getSinglePeriodInfo(dateStr) {
+        if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+            return { label: 'MID Sept', type: 'MID' };
+        }
+        const parts = dateStr.split('-');
+        const day = parseInt(parts[2], 10);
+        const monthIdx = parseInt(parts[1], 10) - 1;
+        const month = monthShortNames[monthIdx] || 'Sept';
+        const type = day <= 15 ? 'MID' : 'END';
+        return {
+            label: `${type} ${month}`,
+            type: type
+        };
+    }
+
+    function resolvePeriodInfo(fromStr, toStr) {
+        const fromInfo = getSinglePeriodInfo(fromStr);
+        if (!toStr || toStr === fromStr) {
+            return fromInfo;
+        }
+        const toInfo = getSinglePeriodInfo(toStr);
+        if (fromInfo.label === toInfo.label) {
+            return fromInfo;
+        }
+        return {
+            label: `${fromInfo.label} - ${toInfo.label}`,
+            type: 'RANGE'
+        };
+    }
+
+    function updatePeriodPills(fromStr, toStr, customLabel = null, customType = null) {
+        const info = resolvePeriodInfo(fromStr, toStr);
+        const label = customLabel || info.label;
+        const type = customType || info.type;
+        ['adminPeriodPill', 'summaryPeriodPill'].forEach(id => {
+            const pill = document.getElementById(id);
+            if (pill) {
+                pill.textContent = label;
+                pill.className = `period-pill ${type.toLowerCase()}`;
+            }
+        });
+    }
+
+    function syncDateInputs(fromVal, toVal) {
+        const adminFrom = document.getElementById('adminDateFrom');
+        const adminTo = document.getElementById('adminDateTo');
+        const summaryFrom = document.getElementById('summaryDateFrom');
+        const summaryTo = document.getElementById('summaryDateTo');
+        if (adminFrom && adminFrom.value !== fromVal) adminFrom.value = fromVal;
+        if (adminTo && adminTo.value !== toVal) adminTo.value = toVal;
+        if (summaryFrom && summaryFrom.value !== fromVal) summaryFrom.value = fromVal;
+        if (summaryTo && summaryTo.value !== toVal) summaryTo.value = toVal;
+        updatePeriodPills(fromVal, toVal);
+    }
+
+    function handleDateChange(fromVal, toVal) {
+        if (!fromVal || !toVal) return;
+        if (fromVal > toVal) {
+            toVal = fromVal;
+        }
+        selectedDateFrom = fromVal;
+        selectedDateTo = toVal;
+        selectedDate = selectedDateFrom;
+        syncDateInputs(selectedDateFrom, selectedDateTo);
+        document.cookie = `heatDateFrom=${selectedDateFrom}; path=/; max-age=31536000`;
+        document.cookie = `heatDateTo=${selectedDateTo}; path=/; max-age=31536000`;
+        localStorage.setItem('heatDateFrom', selectedDateFrom);
+        localStorage.setItem('heatDateTo', selectedDateTo);
+
+        // Tampilkan lambang loading overlay dan spinner
+        document.querySelectorAll('.topbar-scope').forEach(div => div.classList.add('loading'));
+        const overlay = document.getElementById('globalLoadingOverlay');
+        const loadingText = document.getElementById('globalLoadingText');
+        const info = resolvePeriodInfo(selectedDateFrom, selectedDateTo);
+        if (loadingText) {
+            loadingText.textContent = `Memuat Data ${info.label}...`;
+        }
+        if (overlay) {
+            overlay.classList.add('active');
+        }
+        document.body.style.cursor = 'wait';
+
+        const currentSection = document.querySelector('.section.active')?.id || 'overviewSection';
+        const url = new URL(window.location.href);
+        url.searchParams.delete('delivery_count');
+        url.searchParams.delete('date');
+        url.searchParams.set('from', selectedDateFrom);
+        url.searchParams.set('to', selectedDateTo);
+        url.hash = currentSection;
+        window.location.href = url.toString();
+    }
+
+    function setStatusForStyle(style, text, kind = 'good') {
+        const node = document.querySelector(`[data-status-for="${CSS.escape(style)}"]`);
+        if (!node) return;
+        node.textContent = text;
+        node.className = `smv-status ${kind}`;
+    }
+
+    function renderWorkdayCalendar() {
+        const container = document.getElementById('workdayCalendar');
+        const title = document.getElementById('workdayCalendarTitle');
+        if (!container || !title) return;
+
+        title.textContent = monthTitle(calendarCursor);
+        const startDay = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth(), 1).getDay();
+        const daysInMonth = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() + 1, 0).getDate();
+        const todayIso = isoDate(new Date());
+        const cells = weekdayNames.map(day => `<div class="calendar-head">${day}</div>`);
+
+        for (let i = 0; i < startDay; i++) {
+            cells.push('<div class="calendar-day out" aria-hidden="true"></div>');
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth(), day);
+            const iso = isoDate(date);
+            const isSunday = date.getDay() === 0;
+            const classes = ['calendar-day'];
+            if (isSunday) classes.push('sunday');
+            if (calendarState.workDays.has(iso)) classes.push('work');
+            if (calendarState.halfDays.has(iso)) classes.push('half');
+            if (calendarState.quarterDays.has(iso)) classes.push('quarter');
+            if (calendarState.holidays.has(iso)) classes.push('holiday');
+            if (iso === todayIso) classes.push('today');
+
+            cells.push(`
+                <button type="button" class="${classes.join(' ')}" data-calendar-date="${iso}">
+                    <b>${day}</b>
+                    <span>${calendarLabel(iso)}</span>
+                </button>
+            `);
+        }
+
+        container.innerHTML = cells.join('');
+        container.querySelectorAll('[data-calendar-date]').forEach(button => {
+            button.addEventListener('click', () => {
+                const iso = button.dataset.calendarDate;
+                const currentSunday = new Date(`${iso}T00:00:00`).getDay() === 0;
+                const hadHoliday = calendarState.holidays.has(iso);
+                const hadHalf = calendarState.halfDays.has(iso);
+                const hadQuarter = calendarState.quarterDays.has(iso);
+                const hadWork = calendarState.workDays.has(iso);
+
+                clearCalendarSelection(iso);
+
+                if (currentSunday) {
+                    if (!hadWork) {
+                        calendarState.workDays.add(iso);
+                    }
+                } else if (hadHoliday) {
+                    calendarState.halfDays.add(iso);
+                } else if (hadHalf) {
+                    calendarState.quarterDays.add(iso);
+                } else if (hadQuarter) {
+                    calendarState.workDays.add(iso);
+                } else if (hadWork) {
+                    // Kembali ke default kerja
+                } else {
+                    calendarState.holidays.add(iso);
+                }
+
+                renderWorkdayCalendar();
+            });
+        });
+
+        updateCalendarSummary();
+    }
+
+    function openWorkdayModal() {
+        const modal = document.getElementById('workdayModal');
+        if (!modal) return;
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        renderWorkdayCalendar();
+    }
+
+    function closeWorkdayModal() {
+        const modal = document.getElementById('workdayModal');
+        if (!modal) return;
+        modal.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    function updateSmvTotalForStyle(style) {
+        const container = document.querySelector(`[data-smv-container="${CSS.escape(style)}"]`);
+        if (!container) return 0;
+        const inputs = Array.from(container.querySelectorAll('.smv-sub-input'));
+        let sum = 0;
+        let anyFilled = false;
+        inputs.forEach(inp => {
+            const val = parseFloat(inp.value);
+            if (!isNaN(val) && val > 0) {
+                sum += val;
+                anyFilled = true;
+            }
+        });
+        const totalBadge = container.querySelector(`[data-total-for="${CSS.escape(style)}"] b`);
+        if (totalBadge) {
+            totalBadge.textContent = anyFilled ? (Math.round(sum * 1000) / 1000).toString() : '0.00';
+        }
+        return sum;
+    }
+
+    function renderSmvInputsForStyle(container, style, count, existingValues = []) {
+        let rowsHtml = '';
+        for (let i = 0; i < count; i++) {
+            let val = (existingValues[i] !== undefined && existingValues[i] !== null && existingValues[i] !== '') ? existingValues[i] : '';
+            if (typeof val === 'string') val = val.replace(/-/g, '');
+            const label = count > 1 ? `P${i + 1}` : 'SMV';
+            rowsHtml += `
+                <div class="smv-process-row">
+                    <span class="smv-process-label">${label}</span>
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0.001"
+                        class="smv-input smv-sub-input"
+                        data-style="${esc(style)}"
+                        data-process-idx="${i}"
+                        value="${esc(String(val))}"
+                        placeholder="0.00"
+                    >
+                </div>
+            `;
+        }
+        if (count > 1) {
+            rowsHtml += `<div class="smv-total-badge" data-total-for="${esc(style)}">Total: <b>0.00</b></div>`;
+        }
+        container.innerHTML = rowsHtml;
+        updateSmvTotalForStyle(style);
+    }
+
+    function handleProcessCountChange(input) {
+        const style = input.dataset.processStyle;
+        if (!style) return;
+        const row = input.closest('tr');
+        if (!row) return;
+
+        let raw = String(input.value || '').replace(/-/g, '').trim();
+        let count = parseInt(raw, 10);
+        if (isNaN(count) || count < 1) count = 1;
+        if (count > 20) count = 20;
+        input.value = count;
+
+        const container = row.querySelector(`[data-smv-container="${CSS.escape(style)}"]`);
+        if (!container) return;
+
+        const currentValues = Array.from(container.querySelectorAll('.smv-sub-input')).map(inp => inp.value);
+        renderSmvInputsForStyle(container, style, count, currentValues);
+        setStatusForStyle(style, 'Belum disimpan', 'warn');
+    }
+
+    function refreshSmvStatus() {}
+    function setStatusForStyle() {}
+
+    const smvTableState = {
+        page: 1,
+        pageSize: 10,
+    };
+
+    function getSmvRows() {
+        return Array.from(document.querySelectorAll('#smvRows tr[data-style-row]'));
+    }
+
+    function getSmvRowText(row) {
+        return [
+            row.dataset.styleRow || '',
+            row.textContent || '',
+        ].join(' ').toLowerCase();
+    }
+
+    function renderSmvPagination(totalRows, totalPages) {
+        const pagination = document.getElementById('smvPagination');
+        if (!pagination) return;
+
+        const buttons = [];
+        const createButton = (label, page, disabled = false, active = false) => {
+            buttons.push(`<button type="button" data-smv-page="${page}" ${disabled ? 'disabled' : ''} class="${active ? 'active' : ''}">${label}</button>`);
+        };
+
+        createButton('Prev', Math.max(1, smvTableState.page - 1), smvTableState.page <= 1);
+
+        const windowSize = 5;
+        const halfWindow = Math.floor(windowSize / 2);
+        let startPage = Math.max(1, smvTableState.page - halfWindow);
+        let endPage = Math.min(totalPages, startPage + windowSize - 1);
+        startPage = Math.max(1, endPage - windowSize + 1);
+
+        for (let page = startPage; page <= endPage; page++) {
+            createButton(String(page), page, false, page === smvTableState.page);
+        }
+
+        createButton('Next', Math.min(totalPages, smvTableState.page + 1), smvTableState.page >= totalPages);
+
+        pagination.innerHTML = buttons.join('');
+        pagination.querySelectorAll('[data-smv-page]').forEach(button => {
+            button.addEventListener('click', () => {
+                if (button.disabled) return;
+                smvTableState.page = Number(button.dataset.smvPage) || 1;
+                renderSmvDataTable();
+            });
+        });
+    }
+
+    function renderSmvDataTable() {
+        const searchInput = document.getElementById('smvSearch');
+        const pageSizeSelect = document.getElementById('smvPageSize');
+        const infoNode = document.getElementById('smvTableInfo');
+        const pageInfoNode = document.getElementById('smvPageInfo');
+        const emptyRow = document.getElementById('smvEmptyRow');
+        const rows = getSmvRows();
+        const search = String(searchInput ? searchInput.value : '').trim().toLowerCase();
+        const pageSize = Math.max(1, Number(pageSizeSelect ? pageSizeSelect.value : smvTableState.pageSize) || 10);
+
+        smvTableState.pageSize = pageSize;
+
+        const filteredRows = rows.filter(row => !search || getSmvRowText(row).includes(search));
+        const totalRows = filteredRows.length;
+        const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
+
+        if (smvTableState.page > totalPages) {
+            smvTableState.page = totalPages;
+        }
+        if (smvTableState.page < 1) {
+            smvTableState.page = 1;
+        }
+
+        const startIndex = (smvTableState.page - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+
+        rows.forEach(row => {
+            row.style.display = 'none';
+        });
+
+        filteredRows.forEach((row, index) => {
+            const visible = index >= startIndex && index < endIndex;
+            row.style.display = visible ? '' : 'none';
+            if (visible) {
+                const noCell = row.querySelector('.smv-row-number');
+                if (noCell) {
+                    noCell.textContent = String(index + 1);
+                }
+            }
+        });
+
+        if (emptyRow) {
+            emptyRow.style.display = totalRows ? 'none' : '';
+        }
+
+        const fromRow = totalRows ? startIndex + 1 : 0;
+        const toRow = totalRows ? Math.min(startIndex + pageSize, totalRows) : 0;
+
+        if (infoNode) {
+            infoNode.textContent = totalRows ? `${totalRows} style ditemukan` : 'Tidak ada hasil pencarian';
+        }
+        if (pageInfoNode) {
+            pageInfoNode.textContent = totalRows ? `Menampilkan ${fromRow}-${toRow} dari ${totalRows}` : '0 style ditampilkan';
+        }
+
+        renderSmvPagination(totalRows, totalPages);
+    }
+
+    async function saveStyleSmv() {
+        const message = document.getElementById('smvMessage');
+        const button = document.getElementById('smvSaveButton');
+        const directActualInput = document.getElementById('directActualInput');
+        const directActualValue = directActualInput ? String(directActualInput.value || '').trim() : '';
+        const rows = Array.from(document.querySelectorAll('#smvRows tr[data-style-row]'));
+
+        const items = [];
+        for (const row of rows) {
+            const style = row.dataset.styleRow || '';
+            if (!style) continue;
+
+            const processInput = row.querySelector(`[data-process-style="${CSS.escape(style)}"]`);
+            const rawProcess = processInput ? String(processInput.value || '').trim() : '';
+            if (rawProcess !== '' && (isNaN(Number(rawProcess)) || Number(rawProcess) < 1)) {
+                message.textContent = `Style ${style}: Jumlah proses minimal 1 dan tidak boleh bernilai minus atau 0.`;
+                message.className = 'helper risk';
+                if (processInput) {
+                    processInput.focus();
+                    processInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                return;
+            }
+            const processCount = rawProcess !== '' && !isNaN(Number(rawProcess)) ? Math.max(1, parseInt(rawProcess, 10)) : 1;
+
+            const subInputs = Array.from(row.querySelectorAll(`input.smv-sub-input[data-style="${CSS.escape(style)}"]`));
+            const processSmvs = [];
+            let anyFilled = false;
+            const missingIndices = [];
+            let negativeIndex = -1;
+
+            subInputs.forEach((inp, idx) => {
+                const val = String(inp.value || '').trim();
+                if (val !== '') {
+                    anyFilled = true;
+                    const num = parseFloat(val);
+                    if (!isNaN(num) && num > 0) {
+                        processSmvs.push(num);
+                    } else {
+                        if (!isNaN(num) && num <= 0) {
+                            negativeIndex = idx;
+                        }
+                        missingIndices.push(idx + 1);
+                    }
+                } else {
+                    missingIndices.push(idx + 1);
+                }
+            });
+
+            if (negativeIndex >= 0) {
+                message.textContent = `Style ${style}: SMV Proses ${negativeIndex + 1} tidak boleh bernilai 0 atau minus.`;
+                message.className = 'helper risk';
+                const negInput = subInputs[negativeIndex];
+                if (negInput) {
+                    negInput.focus();
+                    negInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                return;
+            }
+
+            // Validasi: jika ada SMV yang diisi, pastikan seluruh SMV proses terisi
+            if (anyFilled) {
+                if (processSmvs.length < processCount || missingIndices.length > 0) {
+                    message.textContent = `Style ${style}: Jumlah proses ${processCount}, maka harus memasukkan ${processCount} SMV. (Proses ${missingIndices.join(', ')} belum diisi).`;
+                    message.className = 'helper risk';
+                    const firstMissing = subInputs[missingIndices[0] - 1];
+                    if (firstMissing) {
+                        firstMissing.focus();
+                        firstMissing.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    return;
+                }
+            }
+
+            const totalSmv = processSmvs.length > 0 ? (Math.round(processSmvs.reduce((a, b) => a + b, 0) * 1000) / 1000) : null;
+
+            items.push({
+                style: style,
+                process_count: processCount,
+                process_smvs: processSmvs,
+                smv: totalSmv !== null ? totalSmv : '',
+            });
+        }
+
+        button.disabled = true;
+        message.className = 'helper';
+        message.textContent = 'Menyimpan SMV...';
+
+        try {
+            const response = await fetch(urls.saveStyleSmv, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    items,
+                    direct_actual: directActualValue,
+                })
+            });
+            const result = await response.json();
+            if (!response.ok || !result.ok) {
+                throw new Error(result.message || 'Gagal menyimpan SMV.');
+            }
+            message.textContent = `SMV tersimpan. ${Number(result.saved || 0)} baris diperbarui.`;
+            message.className = 'helper good';
+            refreshSmvStatus(result.styles || {});
+            if (result.analytics_settings && Object.prototype.hasOwnProperty.call(result.analytics_settings, 'direct_actual')) {
+                directActualState = result.analytics_settings.direct_actual === null || result.analytics_settings.direct_actual === undefined || result.analytics_settings.direct_actual === '' ? null : Number(result.analytics_settings.direct_actual);
+                renderDirectActualInput();
+                if (directActualState === null || directActualState === undefined || directActualState === '') {
+                    localStorage.removeItem('heatDirectActual');
+                } else {
+                    localStorage.setItem('heatDirectActual', String(directActualState));
+                }
+            }
+            renderSmvDataTable();
+            await loadStatus();
+        } catch (error) {
+            message.textContent = error.message || 'Gagal menyimpan SMV.';
+            message.className = 'helper risk';
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    function calendarPayload() {
+        return {
+            holidays: Array.from(calendarState.holidays).sort(),
+            half_days: Array.from(calendarState.halfDays).sort(),
+            quarter_days: Array.from(calendarState.quarterDays).sort(),
+            work_days: Array.from(calendarState.workDays).sort(),
+        };
+    }
+
+    async function saveWorkdays() {
+        const message = document.getElementById('workdayMessage');
+        const button = document.getElementById('workdaySaveButton');
+        const payload = calendarPayload();
+
+        button.disabled = true;
+        message.textContent = 'Menyimpan hari kerja...';
+
+        try {
+            const response = await fetch(urls.saveWorkdays, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+            if (!response.ok || !result.ok) {
+                throw new Error(result.message || 'Gagal menyimpan hari kerja.');
+            }
+            message.textContent = 'Hari kerja tersimpan.';
+            await loadStatus();
+        } catch (error) {
+            message.textContent = error.message || 'Gagal menyimpan hari kerja.';
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    function normalizeAnalyticsCards(cards) {
+        const allowed = new Set(analyticsCardDefinitions.map(item => item.key));
+        return Array.from(new Set((Array.isArray(cards) ? cards : []).filter(card => allowed.has(card))));
+    }
+
+    function renderAnalyticsSettings() {
+        const selected = new Set(normalizeAnalyticsCards(analyticsSettingsState.visible_cards));
+        const languageSelect = document.getElementById('analyticsLanguageSelect');
+        const cardsNode = document.getElementById('analyticsCards');
+        const updatedPill = document.getElementById('analyticsUpdatedPill');
+
+        if (languageSelect) {
+            languageSelect.value = analyticsSettingsState.language === 'en' ? 'en' : 'id';
+        }
+        if (cardsNode) {
+            cardsNode.innerHTML = analyticsCardDefinitions.map(item => `
+                <div class="analytics-setting-card">
+                    <label>
+                        <input type="checkbox" value="${item.key}" ${selected.has(item.key) ? 'checked' : ''}>
+                        <span>${item.label}</span>
+                    </label>
+                    <small>${item.note}</small>
+                </div>
+            `).join('');
+        }
+        if (updatedPill) {
+            updatedPill.textContent = analyticsSettingsState.language === 'en' ? 'EN' : 'ID';
+        }
+    }
+
+    function renderDirectActualInput() {
+        const input = document.getElementById('directActualInput');
+        if (!input) return;
+        input.value = directActualState === null || directActualState === undefined || directActualState === '' ? '' : String(directActualState);
+    }
+
+    async function saveAnalyticsSettings() {
+        const message = document.getElementById('analyticsMessage');
+        const button = document.getElementById('analyticsSaveButton');
+        const languageSelect = document.getElementById('analyticsLanguageSelect');
+        const selectedCards = Array.from(document.querySelectorAll('#analyticsCards input:checked')).map(input => input.value);
+        const visibleCards = normalizeAnalyticsCards(selectedCards);
+
+        if (!visibleCards.length) {
+            message.textContent = 'Pilih minimal 1 kartu analytics.';
+            return;
+        }
+
+        button.disabled = true;
+        message.textContent = 'Menyimpan analytics...';
+
+        try {
+            const response = await fetch(urls.saveAnalyticsSettings, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    visible_cards: visibleCards,
+                    language: languageSelect && languageSelect.value === 'en' ? 'en' : 'id',
+                    direct_actual: directActualState === null || directActualState === undefined ? null : directActualState,
+                })
+            });
+            const result = await response.json();
+            if (!response.ok || !result.ok) {
+                throw new Error(result.message || 'Gagal menyimpan analytics.');
+            }
+
+            analyticsSettingsState = {
+                visible_cards: Array.isArray(result.analytics_settings?.visible_cards) ? result.analytics_settings.visible_cards : visibleCards,
+                language: result.analytics_settings?.language === 'en' ? 'en' : 'id',
+            };
+            if (result.analytics_settings && Object.prototype.hasOwnProperty.call(result.analytics_settings, 'direct_actual')) {
+                directActualState = result.analytics_settings.direct_actual === null || result.analytics_settings.direct_actual === undefined || result.analytics_settings.direct_actual === ''
+                    ? null
+                    : Number(result.analytics_settings.direct_actual);
+                renderDirectActualInput();
+                if (directActualState === null || directActualState === undefined || directActualState === '') {
+                    localStorage.removeItem('heatDirectActual');
+                } else {
+                    localStorage.setItem('heatDirectActual', String(directActualState));
+                }
+            }
+            renderAnalyticsSettings();
+            message.textContent = 'Analytics tersimpan.';
+        } catch (error) {
+            message.textContent = error.message || 'Gagal menyimpan analytics.';
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    function resetAnalyticsSettings() {
+        analyticsSettingsState = {
+            visible_cards: ['production_status', 'output_achievement', 'data_accuracy'],
+            language: 'id',
+        };
+        renderAnalyticsSettings();
+        document.getElementById('analyticsMessage').textContent = '';
+    }
+
+    function resetWorkdayFields() {
+        calendarState.holidays = new Set();
+        calendarState.halfDays = new Set();
+        calendarState.quarterDays = new Set();
+        calendarState.workDays = new Set();
+        renderWorkdayCalendar();
+        document.getElementById('workdayMessage').textContent = '';
+    }
+
+    function setAdminSection(sectionId) {
+        document.querySelectorAll('.section').forEach(section => {
+            section.classList.toggle('active', section.id === sectionId);
+        });
+        document.querySelectorAll('[data-section]').forEach(button => {
+            button.classList.toggle('active', button.dataset.section === sectionId);
+        });
+        // Re-apply pagination whenever SMV tab becomes visible
+        if (sectionId === 'style-smv') {
+            smvTableState.page = 1;
+            renderSmvDataTable();
+        }
+    }
+
+    async function logout() {
+        try {
+            await fetch(urls.portalLogout, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({})
+            });
+        } finally {
+            window.location.href = urls.dashboard || '';
+        }
+    }
+
+    document.querySelectorAll('[data-section]').forEach(button => {
+        button.addEventListener('click', () => {
+            setAdminSection(button.dataset.section);
+            if (button.dataset.section === 'workdays') {
+                openWorkdayModal();
+            }
+        });
+    });
+    document.querySelectorAll('[data-jump]').forEach(button => {
+        button.addEventListener('click', () => {
+            setAdminSection(button.dataset.jump);
+            if (button.dataset.jump === 'workdays') {
+                openWorkdayModal();
+            }
+        });
+    });
+
+    document.getElementById('logoutButton').addEventListener('click', logout);
+    document.getElementById('refreshButton').addEventListener('click', () => loadStatus(true));
+    const workdayOpenButton = document.getElementById('workdayOpenButton');
+    if (workdayOpenButton) {
+        workdayOpenButton.addEventListener('click', openWorkdayModal);
+    }
+    const workdayOpenButtonInline = document.getElementById('workdayOpenButtonInline');
+    if (workdayOpenButtonInline) {
+        workdayOpenButtonInline.addEventListener('click', openWorkdayModal);
+    }
+    const overviewOpenCalendar = document.getElementById('overviewOpenCalendar');
+    if (overviewOpenCalendar) {
+        overviewOpenCalendar.addEventListener('click', openWorkdayModal);
+    }
+    document.getElementById('smvSaveButton').addEventListener('click', saveStyleSmv);
+    document.getElementById('smvResetButton').addEventListener('click', () => {
+        document.querySelectorAll('#smvRows tr[data-style-row]').forEach(row => {
+            const style = row.dataset.styleRow;
+            if (!style) return;
+            const processInput = row.querySelector('.smv-process-input');
+            if (processInput) processInput.value = '1';
+            const container = row.querySelector(`[data-smv-container="${CSS.escape(style)}"]`);
+            if (container) {
+                renderSmvInputsForStyle(container, style, 1, ['']);
+            }
+        });
+        smvTableState.page = 1;
+        renderSmvDataTable();
+        const msg = document.getElementById('smvMessage');
+        if (msg) {
+            msg.textContent = '';
+            msg.className = 'helper';
+        }
+    });
+    const smvRows = document.getElementById('smvRows');
+    if (smvRows) {
+        smvRows.addEventListener('keydown', event => {
+            if (event.target && (event.target.classList.contains('smv-process-input') || event.target.classList.contains('smv-sub-input'))) {
+                // Blokir tombol minus (-), plus (+), dan huruf 'e' / 'E' (notasi eksponensial)
+                if (event.key === '-' || event.key === 'Minus' || event.key === '+' || event.key === 'e' || event.key === 'E') {
+                    event.preventDefault();
+                }
+            }
+        });
+        smvRows.addEventListener('change', event => {
+            if (event.target && event.target.classList.contains('smv-process-input')) {
+                handleProcessCountChange(event.target);
+            }
+        });
+        smvRows.addEventListener('input', event => {
+            if (event.target && event.target.classList.contains('smv-sub-input')) {
+                let val = String(event.target.value || '');
+                if (val.includes('-')) {
+                    event.target.value = val.replace(/-/g, '');
+                }
+                const num = parseFloat(event.target.value);
+                if (!isNaN(num) && num < 0) {
+                    event.target.value = Math.abs(num);
+                }
+                const style = event.target.dataset.style;
+                if (style) {
+                    updateSmvTotalForStyle(style);
+                }
+            } else if (event.target && event.target.classList.contains('smv-process-input')) {
+                let val = String(event.target.value || '');
+                if (val.includes('-')) {
+                    event.target.value = val.replace(/-/g, '');
+                }
+                const num = parseInt(event.target.value, 10);
+                if (!isNaN(num) && num < 1) {
+                    event.target.value = '1';
+                }
+                handleProcessCountChange(event.target);
+            }
+        });
+    }
+    document.getElementById('smvSearch').addEventListener('input', () => {
+        smvTableState.page = 1;
+        renderSmvDataTable();
+    });
+    document.getElementById('smvPageSize').addEventListener('change', () => {
+        smvTableState.page = 1;
+        renderSmvDataTable();
+    });
+    document.getElementById('workdaySaveButton').addEventListener('click', saveWorkdays);
+    document.getElementById('analyticsSaveButton').addEventListener('click', saveAnalyticsSettings);
+    document.getElementById('analyticsResetButton').addEventListener('click', resetAnalyticsSettings);
+    document.getElementById('analyticsLanguageSelect').addEventListener('change', event => {
+        analyticsSettingsState.language = event.target.value === 'en' ? 'en' : 'id';
+        const updatedPill = document.getElementById('analyticsUpdatedPill');
+        if (updatedPill) {
+            updatedPill.textContent = analyticsSettingsState.language === 'en' ? 'EN' : 'ID';
+        }
+    });
+    document.getElementById('workdayClearButton').addEventListener('click', resetWorkdayFields);
+    document.getElementById('workdayPrevButton').addEventListener('click', () => {
+        calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() - 1, 1);
+        renderWorkdayCalendar();
+    });
+    document.getElementById('workdayNextButton').addEventListener('click', () => {
+        calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() + 1, 1);
+        renderWorkdayCalendar();
+    });
+    document.getElementById('workdayModalClose').addEventListener('click', closeWorkdayModal);
+    document.getElementById('workdayModal').addEventListener('click', event => {
+        if (event.target.id === 'workdayModal') {
+            closeWorkdayModal();
+        }
+    });
+    document.getElementById('directActualInput').addEventListener('input', event => {
+        const value = String(event.target.value || '').trim();
+        directActualState = value === '' ? null : Number(value);
+    });
+
+    function attachDateRangeListeners(fromId, toId) {
+        const fromEl = document.getElementById(fromId);
+        const toEl = document.getElementById(toId);
+        if (fromEl) {
+            fromEl.addEventListener('change', () => {
+                let fromVal = fromEl.value;
+                let toVal = toEl ? toEl.value : fromVal;
+                if (toVal < fromVal) toVal = fromVal;
+                handleDateChange(fromVal, toVal);
+            });
+        }
+        if (toEl) {
+            toEl.addEventListener('change', () => {
+                let toVal = toEl.value;
+                let fromVal = fromEl ? fromEl.value : toVal;
+                if (fromVal > toVal) fromVal = toVal;
+                handleDateChange(fromVal, toVal);
+            });
+        }
+    }
+
+    attachDateRangeListeners('adminDateFrom', 'adminDateTo');
+    attachDateRangeListeners('summaryDateFrom', 'summaryDateTo');
+    updatePeriodPills(selectedDateFrom, selectedDateTo);
+
+    try { renderStats(initialPayload); } catch(e) { console.error('[admin] renderStats:', e); }
+<?php
+$saved_style_status_map = array();
+if (is_array($style_smv_catalog) && isset($style_smv_catalog['styles'])) {
+    foreach ($style_smv_catalog['styles'] as $s_item) {
+        $st = isset($s_item['style']) ? $s_item['style'] : '';
+        if ($st !== '' && ((isset($s_item['smv']) && $s_item['smv'] !== NULL) || (isset($s_item['process_count']) && $s_item['process_count'] !== NULL))) {
+            $saved_style_status_map[$st] = TRUE;
+        }
+    }
+}
+?>
+    try { refreshSmvStatus(<?= json_encode($saved_style_status_map) ?>); } catch(e) { console.error('[admin] refreshSmvStatus:', e); }
+    try { renderSmvDataTable(); } catch(e) { console.error('[admin] renderSmvDataTable:', e); }
+    try { renderDirectActualInput(); } catch(e) { console.error('[admin] renderDirectActualInput:', e); }
+    try { renderWorkdayCalendar(); } catch(e) { console.error('[admin] renderWorkdayCalendar:', e); }
+    try { renderAnalyticsSettings(); } catch(e) { console.error('[admin] renderAnalyticsSettings:', e); }
+    const initialHash = window.location.hash ? window.location.hash.substring(1) : '';
+    const initialSection = (initialHash && document.getElementById(initialHash)) ? initialHash : 'overviewSection';
+    setAdminSection(initialSection);
+    loadStatus();
+
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+            closeWorkdayModal();
+        }
+    });
+</script>
+</body>
+</html>

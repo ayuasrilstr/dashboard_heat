@@ -1,0 +1,15 @@
+{
+    "updated_at": "2026-09-18T10:51:48+02:00",
+    "visible_cards": [
+        "production_status",
+        "output_achievement",
+        "data_accuracy",
+        "ready_to_load",
+        "avg_daily_capacity",
+        "critical_orders"
+    ],
+    "language": "id",
+    "direct_actual": 28,
+    "double_machine_active": 2,
+    "default_capacity_mode": "mesin"
+}

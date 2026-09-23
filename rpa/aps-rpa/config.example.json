@@ -1,10 +1,11 @@
 {
-  "shortcut_path": "C:\\Users\\iso\\Desktop\\IOS-APS - Shortcut.lnk",
+  "shortcut_path": "\\\\172.23.1.10\\ios-aps\\IOS-APS.exe",
   "window_title_contains": [
     "Login",
-    "FrmWelcomeLoading"
+    "FrmWelcomeLoading",
+    "IOS-APS"
   ],
-  "window_timeout_seconds": 60,
+  "window_timeout_seconds": 180,
   "launch": {
     "bypass_zone_check": true
   },
@@ -45,7 +46,11 @@
   "steps": [
     {
       "action": "wait",
-      "seconds": 3
+      "seconds": 3,
+      "window_title_contains": [
+        "Login"
+      ],
+      "window_timeout_seconds": 120
     },
     {
       "action": "type_env",

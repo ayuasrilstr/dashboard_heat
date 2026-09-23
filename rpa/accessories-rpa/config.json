@@ -45,10 +45,10 @@
       "selector": "#inputFromdate"
     },
     {
-      "name": "Isi tanggal awal bulan ini",
+      "name": "Isi tanggal awal 45 hari ke belakang",
       "action": "fill_date",
       "selector": "#inputFromdate",
-      "which": "month_start"
+      "which": "days_back_45"
     },
     {
       "name": "Isi tanggal sampai hari ini",

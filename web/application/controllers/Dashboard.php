@@ -7,6 +7,12 @@ class Dashboard extends Dashboard_base
 {
     public function index()
     {
-        redirect('dashboard_heat');
+        $this->load->view('dashboard_portal', array(
+            'title' => 'Dashboard GM Portal',
+            'dashboard_url' => site_url('dashboard_heat'),
+            'admin_url' => site_url('dashboard_heat/admin'),
+            'portal_login_url' => site_url('dashboard_heat/api/portal-login'),
+            'portal_logout_url' => site_url('dashboard_heat/api/portal-logout'),
+        ));
     }
 }

@@ -12,7 +12,7 @@ import threading
 import time
 import tempfile
 from calendar import monthrange
-from datetime import datetime, timedelta
+from datetime import datetime, time as dt_time, timedelta
 from html import escape
 from pathlib import Path
 
@@ -34,8 +34,24 @@ LOG_DIR = ROOT_DIR / "logs"
 LOG_PATH = LOG_DIR / "scheduler.log"
 LOCK_PATH = LOG_DIR / "scheduler.lock"
 SCHEDULE_START_HOUR = 7
-SCHEDULE_END_HOUR = 23
-SCHEDULE_INTERVAL_HOURS = 1
+SCHEDULE_END_HOUR = 24
+SCHEDULE_INTERVAL_MINUTES = 90
+
+# Jadwal tetap per hari: 07:00 hingga 22:00 (per 1,5 jam), ditutup tepat pada pukul 00:00
+SCHEDULE_DAILY_TIMES = [
+    (7, 0),
+    (8, 30),
+    (10, 0),
+    (11, 30),
+    (13, 0),
+    (14, 30),
+    (16, 0),
+    (17, 30),
+    (19, 0),
+    (20, 30),
+    (22, 0),
+    (0, 0),  # Download penutup tepat pukul 00:00
+]
 ARCHIVE_ENABLED = os.getenv("ENGAGE_KEEP_ARCHIVE", "").strip().lower() in {"1", "true", "yes", "on"}
 RUN_IN_PROGRESS = False
 LOCK_FILE = None
@@ -49,10 +65,7 @@ if ARCHIVE_ENABLED:
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 conditions = [
-    {"storage": "32", "direction": "1", "filename": "32_inflow.xlsx"},
-    {"storage": "32", "direction": "2", "filename": "32_outflow.xlsx"},
-    {"storage": "32a", "direction": "1", "filename": "32a_inflow.xlsx"},
-    {"storage": "32a", "direction": "2", "filename": "32a_outflow.xlsx"},
+    {"storage": "32a", "direction": "0", "filename": "32a_engage.xlsx"},
 ]
 
 REPORT_COLUMNS = [
@@ -326,42 +339,42 @@ def format_report_date(value):
     return f"{value:%Y-%m-%d}"
 
 
-def get_month_periods(reference_date=None, months_back=3):
-    if reference_date is not None:
-        year = reference_date.year
-        month = reference_date.month
-        last_day = monthrange(year, month)[1]
-        month_label = MONTH_ABBR[month - 1]
-
+def get_report_periods(reference_date=None, reference_month=None, date_from=None, date_to=None):
+    if date_from is not None and date_to is not None:
         return [
             {
-                "key": f"{year}-{month:02d}",
-                "label": f"{month_label} {year}",
-                "date_from": datetime(year, month, 1),
-                "date_to": datetime(year, month, last_day),
+                "key": f"{date_from:%Y-%m-%d}_{date_to:%Y-%m-%d}",
+                "label": f"{date_from:%d/%m/%Y} - {date_to:%d/%m/%Y}",
+                "date_from": date_from,
+                "date_to": date_to,
             }
         ]
 
-    periods = []
-    now = datetime.now()
-    months_back = max(1, int(months_back))
-
-    for offset in range(months_back - 1, -1, -1):
-        target = add_months(now.replace(day=1), -offset)
-        year = target.year
-        month = target.month
-        last_day = monthrange(year, month)[1]
-        month_label = MONTH_ABBR[month - 1]
-        periods.append(
+    if reference_month is not None:
+        ref_first = reference_month.replace(day=1)
+        last_day = monthrange(ref_first.year, ref_first.month)[1]
+        month_end = ref_first.replace(day=last_day)
+        month_label = MONTH_ABBR[ref_first.month - 1]
+        return [
             {
-                "key": f"{year}-{month:02d}",
-                "label": f"{month_label} {year}",
-                "date_from": datetime(year, month, 1),
-                "date_to": datetime(year, month, last_day),
+                "key": f"{ref_first:%Y-%m}",
+                "label": f"{month_label} {ref_first.year}",
+                "date_from": ref_first,
+                "date_to": month_end,
             }
-        )
+        ]
 
-    return periods
+    ref = reference_date or datetime.now()
+    ref_date = ref.date() if isinstance(ref, datetime) else ref
+    month_label = MONTH_ABBR[ref_date.month - 1]
+    return [
+        {
+            "key": f"{ref_date:%Y-%m-%d}",
+            "label": f"{ref_date.day} {month_label} {ref_date.year}",
+            "date_from": ref_date,
+            "date_to": ref_date,
+        }
+    ]
 
 
 def archive_stale_download(download_path):
@@ -512,31 +525,58 @@ def parse_report_date(value):
     if value is None:
         return None
 
+    if isinstance(value, datetime):
+        return value.date()
+
     text = str(value).strip()
     if not text:
         return None
 
+    try:
+        num = float(text)
+        if 20000 < num < 90000:
+            dt_raw = (datetime(1899, 12, 30) + timedelta(days=int(num))).date()
+            if dt_raw.day <= 12:
+                try:
+                    return datetime(dt_raw.year, dt_raw.day, dt_raw.month).date()
+                except ValueError:
+                    return dt_raw
+            return dt_raw
+    except ValueError:
+        pass
+
+    clean_text = text.split(".")[0] if "." in text and len(text.split(".")[0]) >= 10 else text
+
     candidates = (
-        "%d/%m/%Y",
-        "%d/%m/%Y %H:%M",
-        "%d/%m/%Y %H:%M:%S",
-        "%Y-%m-%d",
-        "%Y-%m-%d %H:%M",
         "%Y-%m-%d %H:%M:%S",
-        "%d-%m-%Y",
-        "%d-%m-%Y %H:%M",
+        "%Y-%m-%d %H:%M",
+        "%Y-%m-%d",
+        "%d/%m/%Y %H:%M:%S",
+        "%d/%m/%Y %H:%M",
+        "%d/%m/%Y",
+        "%d/%m/%y %H:%M:%S",
+        "%d/%m/%y %H:%M",
+        "%d/%m/%y",
         "%d-%m-%Y %H:%M:%S",
-        "%d.%m.%Y",
-        "%d.%m.%Y %H:%M",
+        "%d-%m-%Y %H:%M",
+        "%d-%m-%Y",
+        "%d-%m-%y %H:%M:%S",
+        "%d-%m-%y %H:%M",
+        "%d-%m-%y",
         "%d.%m.%Y %H:%M:%S",
-        "%Y/%m/%d",
-        "%Y/%m/%d %H:%M",
+        "%d.%m.%Y %H:%M",
+        "%d.%m.%Y",
+        "%d.%m.%y %H:%M:%S",
+        "%d.%m.%y %H:%M",
+        "%d.%m.%y",
         "%Y/%m/%d %H:%M:%S",
+        "%Y/%m/%d %H:%M",
+        "%Y/%m/%d",
     )
 
     for pattern in candidates:
         try:
-            return datetime.strptime(text, pattern).date()
+            return datetime.strptime(clean_text, pattern).date()
         except ValueError:
             continue
     return None
@@ -546,36 +586,103 @@ def normalize_daily_qty(value):
     return int(round(abs(parse_float(value))))
 
 
-def build_engage_daily_history(inflow_rows, outflow_rows):
+def build_engage_daily_history(rows):
     daily = {}
 
-    def add_rows(rows, field_name):
-        for row in rows or []:
-            date_value = row.get("Date") or row.get("We_datum") or row.get("date")
-            report_date = parse_report_date(date_value)
-            if report_date is None:
-                continue
+    for row in rows or []:
+        date_value = row.get("Date") or row.get("We_datum") or row.get("date")
+        report_date = parse_report_date(date_value)
+        if report_date is None:
+            continue
 
-            qty = normalize_daily_qty(row.get("Qty") or row.get("We_stck") or row.get("qty"))
-            key = report_date.isoformat()
-            bucket = daily.setdefault(
-                key,
-                {
-                    "date": key,
-                    "input_qty": 0,
-                    "output_qty": 0,
-                    "ready_qty": 0,
-                },
-            )
-            bucket[field_name] += qty
+        raw_qty = parse_float(row.get("Qty") or row.get("We_stck") or row.get("qty"))
+        if raw_qty == 0:
+            continue
 
-    add_rows(inflow_rows, "input_qty")
-    add_rows(outflow_rows, "output_qty")
+        key = report_date.isoformat()
+        bucket = daily.setdefault(
+            key,
+            {
+                "date": key,
+                "input_qty": 0,
+                "output_qty": 0,
+                "ready_qty": 0,
+            },
+        )
+        if raw_qty > 0:
+            bucket["input_qty"] += int(round(raw_qty))
+        else:
+            bucket["output_qty"] += int(round(abs(raw_qty)))
 
     for bucket in daily.values():
         bucket["ready_qty"] = int(bucket["input_qty"]) - int(bucket["output_qty"])
 
     return [daily[key] for key in sorted(daily.keys())]
+
+
+def get_php_executable():
+    for candidate in (shutil.which("php"), shutil.which("php.exe")):
+        if candidate:
+            return candidate
+
+    common_paths = [
+        Path(r"E:\xampp\php\php.exe"),
+        Path(r"C:\xampp\php\php.exe"),
+        Path(r"D:\xampp\php\php.exe"),
+    ]
+    for candidate in common_paths:
+        if candidate.is_file():
+            return str(candidate)
+
+    return "php"
+
+
+def sync_engage_transactions_to_mysql(rows, meta):
+    if not rows:
+        return True
+
+    helper_path = ROOT_DIR / "sync_engage_transactions.php"
+    if not helper_path.is_file():
+        return True
+
+    payload = json.dumps({"rows": rows, "meta": meta}, ensure_ascii=False)
+    with tempfile.NamedTemporaryFile("w", delete=False, suffix=".json", encoding="utf-8") as temp_file:
+        temp_file.write(payload)
+        temp_path = temp_file.name
+
+    try:
+        php_exe = get_php_executable()
+        result = subprocess.run(
+            [php_exe, str(helper_path), temp_path],
+            cwd=str(ROOT_DIR),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+
+        if result.stdout:
+            for line in result.stdout.splitlines():
+                if line.strip():
+                    log(f"[MySQL] {line}")
+
+        if result.stderr:
+            for line in result.stderr.splitlines():
+                if line.strip():
+                    log(f"[MySQL ERR] {line}")
+
+        if result.returncode != 0:
+            log(f"Sinkron transaksi MySQL keluar dengan exit code {result.returncode}")
+
+        return result.returncode == 0
+    except Exception as e:
+        log(f"Gagal menjalankan sinkron transaksi MySQL: {e}")
+        return False
+    finally:
+        try:
+            os.remove(temp_path)
+        except OSError:
+            pass
 
 
 def sync_engage_daily_history_to_mysql(history_rows):
@@ -593,8 +700,9 @@ def sync_engage_daily_history_to_mysql(history_rows):
         temp_path = temp_file.name
 
     try:
+        php_exe = get_php_executable()
         result = subprocess.run(
-            ["php", str(helper_path), temp_path],
+            [php_exe, str(helper_path), temp_path],
             cwd=str(ROOT_DIR),
             capture_output=True,
             text=True,
@@ -760,7 +868,7 @@ async def fetch_report_rows(page, storage, date_from, date_to, direction):
             await page.wait_for_timeout(PAGE_FETCH_PAUSE_MS)
 
 
-async def download_reports(reference_date=None, storage_filter=None, direction_filter=None):
+async def download_reports(reference_date=None, reference_month=None, storage_filter=None, direction_filter=None, date_from=None, date_to=None):
     async with async_playwright() as p:
         clean_download_folder()
         downloaded_any = False
@@ -797,13 +905,12 @@ async def download_reports(reference_date=None, storage_filter=None, direction_f
 
         log("Halaman report berhasil dibuka")
 
-        for period in get_month_periods(reference_date, months_back=3):
-            date_from = format_report_date(period["date_from"])
-            date_to = format_report_date(period["date_to"])
+        for period in get_report_periods(reference_date=reference_date, reference_month=reference_month, date_from=date_from, date_to=date_to):
+            period_date_from = format_report_date(period["date_from"])
+            period_date_to = format_report_date(period["date_to"])
 
-            log(f"Proses periode {period['label']}: {date_from} sampai {date_to}")
-            period_inflow_rows = []
-            period_outflow_rows = []
+            log(f"Proses periode {period['label']}: {period_date_from} sampai {period_date_to}")
+            period_rows = []
 
             for condition in conditions:
 
@@ -816,7 +923,7 @@ async def download_reports(reference_date=None, storage_filter=None, direction_f
 
                 log(f"Proses download Storage={storage}, Direction={direction}, Periode={period['label']}")
 
-                row_count = await prepare_report_context(page, storage, date_from, date_to, direction)
+                row_count = await prepare_report_context(page, storage, period_date_from, period_date_to, direction)
 
                 if row_count == 0:
                     log(f"Download dilewati karena data kosong: Storage={storage}, Direction={direction}, Periode={period['label']}")
@@ -826,67 +933,74 @@ async def download_reports(reference_date=None, storage_filter=None, direction_f
 
                 download_path = DOWNLOAD_DIR / filename
 
-                rows = await fetch_report_rows(page, storage, date_from, date_to, direction)
+                rows = await fetch_report_rows(page, storage, period_date_from, period_date_to, direction)
                 log(f"Jumlah row export: {len(rows)}")
                 save_report_rows(rows, download_path)
                 downloaded_any = True
 
-                if filename in {"32_inflow.xlsx", "32a_inflow.xlsx"}:
-                    period_inflow_rows.extend(rows)
-                elif filename in {"32_outflow.xlsx", "32a_outflow.xlsx"}:
-                    period_outflow_rows.extend(rows)
+                sync_engage_transactions_to_mysql(
+                    rows,
+                    {
+                        "storage": storage,
+                        "direction": direction,
+                        "source_report": Path(filename).stem,
+                        "source_file": filename,
+                        "period_key": period["key"],
+                        "period_label": period["label"],
+                        "date_from": period_date_from,
+                        "date_to": period_date_to,
+                    },
+                )
+
+                period_rows.extend(rows)
 
                 log(f"Download berhasil: {download_path}")
 
                 await page.wait_for_timeout(3000)
 
-                await asyncio.sleep(5)
+            archive_stale_download(DOWNLOAD_DIR / "32a_engage.xlsx")
 
-            daily_history = build_engage_daily_history(period_inflow_rows, period_outflow_rows)
+            daily_history = build_engage_daily_history(period_rows)
             log(f"Sinkron history harian {period['key']} -> {len(daily_history)} hari")
             sync_engage_daily_history_to_mysql(daily_history)
 
         await browser.close()
-
-        if downloaded_any:
-            archive_download_folder()
+        return downloaded_any
 
 
-def run_async_job(coro):
+def run_async_job(coroutine):
     try:
-        asyncio.get_running_loop()
-    except RuntimeError:
-        return asyncio.run(coro)
+        return asyncio.run(coroutine)
+    except RuntimeError as error:
+        if "asyncio.run() cannot be called from a running event loop" not in str(error):
+            raise
 
-    result = {}
-
-    def target():
-        try:
-            result["value"] = asyncio.run(coro)
-        except Exception as error:
-            result["error"] = error
-
-    thread = threading.Thread(target=target)
-    thread.start()
-    thread.join()
-
-    if "error" in result:
-        raise result["error"]
-
-    return result.get("value")
+    loop = asyncio.new_event_loop()
+    try:
+        asyncio.set_event_loop(loop)
+        return loop.run_until_complete(coroutine)
+    finally:
+        loop.close()
 
 
-def run_download_once(reference_date=None, storage_filter=None, direction_filter=None):
+def run_download_once(reference_date=None, reference_month=None, storage_filter=None, direction_filter=None, date_from=None, date_to=None):
     global RUN_IN_PROGRESS
 
     if RUN_IN_PROGRESS:
         log("Download dilewati karena proses sebelumnya masih berjalan")
         return False
 
+    if reference_date is None and reference_month is None and (date_from is None or date_to is None):
+        now = datetime.now()
+        if now.hour < SCHEDULE_START_HOUR:
+            reference_date = now.date() - timedelta(days=1)
+        else:
+            reference_date = now.date()
+
     RUN_IN_PROGRESS = True
     try:
         log("Mulai download report")
-        run_async_job(download_reports(reference_date, storage_filter, direction_filter))
+        run_async_job(download_reports(reference_date, reference_month, storage_filter, direction_filter, date_from, date_to))
         log("Selesai download report")
         return True
     except Exception as error:
@@ -896,27 +1010,41 @@ def run_download_once(reference_date=None, storage_filter=None, direction_filter
         RUN_IN_PROGRESS = False
 
 
-def get_next_run_time():
-    now = datetime.now()
-    schedule_start = now.replace(hour=SCHEDULE_START_HOUR, minute=0, second=0, microsecond=0)
-    schedule_end = now.replace(hour=SCHEDULE_END_HOUR, minute=0, second=0, microsecond=0)
+def is_within_schedule(now=None):
+    if now is None:
+        now = datetime.now()
+    # Jam operasional aktif: 07:00 - 01:00 (proses download 00:00 berjalan hingga selesai sebelum 01:00)
+    # Jam istirahat (idle): 01:00 - 07:00 pagi
+    return now.hour >= SCHEDULE_START_HOUR or now.hour == 0
 
-    if now <= schedule_start:
-        return schedule_start
 
-    if now > schedule_end:
-        tomorrow = now + timedelta(days=1)
-        return tomorrow.replace(hour=SCHEDULE_START_HOUR, minute=0, second=0, microsecond=0)
+def get_next_run_time(now=None):
+    if now is None:
+        now = datetime.now()
 
-    elapsed_seconds = (now - schedule_start).total_seconds()
-    elapsed_slots = int(elapsed_seconds // (SCHEDULE_INTERVAL_HOURS * 3600))
-    next_run = schedule_start + timedelta(hours=SCHEDULE_INTERVAL_HOURS * (elapsed_slots + 1))
+    today = now.date()
+    candidates = []
 
-    if next_run > schedule_end:
-        tomorrow = now + timedelta(days=1)
-        return tomorrow.replace(hour=SCHEDULE_START_HOUR, minute=0, second=0, microsecond=0)
+    # Slot hari ini (07:00 - 22:00 dan 00:00 penutup hari ini)
+    for hour, minute in SCHEDULE_DAILY_TIMES:
+        if hour == 0 and minute == 0:
+            candidates.append(datetime.combine(today + timedelta(days=1), dt_time(0, 0)))
+        else:
+            candidates.append(datetime.combine(today, dt_time(hour, minute)))
 
-    return next_run
+    # Slot esok hari (untuk antisipasi jika waktu sekarang sudah lewat tengah malam)
+    for hour, minute in SCHEDULE_DAILY_TIMES:
+        if hour == 0 and minute == 0:
+            candidates.append(datetime.combine(today + timedelta(days=2), dt_time(0, 0)))
+        else:
+            candidates.append(datetime.combine(today + timedelta(days=1), dt_time(hour, minute)))
+
+    candidates.sort()
+    for dt in candidates:
+        if dt > now:
+            return dt
+
+    return candidates[0]
 
 
 def run_scheduler():
@@ -925,13 +1053,13 @@ def run_scheduler():
         return
 
     log(
-        f"Scheduler aktif. Download setiap {SCHEDULE_INTERVAL_HOURS} jam "
-        f"dari {SCHEDULE_START_HOUR:02d}:00 sampai {SCHEDULE_END_HOUR:02d}:00."
+        f"Scheduler aktif. Download Engage setiap {SCHEDULE_INTERVAL_MINUTES} menit (1,5 jam) "
+        f"dari {SCHEDULE_START_HOUR:02d}:00 sampai 00:00."
     )
 
     try:
         now = datetime.now()
-        if SCHEDULE_START_HOUR <= now.hour <= SCHEDULE_END_HOUR:
+        if is_within_schedule(now):
             run_download_once()
 
         while True:
@@ -947,23 +1075,45 @@ def run_scheduler():
         release_process_lock()
 
 
+def parse_reference_date(value):
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").date()
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("Format tanggal harus YYYY-MM-DD, contoh: 2026-09-02") from error
+
+
 def parse_reference_month(value):
     try:
-        return datetime.strptime(value, "%Y-%m")
+        return datetime.strptime(value, "%Y-%m").date()
     except ValueError as error:
-        raise argparse.ArgumentTypeError("Format bulan harus YYYY-MM, contoh: 2026-04") from error
+        raise argparse.ArgumentTypeError("Format bulan harus YYYY-MM, contoh: 2026-09") from error
 
 
 def main():
     parser = argparse.ArgumentParser(description="Engage RPA downloader")
     parser.add_argument("--once", action="store_true", help="Jalankan download sekali lalu keluar")
     parser.add_argument(
+        "--reference-date",
+        type=parse_reference_date,
+        help="Tanggal download dalam format YYYY-MM-DD (default: hari ini).",
+    )
+    parser.add_argument(
         "--reference-month",
         type=parse_reference_month,
-        help="Bulan download dalam format YYYY-MM. Contoh 2026-05 untuk data bulan Mei.",
+        help="Bulan download dalam format YYYY-MM jika ingin unduh satu bulan penuh.",
+    )
+    parser.add_argument(
+        "--date-from",
+        type=parse_reference_date,
+        help="Tanggal awal download dalam format YYYY-MM-DD.",
+    )
+    parser.add_argument(
+        "--date-to",
+        type=parse_reference_date,
+        help="Tanggal akhir download dalam format YYYY-MM-DD.",
     )
     parser.add_argument("--storage", help="Filter storage, contoh: 32a")
-    parser.add_argument("--direction", help="Filter direction, contoh: 2 untuk outflow")
+    parser.add_argument("--direction", help="Filter direction, contoh: 0")
     args = parser.parse_args()
 
     if args.once:
@@ -972,7 +1122,7 @@ def main():
             return 1
 
         try:
-            success = run_download_once(args.reference_month, args.storage, args.direction)
+            success = run_download_once(args.reference_date, args.reference_month, args.storage, args.direction, args.date_from, args.date_to)
         finally:
             release_process_lock()
         return 0 if success else 1

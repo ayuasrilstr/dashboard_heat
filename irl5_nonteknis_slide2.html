@@ -1,0 +1,230 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>IRL 5 (Bagian 2) : Development Dashboard & Fitur Siap Operasional (Versi Manajemen)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+  body {
+    background-color: #F0F4F8;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 10px;
+  }
+  .slide-container {
+    width: 1333px;
+    height: 750px;
+    background: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    position: relative;
+    padding: 22px 28px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.07);
+    overflow: hidden;
+  }
+  .main-header {
+    background: #10528A;
+    color: #FFFFFF;
+    padding: 10px 22px;
+    font-size: 17.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    display: inline-block;
+    width: 84%;
+    margin-bottom: 18px;
+    white-space: nowrap;
+  }
+  .grid-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    height: calc(100% - 65px);
+  }
+  .pill-center {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+  .pill-header {
+    background: #0E4D82;
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 6px 36px;
+    border-radius: 20px;
+    letter-spacing: 0.4px;
+    text-align: center;
+  }
+  .feature-column {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .feature-card {
+    background: #F8FAFC;
+    border: 1px solid #CBD5E1;
+    border-left: 4px solid #0E4D82;
+    border-radius: 5px;
+    padding: 10px 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .feature-card.alt {
+    border-left-color: #0288D1;
+  }
+  .feature-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #0E4D82;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .feature-desc {
+    font-size: 11px;
+    color: #1E293B;
+    line-height: 1.45;
+  }
+  .tag {
+    display: inline-block;
+    font-size: 9.5px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: #E0F2FE;
+    color: #0369A1;
+    margin-left: auto;
+  }
+  .tag.green {
+    background: #DCFCE7;
+    color: #15803D;
+  }
+</style>
+</head>
+<body>
+
+<div class="slide-container">
+  <div class="main-header">
+    IRL 5 (BAGIAN 2) : DEVELOPMENT DASHBOARD & FITUR SIAP OPERASIONAL
+  </div>
+
+  <div class="grid-layout">
+    <!-- Left Column: Dashboard Publik -->
+    <div class="feature-column">
+      <div class="pill-center">
+        <div class="pill-header">DASHBOARD PUBLIK UNTUK PABRIK</div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-title">
+          <span>1. Tampilan Khusus Layar Lebar (TV & PC)</span>
+          <span class="tag green">SIAP PAKAI</span>
+        </div>
+        <div class="feature-desc">
+          Dirancang agar angka pencapaian, grafik tren, dan tabel prioritas order terlihat jelas dan nyaman dipantau dari kejauhan di lantai produksi pabrik maupun di komputer meja.
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-title">
+          <span>2. Layar Langsung Tampil Seketika (Tanpa Loading)</span>
+          <span class="tag">RESPON CEPAT</span>
+        </div>
+        <div class="feature-desc">
+          Informasi dashboard langsung muncul utuh saat halaman dibuka, tanpa ada jeda layar putih kosong atau lingkaran loading yang mengganggu pemantauan operasional.
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-title">
+          <span>3. Pilihan Rentang Target Fleksibel (1, 2, 4, 6 Delivery)</span>
+          <span class="tag">PILIHAN FLEKSIBEL</span>
+        </div>
+        <div class="feature-desc">
+          Memudahkan pengguna memilih fokus periode pengiriman yang ingin dianalisis, baik jangka pendek (1–2 delivery) maupun jangka menengah (4–6 delivery) dengan sekali klik.
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-title">
+          <span>4. Unduh Laporan Excel Sekali Klik</span>
+          <span class="tag green">EKSPOR EXCEL</span>
+        </div>
+        <div class="feature-desc">
+          Menyediakan tombol download yang langsung mengekspor daftar order siap muat (Material To Load) ke file Excel rapi sesuai periode yang sedang dipilih untuk kebutuhan rapat.
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-title">
+          <span>5. Pembaruan Otomatis Sinkron Jam Pabrik</span>
+          <span class="tag">SETIAP 30 MENIT</span>
+        </div>
+        <div class="feature-desc">
+          Angka di dashboard otomatis memperbarui diri tepat pada menit :00 dan :30 setiap jam, lengkap dengan lampu indikator hijau yang berkedip menandakan data sedang aktif dan mutakhir.
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Admin Panel & Analytics -->
+    <div class="feature-column">
+      <div class="pill-center">
+        <div class="pill-header">PANEL PENGATURAN & ANALISIS</div>
+      </div>
+
+      <div class="feature-card alt">
+        <div class="feature-title">
+          <span>1. Panel Kontrol Terpusat Khusus Admin (Aman)</span>
+          <span class="tag">LOGIN TERLINDUNG</span>
+        </div>
+        <div class="feature-desc">
+          Halaman manajemen yang terlindung kata sandi untuk supervisor dan manajemen dalam mengendalikan seluruh parameter produksi tanpa mengganggu tampilan publik di monitor TV.
+        </div>
+      </div>
+
+      <div class="feature-card alt">
+        <div class="feature-title">
+          <span>2. Pengaturan Target Waktu Kerja (SMV per Style)</span>
+          <span class="tag green">KUSTOM TARGET</span>
+        </div>
+        <div class="feature-desc">
+          Menu tabel lengkap dengan fitur pencarian untuk memasukkan target menit pengerjaan per model baju dan memilih style mana saja yang ingin dimunculkan di layar utama.
+        </div>
+      </div>
+
+      <div class="feature-card alt">
+        <div class="feature-title">
+          <span>3. Pilihan Input Direct Aktual Fleksibel</span>
+          <span class="tag">KONTROL SUPERVISOR</span>
+        </div>
+        <div class="feature-desc">
+          Fleksibilitas bagi supervisor untuk memasukkan angka direct aktual secara manual atau memilih menggunakan rumus hitungan otomatis sistem sesuai kondisi lapangan.
+        </div>
+      </div>
+
+      <div class="feature-card alt">
+        <div class="feature-title">
+          <span>4. Pengaturan Kalender Hari Kerja & Libur Shift</span>
+          <span class="tag green">KALENDER INTERAKTIF</span>
+        </div>
+        <div class="feature-desc">
+          Kalender bulanan visual yang sangat mudah digunakan: cukup klik tanggal untuk mengubahnya menjadi hari kerja penuh, hari libur, setengah hari, atau jadwal lembur.
+        </div>
+      </div>
+
+      <div class="feature-card alt">
+        <div class="feature-title">
+          <span>5. Evaluasi Kinerja & Saran Tindakan Otomatis (CAP)</span>
+          <span class="tag">REKOMENDASI OTOMATIS</span>
+        </div>
+        <div class="feature-desc">
+          Sistem cerdas yang secara otomatis mendeteksi status risiko produksi (Aman / Perlu Perhatian / Berisiko) serta merumuskan rekomendasi tindakan nyata jika target harian belum tercapai.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -5,8 +5,15 @@ import time
 import subprocess
 import msvcrt
 import shutil
-from datetime import datetime, timedelta
+from datetime import datetime, time as dt_time, timedelta
 from pathlib import Path
+
+try:
+    import tkinter as tk
+    from tkinter import messagebox
+except Exception:
+    tk = None
+    messagebox = None
 
 if getattr(sys, "frozen", False):
     exe_dir = Path(sys.executable).resolve().parent
@@ -33,8 +40,24 @@ LOG_PATH = LOG_DIR / "scheduler.log"
 LOCK_PATH = LOG_DIR / "scheduler.lock"
 
 SCHEDULE_START_HOUR = 7
-SCHEDULE_END_HOUR = 23
-SCHEDULE_INTERVAL_HOURS = 1
+SCHEDULE_END_HOUR = 24  # 00:00 tengah malam
+SCHEDULE_INTERVAL_MINUTES = 90
+
+# Jadwal tetap per hari: 07:00 hingga 22:00 (per 1,5 jam), ditutup tepat pada pukul 00:00
+SCHEDULE_DAILY_TIMES = [
+    (7, 0),
+    (8, 30),
+    (10, 0),
+    (11, 30),
+    (13, 0),
+    (14, 30),
+    (16, 0),
+    (17, 30),
+    (19, 0),
+    (20, 30),
+    (22, 0),
+    (0, 0),  # Download penutup tepat pukul 00:00
+]
 
 LOCK_FILE = None
 RUN_IN_PROGRESS = False
@@ -50,6 +73,26 @@ def log(message):
             log_file.write(log_text + "\n")
     except Exception as e:
         print(f"Gagal menulis log: {e}")
+
+
+def confirm_run():
+    if tk is None or messagebox is None:
+        return True
+
+    root = tk.Tk()
+    root.withdraw()
+    root.attributes("-topmost", True)
+    root.update()
+
+    try:
+        return messagebox.askyesno(
+            "Konfirmasi RPA",
+            "Anda yakin ingin menjalankan RPA?",
+            parent=root,
+            default=messagebox.YES,
+        )
+    finally:
+        root.destroy()
 
 def acquire_process_lock():
     global LOCK_FILE
@@ -118,7 +161,8 @@ def run_rpa_script(name, args, cwd):
             text=True,
             encoding="utf-8",
             errors="replace",
-            env=env
+            env=env,
+            creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, "CREATE_NO_WINDOW") else 0,
         )
         
         if result.stdout:
@@ -142,6 +186,16 @@ def run_rpa_script(name, args, cwd):
         log(f"Error saat menjalankan RPA {name}: {e}")
         return False
 
+def get_engage_reference_date(now=None):
+    if now is None:
+        now = datetime.now()
+    # Jika berjalan di jam 00:00 - 06:59 (misal download penutup pukul 00:00),
+    # maka reference_date adalah hari kemarin (H-1) untuk menutup rekap hari tersebut.
+    # Jika berjalan dari jam 07:00 - 23:59, reference_date adalah hari ini (H).
+    if now.hour < SCHEDULE_START_HOUR:
+        return (now.date() - timedelta(days=1)).strftime("%Y-%m-%d")
+    return now.date().strftime("%Y-%m-%d")
+
 def run_all_rpa_once():
     global RUN_IN_PROGRESS
     if RUN_IN_PROGRESS:
@@ -151,7 +205,7 @@ def run_all_rpa_once():
     RUN_IN_PROGRESS = True
     overall_ok = True
     log("=== MEMULAI DOWNLOAD SEMUA RPA ===")
-    
+
     # 1. Accessories RPA
     accessories_dir = ROOT_DIR / "accessories-rpa"
     if accessories_dir.exists():
@@ -163,7 +217,9 @@ def run_all_rpa_once():
     # 2. Engage RPA
     engage_dir = ROOT_DIR / "engage-rpa"
     if engage_dir.exists():
-        overall_ok = run_rpa_script("Engage RPA", ["--once"], engage_dir) and overall_ok
+        ref_date = get_engage_reference_date()
+        log(f"Reference date Engage untuk run ini: {ref_date}")
+        overall_ok = run_rpa_script("Engage RPA", ["--once", "--reference-date", ref_date], engage_dir) and overall_ok
     else:
         log("Folder engage-rpa tidak ditemukan.")
         overall_ok = False
@@ -180,51 +236,61 @@ def run_all_rpa_once():
     RUN_IN_PROGRESS = False
     return overall_ok
 
-def get_next_run_time():
-    now = datetime.now()
-    schedule_start = now.replace(hour=SCHEDULE_START_HOUR, minute=0, second=0, microsecond=0)
-    schedule_end = now.replace(hour=SCHEDULE_END_HOUR, minute=0, second=0, microsecond=0)
+def is_within_schedule(now=None):
+    if now is None:
+        now = datetime.now()
+    # Jam operasional aktif: 07:00 - 01:00 (proses download 00:00 berjalan hingga selesai sebelum 01:00)
+    # Jam istirahat (idle): 01:00 - 07:00 pagi
+    return now.hour >= SCHEDULE_START_HOUR or now.hour == 0
 
-    if now <= schedule_start:
-        return schedule_start
+def get_next_run_time(now=None):
+    if now is None:
+        now = datetime.now()
 
-    if now > schedule_end:
-        tomorrow = now + timedelta(days=1)
-        return tomorrow.replace(hour=SCHEDULE_START_HOUR, minute=0, second=0, microsecond=0)
+    today = now.date()
+    candidates = []
 
-    elapsed_seconds = (now - schedule_start).total_seconds()
-    elapsed_slots = int(elapsed_seconds // (SCHEDULE_INTERVAL_HOURS * 3600))
-    next_run = schedule_start + timedelta(hours=SCHEDULE_INTERVAL_HOURS * (elapsed_slots + 1))
+    # Slot hari ini (07:00 - 22:00 dan 00:00 penutup hari ini)
+    for hour, minute in SCHEDULE_DAILY_TIMES:
+        if hour == 0 and minute == 0:
+            candidates.append(datetime.combine(today + timedelta(days=1), dt_time(0, 0)))
+        else:
+            candidates.append(datetime.combine(today, dt_time(hour, minute)))
 
-    if next_run > schedule_end:
-        tomorrow = now + timedelta(days=1)
-        return tomorrow.replace(hour=SCHEDULE_START_HOUR, minute=0, second=0, microsecond=0)
+    # Slot esok hari (untuk antisipasi jika waktu sekarang sudah lewat tengah malam)
+    for hour, minute in SCHEDULE_DAILY_TIMES:
+        if hour == 0 and minute == 0:
+            candidates.append(datetime.combine(today + timedelta(days=2), dt_time(0, 0)))
+        else:
+            candidates.append(datetime.combine(today + timedelta(days=1), dt_time(hour, minute)))
 
-    return next_run
+    candidates.sort()
+    for dt in candidates:
+        if dt > now:
+            return dt
+
+    return candidates[0]
 
 def run_scheduler():
     if not acquire_process_lock():
         log("Scheduler sudah berjalan di proses lain. Instance ini dihentikan.")
         return
-
-    log(
-        f"Scheduler aktif. Download semua RPA setiap {SCHEDULE_INTERVAL_HOURS} jam "
-        f"dari {SCHEDULE_START_HOUR:02d}:00 sampai {SCHEDULE_END_HOUR:02d}:00."
-    )
-
+        
+    log(f"Scheduler aktif. Download semua RPA setiap {SCHEDULE_INTERVAL_MINUTES} menit (1,5 jam) dari {SCHEDULE_START_HOUR:02d}:00 sampai 00:00.")
+    
     try:
         now = datetime.now()
-        if SCHEDULE_START_HOUR <= now.hour <= SCHEDULE_END_HOUR:
+        if is_within_schedule(now):
             run_all_rpa_once()
-
+            
         while True:
             next_run = get_next_run_time()
             wait_seconds = max(0, (next_run - datetime.now()).total_seconds())
             log(f"Run berikutnya: {next_run:%Y-%m-%d %H:%M:%S}")
             time.sleep(wait_seconds)
-
+            
             run_all_rpa_once()
-
+            
             time.sleep(60)
     finally:
         release_process_lock()
@@ -232,7 +298,16 @@ def run_scheduler():
 def main():
     parser = argparse.ArgumentParser(description="Master RPA Scheduler")
     parser.add_argument("--once", action="store_true", help="Jalankan semua RPA sekali lalu keluar")
+    parser.add_argument(
+        "--no-confirm",
+        action="store_true",
+        help="Jalankan tanpa dialog konfirmasi interaktif",
+    )
     args = parser.parse_args()
+
+    if not args.no_confirm and not confirm_run():
+        log("Dibatalkan oleh pengguna.")
+        return 0
 
     if args.once:
         if not acquire_process_lock():

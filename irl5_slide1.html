@@ -1,0 +1,400 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>IRL 5 (Bagian 1) : Integrasi Database & Pengujian Koneksi Data Real-Time</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+  body {
+    background-color: #F0F4F8;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 10px;
+  }
+  .slide-container {
+    width: 1333px;
+    height: 750px;
+    background: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    position: relative;
+    padding: 22px 28px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.07);
+    overflow: hidden;
+  }
+  .main-header {
+    background: #10528A;
+    color: #FFFFFF;
+    padding: 10px 22px;
+    font-size: 17.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    display: inline-block;
+    width: 84%;
+    margin-bottom: 18px;
+    white-space: nowrap;
+  }
+  .grid-layout {
+    display: grid;
+    grid-template-columns: 570px 1fr;
+    gap: 34px;
+    height: calc(100% - 65px);
+  }
+  .pill-center {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 14px;
+  }
+  .pill-header {
+    background: #0E4D82;
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 6px 36px;
+    border-radius: 20px;
+    letter-spacing: 0.4px;
+    text-align: center;
+  }
+
+  /* Left Column */
+  .left-col {
+    display: flex;
+    flex-direction: column;
+  }
+  .diagram-flow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+  .sources-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    width: 100%;
+  }
+  .source-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .src-parent-box {
+    border: 1px solid #64748B;
+    background: #FFFFFF;
+    padding: 7px 4px;
+    width: 100%;
+    font-size: 12px;
+    font-weight: 700;
+    color: #1E293B;
+    text-align: center;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .src-child-box {
+    border: 1px solid #94A3B8;
+    background: #F8FAFC;
+    padding: 6px 4px;
+    width: 90%;
+    font-size: 10px;
+    color: #475569;
+    text-align: center;
+    margin-top: -1px;
+    line-height: 1.35;
+  }
+  .arrow-merge-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 4px 0;
+  }
+  .arrow-down-icon {
+    color: #0E4D82;
+    font-size: 20px;
+    font-weight: bold;
+    line-height: 1;
+  }
+  .engine-box {
+    border: 1.5px solid #0E4D82;
+    background: #FFFFFF;
+    padding: 8px 16px;
+    width: 82%;
+    border-radius: 4px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+  }
+  .engine-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #0E4D82;
+    margin-bottom: 2px;
+  }
+  .engine-sub {
+    font-size: 10px;
+    color: #334155;
+  }
+  .db-storage-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    width: 100%;
+    margin-top: 4px;
+  }
+  .db-cylinder-icon {
+    width: 125px;
+    height: 60px;
+    border: 1.5px solid #0E4D82;
+    border-radius: 12px / 20px;
+    background: #FFFFFF;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #0E4D82;
+    text-align: center;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.06);
+  }
+  .db-sub-labels {
+    font-size: 10.2px;
+    color: #334155;
+    line-height: 1.55;
+  }
+  .keterangan-section {
+    margin-top: 14px;
+  }
+  .keterangan-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0E4D82;
+    margin-bottom: 7px;
+  }
+  .keterangan-list {
+    list-style: none;
+  }
+  .keterangan-list li {
+    font-size: 10.5px;
+    color: #1E293B;
+    line-height: 1.45;
+    margin-bottom: 6px;
+    position: relative;
+    padding-left: 14px;
+  }
+  .keterangan-list li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: #0E4D82;
+    font-weight: bold;
+    font-size: 14px;
+  }
+  .keterangan-list strong {
+    color: #0F172A;
+  }
+
+  /* Right Column */
+  .right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .test-table {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .test-header-row {
+    display: grid;
+    grid-template-columns: 180px 24px 210px 24px 210px;
+    align-items: center;
+    justify-content: center;
+  }
+  .sub-pill {
+    color: #FFFFFF;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 6px 8px;
+    border-radius: 14px;
+    text-align: center;
+    letter-spacing: 0.3px;
+  }
+  .pill-cyan { background: #0288D1; }
+  .pill-green { background: #2E7D32; }
+  .pill-amber { background: #FB8C00; }
+
+  .test-data-row {
+    display: grid;
+    grid-template-columns: 180px 24px 210px 24px 210px;
+    align-items: center;
+    justify-content: center;
+  }
+  .data-box {
+    border: 1px solid #CBD5E1;
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-size: 10.5px;
+    text-align: center;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.35;
+  }
+  .box-blue { background: #E0F2FE; border-color: #BAE6FD; color: #0369A1; font-weight: 600; }
+  .box-green { background: #DCFCE7; border-color: #BBF7D0; color: #15803D; }
+  .box-amber { background: #FEF3C7; border-color: #FDE68A; color: #92400E; font-weight: 600; }
+  .flow-arrow {
+    text-align: center;
+    color: #0E4D82;
+    font-size: 16px;
+    font-weight: bold;
+  }
+
+  .conclusion-card {
+    background: #F8FAFC;
+    border: 1.5px solid #0E4D82;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-top: 10px;
+  }
+  .conclusion-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #0E4D82;
+    margin-bottom: 4px;
+  }
+  .conclusion-text {
+    font-size: 11px;
+    color: #1E293B;
+    line-height: 1.45;
+  }
+</style>
+</head>
+<body>
+
+<div class="slide-container">
+  <div class="main-header">
+    IRL 5 (BAGIAN 1) : INTEGRASI DATABASE & PENGUJIAN KONEKSI DATA REAL-TIME
+  </div>
+
+  <div class="grid-layout">
+    <!-- Left Column: Integrasi Database -->
+    <div class="left-col">
+      <div class="pill-center">
+        <div class="pill-header">INTEGRASI DATABASE & PIPELINE ETL</div>
+      </div>
+
+      <div class="diagram-flow">
+        <div class="sources-grid">
+          <div class="source-unit">
+            <div class="src-parent-box">Accessories RPA</div>
+            <div class="src-child-box">CONTROLIST.xlsx<br><span style="color:#64748B;">Playwright CIUROX</span></div>
+          </div>
+          <div class="source-unit">
+            <div class="src-parent-box">APS RPA</div>
+            <div class="src-child-box">Export JO.xlsx<br><span style="color:#64748B;">Win32 GUI Automation</span></div>
+          </div>
+          <div class="source-unit">
+            <div class="src-parent-box">Engage Ingestion</div>
+            <div class="src-child-box">Storage 32 & 32a<br><span style="color:#64748B;">sync_engage_transactions.php</span></div>
+          </div>
+        </div>
+
+        <div class="arrow-merge-area">
+          <div class="arrow-down-icon">↓</div>
+        </div>
+
+        <div class="engine-box">
+          <div class="engine-title">Pipeline ETL & Data Cleansing Engine</div>
+          <div class="engine-sub">Streaming Native XML Parser (No-Leak) • Normalisasi Nomor JO • Sanitasi Null/Date</div>
+        </div>
+
+        <div class="arrow-merge-area">
+          <div class="arrow-down-icon">↓</div>
+        </div>
+
+        <div class="db-storage-row">
+          <div class="db-cylinder-icon">
+            Database MySQL<br>(db_dashboardgm)
+          </div>
+          <div class="db-sub-labels">
+            <div>- - - - &gt; <strong>tb_engage_transactions:</strong> Staging Mutasi Live In/Out</div>
+            <div>- - - - &gt; <strong>tb_engage_archieve:</strong> Auto-Rotasi Arsip Lampau &gt; 90 Hari</div>
+            <div>- - - - &gt; <strong>engage_daily_history & dashboard_heat_history</strong></div>
+            <div>- - - - &gt; <strong>Local JSON Cache:</strong> SMV, Kalender Kerja, Analytics</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="keterangan-section">
+        <div class="keterangan-title">Keterangan Integrasi Database :</div>
+        <ul class="keterangan-list">
+          <li><strong>Dual Data Source Handshake:</strong> Mengintegrasikan Active Record MySQL (db_dashboardgm) dengan streaming XML reader untuk file Excel (proses ribuan baris &lt; 1 detik tanpa memory leak).</li>
+          <li><strong>Atomic Upsert & Deduplikasi:</strong> Penyeragaman transaksi Engage dengan pencegahan duplikasi data melalui komposit unique key (<code>udef_3</code> / <code>udef_4</code>).</li>
+          <li><strong>Automated Retention & Archiving:</strong> Pemisahan data mutasi harian dan arsip lampau &gt; 90 hari untuk menjaga latency query MySQL selalu di bawah 15ms.</li>
+          <li><strong>Low-Latency Local JSON Cache:</strong> Konfigurasi dinamis (SMV per style baju, kalender hari kerja/shift, preferensi analytics) dicache lokal untuk meminimalkan beban I/O database.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Right Column: Testing -->
+    <div class="right-col">
+      <div class="pill-center">
+        <div class="pill-header">PENGUJIAN KONEKSI DATA REAL-TIME</div>
+      </div>
+
+      <div class="test-table">
+        <div class="test-header-row">
+          <div class="sub-pill pill-cyan">KOMPONEN KONEKSI</div>
+          <div></div>
+          <div class="sub-pill pill-green">METODE PENGUJIAN</div>
+          <div></div>
+          <div class="sub-pill pill-amber">HASIL & STATUS VALIDASI</div>
+        </div>
+
+        <div class="test-data-row">
+          <div class="data-box box-blue">Database MySQL<br>(db_dashboardgm)</div>
+          <div class="flow-arrow">→</div>
+          <div class="data-box box-green">Stress test query Active Record & pooling (100 simultaneous req)</div>
+          <div class="flow-arrow">→</div>
+          <div class="data-box box-amber">Latency 8 - 14 ms, Zero Data Loss, Integritas Relasi 100%<br><span style="color:#2E7D32; font-weight:bold; margin-top:2px;">[PASS]</span></div>
+        </div>
+
+        <div class="test-data-row">
+          <div class="data-box box-blue">Pipeline Otomasi RPA<br>(RPA_Master.exe)</div>
+          <div class="flow-arrow">→</div>
+          <div class="data-box box-green">Simulasi cron berkala 90 mnt (07:00-00:00) & API run-download</div>
+          <div class="flow-arrow">→</div>
+          <div class="data-box box-amber">Process-Lock aktif, Auto-Recovery, Zero Race Condition<br><span style="color:#2E7D32; font-weight:bold; margin-top:2px;">[PASS]</span></div>
+        </div>
+
+        <div class="test-data-row">
+          <div class="data-box box-blue">Sinkronisasi Client<br>Real-Time (SPA Web)</div>
+          <div class="flow-arrow">→</div>
+          <div class="data-box box-green">Uji wall-clock refresh (:00 & :30) + Pre-Hydration payload</div>
+          <div class="flow-arrow">→</div>
+          <div class="data-box box-amber">Render instan 0ms delay awal, payload ~35KB, Uptime 24/7<br><span style="color:#2E7D32; font-weight:bold; margin-top:2px;">[PASS]</span></div>
+        </div>
+
+        <div class="test-data-row">
+          <div class="data-box box-blue">Integritas Validasi<br>Order & Aksesoris</div>
+          <div class="flow-arrow">→</div>
+          <div class="data-box box-green">Verifikasi pencocokan JO APS + Engage vs COMPLETED CIUROX</div>
+          <div class="flow-arrow">→</div>
+          <div class="data-box box-amber">Pencocokan JO 100% valid, Order RTL tersaring presisi<br><span style="color:#2E7D32; font-weight:bold; margin-top:2px;">[PASS]</span></div>
+        </div>
+      </div>
+
+      <div class="conclusion-card">
+        <div class="conclusion-title">Kesimpulan Hasil Pengujian Sistem Real-Time :</div>
+        <div class="conclusion-text">
+          Seluruh jalur komunikasi data dari RPA → MySQL → Local Cache → Browser Web telah teruji tanpa kendala latensi, bebas memory leak, dan aman dioperasikan secara terus menerus (24/7 non-stop) pada layar TV monitor produksi pabrik.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

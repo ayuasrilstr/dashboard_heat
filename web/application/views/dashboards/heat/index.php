@@ -4,91 +4,476 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= html_escape($title) ?></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
     <style>
         :root{
-            --bg:#f4f7fb;
-            --surface:#ffffff;
-            --surface-soft:#f8fafc;
-            --ink:#102033;
-            --muted:#607287;
-            --line:#dbe4ee;
-            --grid:#edf2f7;
-            --brand:#176b87;
-            --brand-2:#64a6bd;
-            --accent:#7c9a42;
-            --ok:#16a34a;
-            --warn:#d97706;
-            --risk:#dc2626;
-            --shadow:0 10px 26px rgba(16,32,51,.07);
+            /* Solid Navy & Gray Sneat Theme */
+            --bg:#f1f5f9;                 /* Solid Light Slate Gray */
+            --surface:#ffffff;            /* Pure White */
+            --surface-soft:#f8fafc;       /* Light Slate Tint */
+            --ink:#0f172a;                /* Dark Navy Slate */
+            --muted:#64748b;              /* Slate Gray */
+            --line:#cbd5e1;               /* Solid Slate Border */
+            --grid:#e2e8f0;               /* Solid Light Slate Grid */
+            --brand:#1e3a8a;              /* Solid Navy Blue */
+            --brand-2:#2563eb;            /* Solid Blue */
+            --accent:#334155;             /* Solid Dark Slate */
+            --ok:#16a34a;                 /* Solid Green */
+            --warn:#d97706;               /* Solid Amber / Orange */
+            --risk:#dc2626;               /* Solid Red */
+            --info:#0284c7;               /* Solid Blue */
+            --shadow:0 2px 6px rgba(15,23,42,.08);
+            --shadow-hover:0 6px 16px rgba(15,23,42,.12);
             --tv-safe-x:12px;
             --tv-safe-bottom:18px;
-            --tv-scale:.92;
+            --tv-scale:.86;
         }
         *{box-sizing:border-box}
-        body{margin:0;height:100vh;overflow:auto;background:radial-gradient(circle at top left,rgba(100,166,189,.22),transparent 32%),linear-gradient(180deg,#f8fbff 0,var(--bg) 100%);color:var(--ink);font-family:Segoe UI,Arial,Helvetica,sans-serif}
-        .page{height:calc(100vh / var(--tv-scale));width:calc(100vw / var(--tv-scale));padding:6px var(--tv-safe-x) var(--tv-safe-bottom);display:grid;grid-template-rows:38px minmax(0,1fr);gap:6px;transform:scale(var(--tv-scale));transform-origin:top left}
-        .top{display:grid;grid-template-columns:minmax(520px,34vw) auto auto 1fr;align-items:center;gap:10px}
-        .title{height:34px;border:1px solid rgba(219,228,238,.9);border-radius:7px;background:rgba(255,255,255,.92);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;font-size:clamp(18px,1.22vw,24px);font-weight:850;letter-spacing:.3px;color:var(--ink);white-space:nowrap;overflow:hidden}
-        .menu{height:34px;border:1px solid rgba(219,228,238,.9);border-radius:7px;background:rgba(255,255,255,.78);box-shadow:var(--shadow);display:flex;align-items:center;padding:3px;gap:4px}
-        .menu button{height:27px;border:0;border-radius:5px;background:transparent;color:var(--muted);font-size:clamp(11px,.8vw,14px);font-weight:800;text-transform:uppercase;padding:0 12px;cursor:pointer}
-        .menu button.active{background:var(--brand);color:#fff;box-shadow:0 8px 18px rgba(23,107,135,.22)}
-        .delivery-toggle{height:34px;border:1px solid rgba(219,228,238,.9);border-radius:7px;background:rgba(255,255,255,.78);box-shadow:var(--shadow);display:flex;align-items:center;padding:3px;gap:4px}
-        .delivery-toggle button{height:27px;border:0;border-radius:5px;background:transparent;color:var(--muted);font-size:clamp(11px,.8vw,14px);font-weight:800;text-transform:uppercase;padding:0 10px;cursor:pointer;white-space:nowrap}
-        .delivery-toggle button.active{background:var(--accent);color:#fff;box-shadow:0 8px 18px rgba(124,154,66,.2)}
-        .workday-open{height:34px;border:1px solid rgba(219,228,238,.9);border-radius:7px;background:#fff;color:var(--brand);font-size:clamp(11px,.8vw,14px);font-weight:850;text-transform:uppercase;box-shadow:var(--shadow);padding:0 14px;cursor:pointer}
-        .last-update{justify-self:end;position:relative}.last-update button{height:34px;border:1px solid rgba(219,228,238,.9);border-radius:999px;background:rgba(255,255,255,.82);color:var(--muted);font-size:clamp(12px,.84vw,15px);font-weight:750;box-shadow:var(--shadow);padding:0 13px;cursor:pointer}.last-update-panel{position:fixed;right:var(--tv-safe-x);top:50px;z-index:60;width:min(420px,calc(100vw - (var(--tv-safe-x) * 2)));max-height:calc(100vh - 112px);overflow:auto;display:none;border:1px solid var(--line);border-radius:8px;background:#fff;box-shadow:0 18px 44px rgba(16,32,51,.18);padding:10px}.last-update.open .last-update-panel{display:block}.last-update-panel h3{margin:0 0 8px;color:var(--ink);font-size:12px;font-weight:900;text-transform:uppercase}.db-last-list{display:grid;gap:7px;max-height:calc(100vh - 166px);overflow:auto}.db-last-item{border:1px solid var(--grid);border-radius:8px;background:#fff;padding:8px}.db-last-item b{display:block;color:var(--ink);font-size:12px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.db-last-item p{margin:3px 0 0;color:var(--muted);font-size:12px;line-height:1.3}.db-last-empty{padding:12px;border:1px dashed var(--line);border-radius:8px;color:var(--muted);font-size:12px;font-weight:750;text-align:center}
-        .dashboard{min-height:0;display:grid;grid-template-columns:56% 44%;gap:8px}
+        body{margin:0;height:100vh;overflow:auto;background:var(--bg);color:var(--ink);font-family:'Public Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased}
+        .page{height:calc(100vh / var(--tv-scale));width:calc(100vw / var(--tv-scale));padding:5px var(--tv-safe-x) 14px;display:grid;grid-template-rows:38px minmax(0,1fr);gap:5px;transform:scale(var(--tv-scale));transform-origin:top left}
+        .top{display:flex;align-items:center;gap:8px;width:100%;flex-wrap:nowrap}
+        .top .title{flex-shrink:0;min-width:280px;padding:0 14px}
+        .top .menu{flex-shrink:0}
+        .top .date-picker-control{flex-shrink:0}
+        .top .unit-toggle{flex-shrink:0}
+        .top .last-update{margin-left:auto;flex-shrink:0}
+        .unit-toggle{height:34px;border:1px solid var(--line);border-radius:6px;background:#ffffff;box-shadow:var(--shadow);display:flex;align-items:center;padding:3px;gap:4px}
+        .unit-toggle button{height:26px;border:0;border-radius:4px;background:transparent;color:var(--muted);font-size:clamp(11px,.8vw,14px);font-weight:700;text-transform:uppercase;padding:0 12px;cursor:pointer;transition:all .15s ease}
+        .unit-toggle button.active{background:var(--brand);color:#ffffff;box-shadow:none}
+        .title{height:34px;border:1px solid var(--line);border-radius:6px;background:#ffffff;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;font-size:clamp(16px,1.15vw,22px);font-weight:700;letter-spacing:-.3px;color:var(--ink);white-space:nowrap;overflow:hidden}
+        .menu{height:34px;border:1px solid var(--line);border-radius:6px;background:#ffffff;box-shadow:var(--shadow);display:flex;align-items:center;padding:3px;gap:4px}
+        .menu button{height:26px;border:0;border-radius:4px;background:transparent;color:var(--muted);font-size:clamp(11px,.8vw,14px);font-weight:700;text-transform:uppercase;padding:0 12px;cursor:pointer;transition:all .15s ease}
+        .menu button.active{background:var(--brand);color:#ffffff;box-shadow:none}
+        .date-picker-control{height:34px;border:1px solid var(--line);border-radius:6px;background:#ffffff;box-shadow:var(--shadow);display:flex;align-items:center;padding:3px 10px 3px 8px;gap:8px;position:relative}
+        .date-picker-control label{color:var(--muted);font-size:clamp(11px,.78vw,13px);font-weight:700;text-transform:uppercase;white-space:nowrap;letter-spacing:.02em}
+        .date-picker-control input[type="date"]{
+            height:26px;
+            border:1px solid var(--line);
+            border-radius:4px;
+            background:#ffffff;
+            color:var(--ink);
+            font-family:inherit;
+            font-size:clamp(11px,.78vw,13px);
+            font-weight:600;
+            padding:0 6px;
+            cursor:pointer;
+            outline:none;
+        }
+        .date-picker-control input[type="date"]:focus{border-color:var(--brand);box-shadow:0 0 0 2px rgba(30,58,138,.12)}
+        .date-refresh-btn{
+            height:26px;
+            border:0;
+            border-radius:4px;
+            background:var(--brand);
+            color:#ffffff;
+            font-size:clamp(11px,.78vw,13px);
+            font-weight:700;
+            text-transform:uppercase;
+            padding:0 10px;
+            cursor:pointer;
+            display:inline-flex;
+            align-items:center;
+            gap:5px;
+            transition:all .15s ease;
+            white-space:nowrap;
+            line-height:1;
+        }
+        .date-refresh-btn:hover{background:#0f5268}
+        .date-refresh-btn:active{transform:scale(0.96)}
+        .date-refresh-btn svg{display:inline-block;transition:transform .4s ease}
+        .date-refresh-btn:active svg{transform:rotate(180deg)}
+        .period-pill{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            padding:2px 8px;
+            height:22px;
+            border-radius:4px;
+            font-size:clamp(10px,.72vw,12px);
+            font-weight:700;
+            letter-spacing:.02em;
+            white-space:nowrap;
+            user-select:none;
+            transition:all .15s ease;
+        }
+        .period-pill.mid{background:var(--brand);color:#ffffff;border:1px solid var(--brand)}
+        .period-pill.end{background:var(--warn);color:#ffffff;border:1px solid var(--warn)}
+        .period-pill.range{background:var(--accent);color:#ffffff;border:1px solid var(--accent)}
+        .global-loading-overlay{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;background:rgba(15,23,42,.45);backdrop-filter:blur(2px)}
+        .global-loading-overlay.active{display:flex}
+        .global-loading-card{min-width:min(260px,86vw);padding:20px 24px;border:1px solid var(--line);border-radius:8px;background:#ffffff;box-shadow:0 16px 36px rgba(15,23,42,.2);display:grid;justify-items:center;gap:10px}
+        .global-loading-card img{width:48px;height:48px;animation:globalSpin 1s linear infinite}
+        .global-loading-card span{color:var(--ink);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+        @keyframes globalSpin{to{transform:rotate(360deg)}}
+        .workday-open{height:34px;border:1px solid var(--line);border-radius:6px;background:#ffffff;color:var(--brand);font-size:clamp(11px,.8vw,14px);font-weight:700;text-transform:uppercase;box-shadow:var(--shadow);padding:0 14px;cursor:pointer}
+        .last-update{justify-self:end;position:relative}.last-update button{height:34px;border:1px solid var(--line);border-radius:6px;background:#ffffff;color:var(--ink);font-size:clamp(12px,.84vw,15px);font-weight:600;box-shadow:var(--shadow);padding:0 13px;cursor:pointer}.last-update-panel{position:fixed;right:var(--tv-safe-x);top:50px;z-index:60;width:min(420px,calc(100vw - (var(--tv-safe-x) * 2)));max-height:calc(100vh - 112px);overflow:auto;display:none;border:1px solid var(--line);border-radius:8px;background:#ffffff;box-shadow:0 10px 30px rgba(15,23,42,.15);padding:12px}.last-update.open .last-update-panel{display:block}.last-update-panel h3{margin:0 0 8px;color:var(--ink);font-size:12px;font-weight:900;text-transform:uppercase}.db-last-list{display:grid;gap:7px;max-height:calc(100vh - 166px);overflow:auto}.db-last-item{border:1px solid var(--grid);border-radius:8px;background:#fff;padding:8px}.db-last-item b{display:block;color:var(--ink);font-size:12px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.db-last-item p{margin:3px 0 0;color:var(--muted);font-size:12px;line-height:1.3}.db-last-empty{padding:12px;border:1px dashed var(--line);border-radius:8px;color:var(--muted);font-size:12px;font-weight:750;text-align:center}.db-last-summary{border-color:rgba(23,107,135,.2);background:linear-gradient(180deg,rgba(23,107,135,.06),#fff)}.db-last-summary p{margin:4px 0 0}
+        .running-style-box{padding:10px 12px;display:grid;gap:8px;align-content:start}
+        .running-style-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+        .running-style-head h2{margin:0;color:var(--ink);font-size:clamp(13px,.92vw,17px);font-weight:850;text-transform:uppercase;letter-spacing:.02em}
+        .running-style-head small{color:var(--muted);font-size:clamp(10px,.7vw,12px);font-weight:750}
+        .running-style-list{display:grid;gap:6px}
+        .running-style-chip{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:34px;padding:6px 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface-soft);color:var(--ink);font-size:clamp(13px,.9vw,16px);font-weight:700;white-space:nowrap}
+        .running-style-chip .style-name{min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:inherit;font-weight:900;letter-spacing:.01em}
+        .running-style-chip .style-smv{color:var(--risk);font-weight:950;font-size:clamp(15px,1vw,18px);margin-left:auto}
+        .running-style-empty{color:var(--muted);font-size:13px;font-weight:750}
+        .dashboard{min-height:0;display:grid;grid-template-columns:minmax(0,1fr) clamp(280px,22vw,360px);gap:14px}
         .view{min-height:0;display:none}.view.active{display:grid}
-        .left{min-height:0;display:grid;grid-template-rows:42% 58%;gap:8px}
-        .top-charts{min-height:0;display:grid;grid-template-columns:1.05fr .95fr;gap:8px}
-        .right{min-height:0;display:grid;grid-template-rows:128px minmax(0,1fr);gap:8px}
+        .left{min-height:0;min-width:0;display:grid;grid-template-rows:42% 58%;gap:8px}
+        .top-charts{min-height:0;min-width:0;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:8px}
+        .right{min-height:0;min-width:0;display:flex;flex-direction:column;gap:8px}
         .analytics-view{align-content:start;grid-template-rows:72px 132px minmax(0,auto);gap:10px}
         .analytics-detail{min-height:0;display:grid;grid-template-columns:1fr 1fr 1.18fr;gap:10px;align-items:start}
-        .kpis{display:grid;grid-template-columns:1fr 1fr 1.02fr;gap:8px}
-        .box{border:1px solid rgba(219,228,238,.95);border-radius:8px;background:rgba(255,255,255,.94);box-shadow:var(--shadow);min-height:0;overflow:hidden}
-        .chart-box{padding:11px 13px 10px;display:flex;flex-direction:column}
-        #qtyPdkOutputChart,#readyToLoadChart,#outputCapacityChart{min-height:0;flex:1;display:flex;flex-direction:column}
+        .kpis{min-width:0;display:grid;grid-template-rows:repeat(4,minmax(0,1fr));gap:8px;flex:1;height:100%}
+        .box{border:1px solid var(--line);border-radius:8px;background:#ffffff;box-shadow:var(--shadow);min-height:0;min-width:0;overflow:hidden}
+        .chart-box{padding:11px 13px 10px;display:flex;flex-direction:column;min-width:0}
+        #qtyPdkOutputChart,#readyToLoadChart,#outputCapacityChart{min-height:0;min-width:0;flex:1;display:flex;flex-direction:column}
         .chart-title{margin:0 0 5px;text-align:left;color:var(--ink);font-size:clamp(14px,.98vw,18px);font-weight:850;text-transform:uppercase;letter-spacing:.01em}
-        .chart-area{min-height:0;flex:1;display:flex;align-items:end;justify-content:space-around;gap:clamp(18px,1.7vw,34px);border:1px solid var(--grid);border-radius:7px;padding:28px 12px 0;background:linear-gradient(180deg,#fff,var(--surface-soft))}
-        .group{flex:0 1 clamp(92px,6.2vw,128px);min-width:0;height:100%;display:grid;grid-template-rows:1fr clamp(20px,1.24vw,25px);gap:2px}
+        .chart-area{min-height:0;flex:1;display:flex;align-items:end;justify-content:space-around;gap:clamp(18px,1.7vw,34px);border:1px solid var(--grid);border-radius:7px;padding:24px 16px 8px;background:linear-gradient(180deg,#fff,var(--surface-soft))}
+        .group{flex:0 1 clamp(92px,6.2vw,128px);min-width:0;height:100%;display:grid;grid-template-rows:1fr 22px;gap:2px}
         .bars{height:100%;display:flex;align-items:end;justify-content:center;gap:clamp(4px,.34vw,7px)}
-        .vbar{width:clamp(32px,2.55vw,50px);min-height:2px;background:linear-gradient(180deg,var(--brand),#0f5268);border-radius:6px 6px 2px 2px;position:relative;box-shadow:0 8px 17px rgba(23,107,135,.17)}
-        .vbar.alt{background:linear-gradient(180deg,var(--accent),#58712f)}
-        .vbar.third{background:linear-gradient(180deg,#f59e0b,#b45309)}
+        .vbar{width:clamp(32px,2.55vw,50px);min-height:2px;background:var(--brand);border-radius:4px 4px 1px 1px;position:relative;box-shadow:none}
+        .vbar.alt{background:#475569}
+        .vbar.third{background:var(--warn)}
         .vbar small{position:absolute;left:50%;bottom:calc(100% + 3px);transform:translateX(-50%);background:#17202d;color:#fff;border-radius:5px;padding:2px 5px;font-size:clamp(10px,.74vw,14px);font-weight:800;white-space:nowrap}
-        .vbar .label-0{transform:translateX(-74%)}.vbar .label-1{transform:translateX(-26%)}.vbar .label-2{transform:translateX(-14%)}
+        .vbar .label-0{transform:translateX(-78%)}.vbar .label-1{transform:translateX(-34%)}.vbar .label-2{transform:translateX(-6%)}.vbar .label-3{transform:translateX(18%)}
         .vbar.alt small{background:#43591f;color:#fff}.vbar.third small{background:#92400e;color:#fff}
+        .qty .bars, .ready .bars{gap:clamp(3px,.28vw,5px)}
+        .qty .group, .ready .group{flex:0 1 clamp(92px,6.2vw,128px)}
+        .qty .vbar, .ready .vbar{width:clamp(22px,1.75vw,34px)}
         .glabel{text-align:center;font-size:clamp(11px,.78vw,14px);color:var(--muted);white-space:nowrap;font-weight:700}
-        .legend{display:flex;justify-content:flex-end;gap:10px;margin-top:4px;font-size:clamp(10px,.74vw,14px);color:var(--muted);font-weight:700}
-        .legend span{display:inline-flex;align-items:center;gap:5px}.dot{width:clamp(8px,.58vw,11px);height:clamp(8px,.58vw,11px);border-radius:999px;display:inline-block;background:var(--brand)}.dot.alt{background:var(--accent)}.dot.output{background:var(--accent)}.line-key{width:clamp(16px,1.2vw,24px);height:0;border-top:3px solid #f59e0b;display:inline-block}
-        .ready .chart-area{gap:clamp(20px,1.8vw,36px);padding-left:clamp(20px,2vw,36px);padding-right:clamp(20px,2vw,36px)}.ready .vbar{width:clamp(42px,3.25vw,64px);background:linear-gradient(180deg,var(--brand),#0f5268)}.ready .vbar small{background:#17202d;color:#fff}
-        .capacity{padding:11px 13px 10px}
-        .capacity .chart-area{position:relative;z-index:1;min-height:0;flex:1;border:1px solid var(--grid);border-radius:7px;background:linear-gradient(180deg,#fff,var(--surface-soft));padding:0}
-        .capacity .group{position:relative;z-index:2}
-        .capacity .bars{position:relative}
-        .capacity .vbar{width:clamp(34px,2.45vw,48px);background:linear-gradient(180deg,var(--brand),#0f5268)}
-        .capacity .vbar.alt{background:linear-gradient(180deg,#9fc06a,#6d8737)}
-        .capacity .vbar small{background:#17202d;color:#fff}
-        .capacity .vbar.alt small{background:#43591f;color:#fff}
-        .capacity .input-line-chart{position:absolute;z-index:4;overflow:visible;pointer-events:none}
-        .capacity .input-line-chart polyline{fill:none;stroke:#f59e0b;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
-        .capacity .input-line-labels{position:absolute;z-index:6;pointer-events:none}
-        .capacity .input-value{position:absolute;transform:translateX(-50%);background:#f59e0b;color:#fff;border-radius:5px;padding:2px 5px;font-size:clamp(9px,.68vw,12px);font-weight:900;line-height:1;white-space:nowrap;box-shadow:0 0 0 2px rgba(255,255,255,.72)}
-        .capacity .chart-gridline{position:absolute;border-top:1px solid var(--grid);height:0;pointer-events:none;z-index:1}
-        .capacity .chart-y-label{position:absolute;color:var(--muted);font-size:clamp(9px,.65vw,11px);font-weight:800;pointer-events:none;z-index:1;line-height:1}
-        #outputCapacityChart{flex-direction:row;gap:15px}
-        .chart-sidebar{width:115px;flex-shrink:0;border-right:1px solid var(--grid);padding:5px 12px 5px 0;display:flex;flex-direction:column;gap:12px}
-        .sidebar-title{font-size:clamp(11px,.8vw,14px);font-weight:900;color:var(--ink);letter-spacing:.05em;margin-bottom:2px}
-        .sidebar-item{display:flex;flex-direction:column;gap:3px}
-        .sidebar-label{display:inline-flex;align-items:center;gap:6px;font-size:clamp(9px,.68vw,11px);font-weight:800;color:var(--muted)}
-        .sidebar-label .dot{width:8px;height:8px;margin:0}
-        .sidebar-label .line-key{width:14px;height:0;border-top:3px solid #f59e0b}
-        .sidebar-value{font-size:clamp(16px,1.2vw,22px);font-weight:900;color:var(--ink);padding-left:14px}
-        .kpi{background:linear-gradient(180deg,#fff,#f6fafc);border:1px solid rgba(219,228,238,.95);border-radius:7px;padding:12px;color:var(--ink);box-shadow:var(--shadow)}
-        .kpi span{display:block;font-size:clamp(12px,.82vw,15px);font-weight:850;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.kpi strong{display:block;margin-top:7px;font-size:clamp(26px,1.92vw,36px);line-height:1;font-weight:900;color:var(--ink)}.kpi small{font-size:clamp(14px,1vw,19px);font-weight:850;color:var(--muted)}
-        .kpi-remaining-days{margin-top:8px;padding-top:8px;border-top:1px dashed rgba(128,144,163,.35);display:grid;gap:2px}.kpi-remaining-days span{font-size:clamp(10px,.72vw,13px);font-weight:850;color:var(--muted);text-transform:none;white-space:normal;overflow:visible;text-overflow:clip}.kpi-remaining-days #remainingDays{display:inline-block;margin-top:0;font-size:clamp(16px,1.18vw,22px);font-weight:950;color:var(--brand)}
+        .legend{display:flex;justify-content:flex-end;gap:10px;margin-top:4px;font-size:clamp(10px,.74vw,14px);color:var(--muted);font-weight:700;flex-wrap:wrap;row-gap:2px}
+        .legend span{display:inline-flex;align-items:center;gap:5px}.dot{width:clamp(8px,.58vw,11px);height:clamp(8px,.58vw,11px);border-radius:999px;display:inline-block;background:var(--brand)}.dot.alt{background:var(--accent)}.dot.demand{background:var(--accent)}.dot.output{background:#f59e0b}.bar-key{width:clamp(10px,.7vw,14px);height:clamp(10px,.7vw,14px);border-radius:3px;display:inline-block;background:#facc15;border:1px solid rgba(180,83,9,.35)}.bar-key.cap{background:var(--brand);border-color:#0f5268}.bar-key.demand{background:var(--accent);border-color:#58712f}.bar-key.out{background:#f59e0b;border-color:#b45309}.bar-key.in{background:var(--brand);border-color:#0f5268}.line-key{width:clamp(16px,1.1vw,22px);height:3px;background:#facc15;border-radius:2px;display:inline-flex;align-items:center;justify-content:center;position:relative}.line-key::after{content:'';width:7px;height:7px;border-radius:999px;background:#facc15;border:1.5px solid #17202d}.line-key.demand,.line-key.capacity{background:#ef4444}.line-key.demand::after,.line-key.capacity::after{background:#ef4444;border:1.5px solid #17202d}
+        .ready .chart-area{gap:clamp(18px,1.7vw,34px);padding:24px 16px 8px}
+        .ready .vbar{background:linear-gradient(180deg,var(--brand),#0f5268)}
+        .ready .vbar.alt{background:linear-gradient(180deg,var(--accent),#58712f)}
+        .ready .vbar small{background:#17202d;color:#fff}
+        .ready .vbar.alt small{background:#43591f;color:#fff}
+        .capacity{padding:11px 13px 10px;overflow:visible}
+        .capacity .chart-area{
+            position:relative;
+            z-index:1;
+            min-height:0;
+            flex:1;
+            border:1px solid var(--grid);
+            border-radius:7px;
+            background:linear-gradient(180deg,#fff,var(--surface-soft));
+            padding:10px;
+            overflow:visible;
+            display:flex;
+            flex-direction:column;
+            gap:6px;
+        }
+        .capacity-inline-chart{
+            min-height:0;
+            flex:1;
+            display:flex;
+            align-items:end;
+            justify-content:space-around;
+            gap:clamp(18px,1.7vw,34px);
+            border:1px solid var(--grid);
+            border-radius:7px;
+            background:linear-gradient(180deg,#fff,var(--surface-soft));
+            padding:24px 16px 8px;
+            overflow:hidden;
+        }
+        .capacity-panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:0 2px}
+        .capacity-panel-head span{color:var(--ink);font-size:clamp(11px,.8vw,13px);font-weight:900;text-transform:uppercase;letter-spacing:.03em}
+        .capacity-panel-head small{color:var(--muted);font-size:clamp(9px,.68vw,11px);font-weight:750;white-space:nowrap}
+        .capacity-combined-chart{
+            position:relative;
+            min-height:0;
+            flex:1;
+            border:1px solid var(--grid);
+            border-radius:7px;
+            background:linear-gradient(180deg,#fff,var(--surface-soft));
+            padding:14px 12px 10px;
+            overflow:hidden;
+            display:grid;
+            grid-template-columns:48px minmax(0,1fr);
+            grid-template-rows:minmax(0,1fr) 26px;
+            gap:6px 8px;
+        }
+        .capacity-combined-chart .flow-caption{
+            position:absolute;
+            left:12px;
+            top:8px;
+            z-index:7;
+            color:var(--muted);
+            font-size:10px;
+            font-weight:800;
+            text-transform:uppercase;
+            letter-spacing:.04em;
+            background:rgba(255,255,255,.88);
+            padding:0 4px;
+        }
+        .capacity-y-axis{
+            grid-column:1;
+            grid-row:1;
+            position:relative;
+            min-width:0;
+        }
+        .capacity-y-axis span{
+            position:absolute;
+            left:0;
+            transform:translateY(50%);
+            color:var(--muted);
+            font-size:clamp(9px,.68vw,11px);
+            font-weight:800;
+            white-space:nowrap;
+        }
+        .capacity-plot{
+            grid-column:2;
+            grid-row:1;
+            position:relative;
+            min-width:0;
+            border:1px solid var(--grid);
+            border-radius:7px;
+            background:linear-gradient(180deg,#fff,var(--surface-soft));
+            overflow:hidden;
+        }
+        .capacity-plot .flow-gridline{
+            position:absolute;
+            left:0;
+            right:0;
+            border-top:1px solid var(--grid);
+            height:0;
+            pointer-events:none;
+            z-index:1;
+        }
+        .chart-gridline{
+            position:absolute;
+            border-top:1px solid var(--grid);
+            height:0;
+            pointer-events:none;
+            z-index:1;
+        }
+        .capacity-plot .flow-svg{
+            position:absolute;
+            inset:0;
+            z-index:4;
+            overflow:hidden;
+            pointer-events:none;
+        }
+        .capacity-plot .line-outline{fill:none;stroke:rgba(16,32,51,.34);stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+        .capacity-plot .line-main{fill:none;stroke:#facc15;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;filter:drop-shadow(0 1px 0 rgba(255,255,255,.85))}
+        .capacity-plot .line-dot{stroke:#17202d;stroke-width:.9;fill:#facc15}
+        .capacity-plot .flow-labels{
+            position:absolute;
+            inset:0;
+            z-index:6;
+            pointer-events:none;
+            overflow:visible;
+        }
+        .capacity-plot .input-value{
+            position:absolute;
+            transform:translateX(-50%);
+            background:#facc15;
+            color:#111827;
+            border-radius:4px;
+            padding:2px 5px;
+            font-size:clamp(9px,.68vw,12px);
+            font-weight:900;
+            line-height:1;
+            white-space:nowrap;
+            box-shadow:0 0 0 2px rgba(255,255,255,.88);
+        }
+        .capacity-plot .capacity-columns{
+            position:absolute;
+            inset:12px 10px 18px 10px;
+            display:flex;
+            align-items:end;
+            justify-content:space-around;
+            gap:clamp(10px,1.15vw,18px);
+            z-index:2;
+        }
+        .capacity-plot .capacity-column-bars{height:100%;display:flex;align-items:end;justify-content:center;gap:clamp(4px,.34vw,7px)}
+        .capacity-plot .capacity-column-label{margin-top:2px;text-align:center;font-size:clamp(10px,.72vw,12px);color:var(--muted);white-space:nowrap;font-weight:750}
+        .capacity-x-axis{
+            grid-column:2;
+            grid-row:2;
+            display:grid;
+            gap:4px;
+            grid-template-columns:repeat(auto-fit,minmax(0,1fr));
+            align-items:start;
+            min-width:0;
+        }
+        .capacity-x-axis span{
+            text-align:center;
+            color:var(--muted);
+            font-size:clamp(10px,.72vw,12px);
+            font-weight:750;
+            line-height:1.1;
+            white-space:nowrap;
+            overflow:hidden;
+            text-overflow:ellipsis;
+        }
+        .capacity .group{position:relative;z-index:2;flex:1 1 0;min-width:0;height:100%;display:grid;grid-template-rows:1fr 26px;gap:2px;padding-top:4px}
+        .capacity .bars{gap:clamp(4px,.32vw,8px)}
+        .capacity .vbar, .capacity .vbar.in{width:clamp(24px,1.8vw,38px);border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,var(--brand),#0f5268)}
+        .capacity .vbar.out, .capacity .vbar.third{background:linear-gradient(180deg,#f59e0b,#b45309)}
+        .capacity .vbar small, .capacity .vbar.in small{background:#17202d;color:#fff;font-size:clamp(9px,.68vw,13px);padding:1px 5px;border-radius:4px}
+        .capacity .vbar.out small, .capacity .vbar.third small{background:#92400e;color:#fff}
+        .capacity .vbar .label-0{transform:translateX(-68%)}
+        .capacity .vbar .label-1{transform:translateX(-32%)}
+        .capacity-combined-chart .output-value{
+            position:absolute;
+            transform:translateX(-50%);
+            background:#ef4444;
+            color:#fff;
+            border-radius:4px;
+            padding:2px 5px;
+            font-size:clamp(9px,.68vw,12px);
+            font-weight:900;
+            line-height:1;
+            white-space:nowrap;
+            box-shadow:0 0 0 2px rgba(255,255,255,.88);
+        }
+        .capacity-combined-chart .flow-xlabels{
+            position:absolute;
+            left:12px;
+            right:12px;
+            bottom:8px;
+            z-index:5;
+            display:grid;
+            gap:4px;
+            grid-template-columns:repeat(auto-fit,minmax(0,1fr));
+            pointer-events:none;
+        }
+        .capacity-combined-chart .flow-xlabels span{
+            text-align:center;
+            color:var(--muted);
+            font-size:clamp(10px,.72vw,12px);
+            font-weight:750;
+            line-height:1.1;
+            white-space:nowrap;
+            overflow:hidden;
+            text-overflow:ellipsis;
+        }
+        .kpi{background:#ffffff;border:1px solid var(--line);border-radius:8px;padding:16px 18px;color:var(--ink);box-shadow:var(--shadow);display:flex;flex-direction:column;justify-content:center}
+        .kpi span{display:block;font-size:clamp(12px,.85vw,16px);font-weight:700;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.03em}.kpi strong{display:flex;align-items:baseline;gap:8px;margin-top:8px;font-size:clamp(28px,2.2vw,42px);line-height:1;font-weight:800;color:var(--ink)}.kpi small{font-size:clamp(13px,.9vw,18px);font-weight:600;color:var(--muted)}
+        .kpi-overview{display:grid;grid-template-rows:auto auto;gap:10px}
+        .kpi-overview-stack{display:grid;gap:8px}
+        .kpi-overview-item{min-width:0}
+        .kpi-composite-list{display:grid;gap:6px}
+        .kpi-composite-item{display:grid;gap:2px;min-width:0;padding-top:0}
+        .kpi-composite-item + .kpi-composite-item{padding-top:2px;border-top:1px dashed rgba(128,144,163,.35)}
+        .kpi-composite-item span{font-size:clamp(12px,.82vw,15px);font-weight:850;color:var(--muted);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .kpi-composite-item strong{display:flex;align-items:baseline;gap:6px;margin:0;color:var(--ink);font-size:clamp(24px,1.7vw,36px);line-height:1;font-weight:950}
+        .kpi-composite-item strong small{font-size:clamp(13px,.92vw,16px);font-weight:850}
+        .kpi-composite-item .kpi-help{color:var(--muted);font-size:11px;font-weight:750;line-height:1.25}
+        .kpi-style-item .running-style-list{margin-top:2px}
+        .kpi-direct-card{
+            border:1px solid var(--line);
+            border-radius:8px;
+            background:#ffffff;
+            box-shadow:var(--shadow);
+            padding:6px 10px 8px;
+            display:grid;
+            gap:4px;
+            min-height:200px;
+            height:auto;
+            overflow:visible;
+        }
+        .kpi-direct-head{
+            display:flex;
+            align-items:center;
+            gap:6px;
+            color:var(--muted);
+            font-size:10px;
+            font-weight:900;
+            text-transform:uppercase;
+            letter-spacing:.04em;
+            white-space:nowrap;
+        }
+        .kpi-direct-head::before,
+        .kpi-direct-head::after{
+            content:'';
+            flex:1;
+            border-top:1px dashed rgba(128,144,163,.45);
+        }
+        .kpi-direct-head span{
+            color:var(--ink);
+            font-size:12px;
+            line-height:1;
+        }
+        .kpi-direct-grid{
+            display:grid;
+            grid-template-columns:minmax(0,1fr) 1px minmax(0,1fr);
+            gap:2px;
+            align-items:start;
+            min-height:0;
+        }
+        .kpi-direct-divider{
+            align-self:stretch;
+            background:linear-gradient(180deg, rgba(128,144,163,.18), rgba(128,144,163,.45), rgba(128,144,163,.18));
+        }
+        .kpi-direct-cell{
+            min-width:0;
+            display:grid;
+            gap:2px;
+            padding:0 1px 0;
+            align-content:start;
+        }
+        .kpi-direct-cell.right{
+            position:relative;
+            text-align:right;
+            justify-items:end;
+            align-content:start;
+            gap:0;
+            padding-right:2px;
+            min-height:54px;
+        }
+        .kpi-direct-cell.right .kpi-help{
+            width:100%;
+            text-align:right;
+        }
+        #directActualOutput{
+            position:absolute;
+            right:2px;
+            top:12px;
+            display:block;
+            width:auto;
+            margin-top:0;
+            margin-left:auto;
+            line-height:1;
+            text-align:center;
+            font-variant-numeric:tabular-nums;
+            font-size:clamp(26px,1.9vw,40px);
+            font-weight:950;
+            letter-spacing:-.05em;
+            padding:0 2px 0 0;
+            color:var(--ink);
+            justify-self:end;
+            align-self:start;
+        }
+        .kpi-direct-label{
+            color:var(--muted);
+            font-size:clamp(10px,.72vw,12px);
+            font-weight:900;
+            text-transform:uppercase;
+            letter-spacing:.03em;
+        }
+        .kpi-direct-value{
+            display:block;
+            margin-top:0 !important;
+            color:var(--ink);
+            font-size:clamp(20px,1.42vw,30px);
+            line-height:1;
+            font-weight:950;
+            letter-spacing:-.04em;
+        }
+        .kpi-remaining-days{margin-top:8px;padding-top:8px;border-top:1px dashed rgba(128,144,163,.35);display:grid;gap:2px}.kpi-remaining-days span{font-size:clamp(12px,.82vw,15px);font-weight:850;color:var(--muted);text-transform:none;white-space:normal;overflow:visible;text-overflow:clip}.kpi-remaining-days #remainingDays{display:inline-block;margin-top:0;font-size:clamp(20px,1.35vw,28px);font-weight:950;color:var(--brand)}
 
-        .kpi.balance-detail{display:grid;grid-template-rows:auto minmax(0,1fr);gap:5px}.kpi-balance-list{min-height:0;display:grid;gap:2px;align-content:start}.kpi-balance-row{display:grid;grid-template-columns:minmax(70px,1fr) 8px minmax(54px,.8fr) 26px;gap:5px;align-items:center;color:var(--ink);font-size:clamp(12px,.84vw,16px);font-weight:750;line-height:1.08}.kpi-balance-row b{text-align:right;font-size:inherit}.kpi-balance-row small{color:var(--muted);font-size:clamp(10px,.7vw,13px);font-weight:750}
+        .kpi.balance-detail{display:grid;grid-template-rows:auto minmax(0,1fr);gap:6px;align-content:start;justify-content:start;justify-items:start;min-height:0;overflow:hidden}
+        .kpi.balance-detail > span{font-size:clamp(11px,.72vw,13px);font-weight:800;color:var(--text);letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
+        .kpi-balance-list{min-height:0;display:grid;gap:clamp(3px,.4vh,6px);align-content:start;justify-content:start;overflow-y:auto}
+        .kpi-balance-row{display:grid;grid-template-columns:minmax(72px,auto) 10px auto auto;gap:6px;align-items:baseline;color:var(--ink);font-size:clamp(13px,.92vw,17px);font-weight:850;line-height:1.15;white-space:nowrap}
+        .kpi-balance-row span:first-child{font-weight:850;color:var(--ink)}
+        .kpi-balance-row span:nth-child(2){text-align:center;font-weight:900;color:var(--muted)}
+        .kpi-balance-row b{text-align:left;font-size:clamp(16px,1.2vw,23px);font-weight:950;color:var(--ink);font-variant-numeric:tabular-nums}
+        .kpi-balance-row small{color:var(--muted);font-size:clamp(11px,.75vw,14px);font-weight:850;padding-left:2px}
         .condition-card{padding:11px 16px;display:grid;grid-template-columns:182px 132px minmax(0,1fr) 110px;align-items:center;gap:14px;border-left:6px solid var(--brand)}.condition-card h2{margin:0;color:var(--muted);font-size:clamp(11px,.76vw,13px);font-weight:850;text-transform:uppercase;letter-spacing:.04em}.condition-level{display:inline-flex;align-items:center;justify-content:center;height:38px;border-radius:999px;font-size:clamp(17px,1.18vw,23px);font-weight:950;text-transform:uppercase}.condition-text{min-width:0;color:var(--ink);font-size:clamp(13px,.92vw,17px);font-weight:800;line-height:1.25}.condition-meta{justify-self:end;color:var(--muted);font-size:clamp(10px,.7vw,13px);font-weight:850;text-transform:uppercase;text-align:right}.condition-shortage{grid-column:4;justify-self:end;color:var(--muted);font-size:clamp(10px,.72vw,13px);font-weight:850;text-transform:uppercase;white-space:nowrap;text-align:right}.condition-shortage b{color:var(--ink);font-size:clamp(13px,.92vw,18px);font-weight:950}.condition-card.good{border-color:#bbf7d0;border-left-color:var(--ok);background:linear-gradient(90deg,#f4fff7 0,#fff 62%)}.condition-card.good .condition-level{background:#dcfce7;color:#166534}.condition-card.watch{border-color:#fde68a;border-left-color:var(--warn);background:linear-gradient(90deg,#fffbea 0,#fff 62%)}.condition-card.watch .condition-level{background:#fef3c7;color:#92400e}.condition-card.risk{border-color:#fecaca;border-left-color:var(--risk);background:linear-gradient(90deg,#fff5f5 0,#fff 62%)}.condition-card.risk .condition-level{background:#fee2e2;color:#991b1b}
         .condition-card.simple{grid-template-columns:220px 150px minmax(0,1fr) 130px}.condition-card.simple .condition-text{display:none}.condition-card.simple .condition-meta{display:none}
         .analytics{padding:11px 14px;display:grid;grid-template-rows:auto minmax(0,1fr);gap:9px}.analytics h2,.summary h2,.priority h2{margin:0;color:var(--ink);font-size:clamp(13px,.92vw,17px);font-weight:850;text-transform:uppercase;letter-spacing:.02em}
@@ -96,15 +481,28 @@
         .insights{min-height:0;overflow:hidden;display:grid;grid-template-columns:1fr;gap:7px;align-content:start}.insight{display:grid;grid-template-columns:9px 1fr;gap:9px;align-items:start;min-width:0;border:1px solid var(--grid);border-radius:8px;background:#fff;padding:8px 9px}.badge{width:9px;height:9px;border-radius:999px;margin-top:5px;background:var(--brand)}.insight.good .badge,.accuracy-row.good .badge,.action-row.good .badge{background:var(--ok)}.insight.watch .badge,.accuracy-row.watch .badge,.action-row.watch .badge{background:var(--warn)}.insight.risk .badge,.accuracy-row.risk .badge,.action-row.risk .badge{background:var(--risk)}.insight b{display:block;color:var(--ink);font-size:clamp(12px,.82vw,14px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.insight p{margin:2px 0 0;color:var(--muted);font-size:clamp(10px,.72vw,13px);line-height:1.28}
         .summary{padding:11px 14px;display:grid;grid-template-rows:auto auto auto auto;gap:9px}.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-content:start}.summary-item{border:1px solid var(--grid);border-radius:8px;background:#fff;padding:8px 72px 8px 10px;position:relative;overflow:visible}.summary-item span{display:block;color:var(--muted);font-size:clamp(9px,.64vw,12px);font-weight:850;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.summary-item strong{display:block;margin-top:4px;color:var(--ink);font-size:clamp(15px,1vw,20px);font-weight:900}.accuracy-list{min-height:0;overflow:visible;display:grid;gap:7px;align-content:start}.accuracy-row{border:1px solid var(--grid);border-radius:8px;background:#fff;padding:8px;display:grid;grid-template-columns:9px 1fr;gap:9px;position:relative;overflow:visible}.accuracy-row b{display:block;color:var(--ink);font-size:clamp(11px,.74vw,13px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.accuracy-row p{margin:2px 0 0;color:var(--muted);font-size:clamp(10px,.68vw,12px);line-height:1.24}.section-label{margin:0;color:var(--muted);font-size:clamp(10px,.68vw,13px);font-weight:850;text-transform:uppercase}.action-card{padding:11px 14px;display:grid;grid-template-rows:auto minmax(0,1fr);gap:9px}.action-card h2{margin:0;color:var(--ink);font-size:clamp(13px,.92vw,17px);font-weight:850;text-transform:uppercase;letter-spacing:.02em}.action-list{min-height:0;overflow:visible;display:grid;gap:8px;align-content:start}.action-row{display:grid;grid-template-columns:9px 1fr;gap:9px;border:1px solid var(--grid);border-radius:8px;background:#fff;padding:8px 9px;position:relative;overflow:visible}.action-row b{display:block;color:var(--ink);font-size:clamp(11px,.76vw,14px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.action-row p{margin:3px 0 0;color:var(--muted);font-size:clamp(10px,.68vw,12px);line-height:1.24}.action-row p strong{color:var(--ink);font-weight:850}.action-row .cap-row{display:grid;grid-template-columns:88px 1fr;gap:4px;margin:2px 0 0;align-items:baseline}.action-row .cap-label{font-size:clamp(9px,.64vw,11px);font-weight:900;text-transform:uppercase;color:var(--brand);white-space:nowrap}.action-row .cap-label.penyebab{color:var(--warn)}.action-row .cap-label.pencegahan{color:var(--ok)}.action-row .cap-label.penanganan{color:var(--risk)}.action-row .cap-label.masalah{color:var(--muted)}.action-row .cap-val{font-size:clamp(10px,.68vw,12px);color:var(--ink);line-height:1.26}.hover-detail{display:none}
         .priority{padding:16px 18px 18px}.priority-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.priority h2{margin:0;font-size:clamp(15px,1.05vw,20px);letter-spacing:.02em}.download-btn{height:34px;border:1px solid var(--line);border-radius:8px;background:linear-gradient(180deg,#fff,#edf7fb);color:var(--brand);font-size:13px;font-weight:900;text-transform:uppercase;padding:0 14px;cursor:pointer;box-shadow:0 6px 14px rgba(16,32,51,.05)}.download-btn:hover{border-color:var(--brand);background:#eaf6fb}.list-order-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 14px;padding:0 2px}.list-order-stat{border:1px solid rgba(219,228,238,.95);border-radius:10px;background:linear-gradient(180deg,#fff,#f8fbfd);box-shadow:0 8px 20px rgba(16,32,51,.04);padding:12px 14px;display:grid;gap:6px;min-height:76px}.list-order-stat span{display:block;color:var(--muted);font-size:12px;font-weight:850;text-transform:uppercase;letter-spacing:.03em}.list-order-stat strong{display:block;color:var(--ink);font-size:clamp(22px,1.55vw,32px);line-height:1.02;font-weight:950;text-align:center}.list-order-stat small{display:block;color:var(--muted);font-size:11px;font-weight:750;text-align:center}.table-scroll{height:calc(100% - 104px);overflow:auto;border:1px solid var(--grid);border-radius:10px;background:#fff;box-shadow:0 8px 18px rgba(16,32,51,.03)}table{width:100%;border-collapse:separate;border-spacing:0;color:var(--ink);font-size:clamp(16px,1.1vw,20px)}th{height:44px;color:var(--muted);font-size:clamp(13px,.92vw,16px);text-align:center;text-transform:uppercase;background:var(--surface-soft);font-weight:900;letter-spacing:.03em;position:sticky;top:0;z-index:2}td{border-bottom:1px solid var(--grid);vertical-align:middle;padding:12px 14px;line-height:1.15}tbody tr:nth-child(even){background:#fafcff}tbody tr:hover{background:#f4f9fc}th:first-child,td:first-child{width:48px;text-align:right;padding-right:12px}.order{width:190px;white-space:nowrap;font-size:clamp(14px,1vw,18px)}.style{width:210px;white-space:nowrap;font-size:clamp(14px,1vw,18px)}.delivery{text-align:center;white-space:nowrap;font-size:clamp(14px,.98vw,17px)}.num{text-align:center;font-weight:900;white-space:nowrap;font-size:clamp(14px,1vw,18px)}.unit{padding-left:5px;font-size:clamp(11px,.76vw,14px);color:var(--muted);font-weight:700}.priority table{height:100%}.priority tbody tr{height:10%}.priority-detail-row td{padding:0 10px 10px;border-bottom:1px solid var(--grid);background:transparent}.priority-detail{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:clamp(10px,.7vw,12px);color:var(--muted);font-weight:750;line-height:1.25}.priority-detail b{color:var(--ink);font-weight:900}
+        .list-order-filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+        .list-order-filter-group{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(180deg,#fff,#f8fbfd);border:1px solid var(--line);border-radius:7px;padding:3px 8px;box-shadow:0 2px 6px rgba(16,32,51,.04);height:32px}
+        .list-order-filter-group label{font-size:clamp(11px,.76vw,13px);font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.02em;white-space:nowrap}
+        .list-order-filter-group select,.list-order-filter-group input{border:0;outline:none;font-size:clamp(11px,.78vw,13px);font-weight:800;color:var(--ink);background:transparent;font-family:inherit}
+        .list-order-filter-group select{max-width:210px;cursor:pointer}
+        .list-order-filter-group input[type="number"]{width:80px}
+        .list-order-filter-reset{height:32px;padding:0 12px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--brand);font-size:clamp(11px,.76vw,13px);font-weight:850;cursor:pointer;box-shadow:0 2px 6px rgba(16,32,51,.04);transition:all .15s ease}
+        .list-order-filter-reset:hover{background:#f0f7fa;border-color:var(--brand)}
+        .list-order-count-badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;background:rgba(23,107,135,.1);color:var(--brand);font-size:clamp(10px,.72vw,12px);font-weight:850;letter-spacing:.02em}
+        .process{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(12px,.82vw,14px);font-weight:750;color:var(--ink);text-align:left}
         .modal-backdrop{position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:9999;display:none;align-items:flex-start;justify-content:center;padding:58px 18px 28px;background:rgba(16,32,51,.42)}.modal-backdrop.open{display:flex}.detail-modal{width:min(1080px,94vw);height:auto;max-height:calc(100vh - 96px);border:1px solid var(--line);border-radius:8px;background:#fff;box-shadow:0 28px 70px rgba(16,32,51,.28);display:grid;grid-template-rows:52px minmax(0,1fr)}.modal-head{height:52px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 16px;border-bottom:1px solid var(--grid)}.modal-head h3{margin:0;color:var(--ink);font-size:16px;font-weight:900;text-transform:uppercase}.modal-close{width:32px;height:32px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);font-size:22px;line-height:1;cursor:pointer}.modal-body{min-height:0;max-height:calc(100vh - 148px);padding:14px;overflow:auto}.calc-note{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}.calc-item{border:1px solid var(--grid);border-radius:8px;background:var(--surface-soft);padding:9px 10px;text-align:center}.calc-item span{display:block;color:var(--muted);font-size:11px;font-weight:850;text-transform:uppercase}.calc-item strong{display:block;margin-top:4px;color:var(--ink);font-size:15px;font-weight:900}.calc-formula{grid-column:1/-1;border:1px solid var(--line);border-radius:8px;background:#fff;padding:9px 10px;color:var(--muted);font-size:12px;font-weight:750;text-align:center}.detail-table{border:1px solid var(--grid);border-radius:8px;overflow:auto}.detail-table table{font-size:13px}.detail-table th,.detail-table td{padding:8px 10px;text-align:center}.detail-table th:first-child,.detail-table td:first-child{width:auto;text-align:center;padding-right:10px}.detail-table .num{text-align:center}.detail-empty{padding:18px;border:1px dashed var(--line);border-radius:8px;color:var(--muted);font-weight:750;text-align:center}
         .workday-modal{width:min(980px,94vw)}.calendar-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.calendar-tools button{height:32px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);font-weight:850;padding:0 12px;cursor:pointer}.calendar-month-title{color:var(--ink);font-size:16px;font-weight:900;text-transform:uppercase}.calendar-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}.calendar-summary-item{border:1px solid var(--grid);border-radius:7px;background:var(--surface-soft);padding:7px 8px}.calendar-summary-item span{display:block;color:var(--muted);font-size:10px;font-weight:850;text-transform:uppercase}.calendar-summary-item b{display:block;margin-top:3px;color:var(--ink);font-size:15px;font-weight:900}.calendar-summary-item small{display:block;margin-top:3px;color:var(--muted);font-size:9px;font-weight:750}.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.calendar-head{padding:6px 4px;color:var(--muted);font-size:11px;font-weight:900;text-align:center;text-transform:uppercase}.calendar-day{min-height:62px;border:1px solid var(--grid);border-radius:7px;background:#fff;color:var(--ink);display:grid;grid-template-rows:auto 1fr;align-items:start;padding:6px;text-align:left;cursor:pointer}.calendar-day b{font-size:13px}.calendar-day span{align-self:end;color:var(--muted);font-size:10px;font-weight:800;text-transform:uppercase}.calendar-day.out{opacity:.38}.calendar-day.sunday{background:#fff7f7}.calendar-day.work{border-color:#bbf7d0;background:#f0fdf4;color:#166534}.calendar-day.half{border-color:#fed7aa;background:#fff7ed;color:#9a3412}.calendar-day.holiday{border-color:#fecaca;background:#fee2e2;color:#991b1b}.calendar-day.today{box-shadow:inset 0 0 0 2px var(--brand)}.calendar-day.locked{background:#f8fafc;border-color:#e2e8f0;color:#94a3b8}.calendar-legend{display:flex;gap:12px;align-items:center;margin-top:10px;color:var(--muted);font-size:12px;font-weight:750}.calendar-legend i{width:11px;height:11px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:-1px}.legend-work{background:#f0fdf4;border:1px solid #bbf7d0}.legend-half{background:#fff7ed;border:1px solid #fed7aa}.legend-off{background:#fee2e2;border:1px solid #fecaca}.legend-sunday{background:#fff7f7;border:1px solid var(--grid)}.calendar-help{margin-top:8px;color:var(--muted);font-size:12px;font-weight:750}.modal-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:12px}.modal-actions button{height:34px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);font-weight:850;padding:0 14px;cursor:pointer}.modal-actions .primary{border-color:var(--brand);background:var(--brand);color:#fff}.workday-message{margin-right:auto;color:var(--muted);font-size:12px;font-weight:750}
         @media (max-height: 820px){
-            .page{padding:8px var(--tv-safe-x) var(--tv-safe-bottom);grid-template-rows:40px minmax(0,1fr);gap:8px}
+            .page{padding:7px var(--tv-safe-x) 12px;grid-template-rows:40px minmax(0,1fr);gap:7px}
             .top{gap:8px}.title,.menu{height:38px}.menu button{height:30px;padding:0 12px}
+            .date-picker-control{height:32px;padding:2px 8px;gap:6px}.date-picker-control input[type="date"]{height:24px}.date-picker-control .date-refresh-btn{height:24px;padding:0 8px;font-size:11px}
             .last-update button{height:36px;font-size:12px}.last-update-panel{position:fixed;right:var(--tv-safe-x);top:50px;width:min(420px,calc(100vw - (var(--tv-safe-x) * 2)));max-height:calc(100vh - 96px);overflow:auto}.db-last-list{max-height:calc(100vh - 150px)}
-            .dashboard{gap:8px}.left{gap:8px}.top-charts{gap:8px}.right{grid-template-rows:132px minmax(0,1fr);gap:8px}
+            .dashboard{gap:12px}.left{gap:8px}.top-charts{gap:8px}.right{gap:8px}
             .chart-box,.capacity,.priority{padding:9px 11px}.chart-title{margin-bottom:5px}.chart-area{padding-top:23px}.legend{margin-top:4px}
-            .kpi{padding:9px 10px}.kpi strong{margin-top:6px;font-size:clamp(21px,1.65vw,30px)}.kpi.balance-detail{gap:5px}.kpi-balance-row{font-size:clamp(11px,.76vw,14px);grid-template-columns:minmax(64px,1fr) 9px minmax(46px,.75fr) 24px;gap:5px}
+            .kpi{padding:10px 14px}.kpi strong{margin-top:6px;font-size:clamp(22px,1.75vw,32px)}.kpi.balance-detail{gap:5px;align-content:start;justify-content:start;justify-items:start}.kpi.balance-detail > span{font-size:clamp(13px,.88vw,16px);text-align:left}.kpi-balance-list{gap:4px;align-content:start;justify-content:start}.kpi-balance-row{font-size:clamp(13px,.9vw,17px);grid-template-columns:minmax(70px,auto) 9px auto auto;gap:5px}.kpi-balance-row b{font-size:clamp(15px,1.15vw,22px);text-align:left}.kpi-balance-row small{font-size:clamp(11px,.75vw,14px)}
+            .kpi-composite-list{gap:5px}.kpi-composite-item{gap:1px}.kpi-composite-item + .kpi-composite-item{padding-top:5px}
+            .kpi-direct-card{min-height:108px;height:100px;padding:6ppx 6px 4px;gap:2px}.kpi-direct-head{font-size:9px}.kpi-direct-head span{font-size:10px}.kpi-direct-grid{gap:5px}.kpi-direct-label{font-size:clamp(10px,.68vw,11px)}.kpi-direct-value{font-size:clamp(19px,1.25vw,24px)}
             .priority h2{margin-bottom:5px}.table-scroll{height:calc(100% - 28px);overflow:auto}.priority tbody tr{height:auto}
             .analytics-view{grid-template-rows:58px 112px minmax(0,1fr);gap:8px}.analytics-detail{height:calc(100vh - 226px);gap:8px}.analytics,.summary,.action-card{padding:9px 11px}
             .condition-card{padding:8px 12px;grid-template-columns:150px 116px minmax(0,1fr) 90px;gap:10px}.condition-card.simple{grid-template-columns:180px 116px minmax(0,1fr) 104px}.condition-level{height:32px}
@@ -114,11 +512,12 @@
             .modal-backdrop{align-items:flex-start;padding:54px 16px 16px}.detail-modal{max-height:calc(100vh - 70px);width:min(1040px,96vw)}.modal-body{max-height:calc(100vh - 122px);padding:10px}.calc-note{gap:6px;margin-bottom:8px}.calc-item{padding:7px 8px}.detail-table th,.detail-table td{padding:6px 8px}
         }
         @media (hover: none) and (pointer: coarse){
-            :root{--tv-safe-x:24px;--tv-safe-bottom:40px}
+            :root{--tv-safe-x:22px;--tv-safe-bottom:34px}
             .chart-title,.analytics h2,.summary h2,.priority h2,.action-card h2{font-size:clamp(12px,.82vw,16px)}
             .kpi strong{font-size:clamp(21px,1.65vw,32px)}
             table{font-size:clamp(15px,1vw,19px)}
             .action-row p,.accuracy-row p,.insight p{font-size:clamp(9px,.62vw,11px)}
+            .date-picker-control{padding:3px 8px}.date-picker-control label{font-size:11px}.date-picker-control input[type="date"]{height:28px;font-size:13px}.date-picker-control .date-refresh-btn{height:28px}
         }
         .login-modal{width:min(360px,92vw)}.login-fields{display:grid;gap:10px}.login-fields label{display:grid;gap:5px;color:var(--muted);font-size:12px;font-weight:850;text-transform:uppercase}.login-fields input{height:38px;border:1px solid var(--line);border-radius:7px;padding:0 10px;color:var(--ink);font-size:14px;font-weight:750;outline:none}.login-fields input:focus{border-color:var(--brand);box-shadow:0 0 0 2px rgba(11,111,150,.14)}.login-message{margin-right:auto;color:var(--risk);font-size:12px;font-weight:750}
         .calendar-day.quarter{border-color:#bfdbfe;background:#eff6ff;color:#1d4ed8}.legend-quarter{background:#eff6ff;border:1px solid #bfdbfe}
@@ -144,10 +543,42 @@
         .analytics-lang button.active{background:rgba(23,107,135,.14);color:var(--brand)}
         .analytics-tune{width:22px;height:18px;border:0;border-radius:5px;background:rgba(96,114,135,.12);color:rgba(96,114,135,.62);font-size:12px;font-weight:900;line-height:1;cursor:pointer}
         .analytics-tune:hover{background:rgba(23,107,135,.16);color:var(--brand)}
-        .management-modal{width:min(1020px,94vw)}.management-body{display:grid;gap:12px}.management-note{margin:0;color:var(--muted);font-size:12px;font-weight:750;line-height:1.4}.management-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.management-card{border:1px solid var(--grid);border-radius:10px;background:linear-gradient(180deg,#fff,#f8fbfd);padding:12px;display:grid;gap:10px;box-shadow:0 10px 20px rgba(16,32,51,.04)}.management-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.management-card-head b{color:var(--ink);font-size:14px;font-weight:900;text-transform:uppercase;letter-spacing:.02em}.management-card-head span{color:var(--muted);font-size:11px;font-weight:850;text-transform:uppercase}.management-card p{margin:0;color:var(--muted);font-size:12px;line-height:1.35;font-weight:700}.management-card .primary{height:34px;border:1px solid var(--brand);border-radius:8px;background:var(--brand);color:#fff;font-weight:850;cursor:pointer;padding:0 14px;justify-self:start}
+        .capacity-mode-switcher{display:inline-flex;align-items:center;background:rgba(96,114,135,.14);border-radius:6px;padding:2px;gap:2px}
+        .cap-mode-btn{border:none;background:transparent;color:var(--muted);font-size:clamp(9px,.62vw,11px);font-weight:800;padding:2px 7px;border-radius:4px;cursor:pointer;line-height:1.2;transition:background-color .15s ease,color .15s ease}
+        .cap-mode-btn:hover{color:var(--brand)}
+        .cap-mode-btn.active{background:var(--brand);color:#fff;box-shadow:0 1px 3px rgba(23,107,135,.25)}
+        .management-modal{width:min(1020px,94vw)}
+        .management-body{display:grid;gap:12px}
+        .management-note{margin:0;color:var(--muted);font-size:12px;font-weight:750;line-height:1.4}
+        .management-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+        .management-card{border:1px solid var(--grid);border-radius:10px;background:linear-gradient(180deg,#fff,#f8fbfd);padding:12px;display:grid;gap:10px;box-shadow:0 10px 20px rgba(16,32,51,.04)}
+        .management-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+        .management-card-head b{color:var(--ink);font-size:14px;font-weight:900;text-transform:uppercase;letter-spacing:.02em}
+        .management-card-head span{color:var(--muted);font-size:11px;font-weight:850;text-transform:uppercase}
+        .management-card p{margin:0;color:var(--muted);font-size:12px;line-height:1.35;font-weight:700}
+        .management-card .primary{height:34px;border:1px solid var(--brand);border-radius:8px;background:var(--brand);color:#fff;font-weight:850;cursor:pointer;padding:0 14px;justify-self:start}
+        .formula-guide{display:grid;gap:12px}
+        .formula-section{border:1px solid var(--grid);border-radius:10px;background:linear-gradient(180deg,#fff,#f8fbfd);padding:12px}
+        .formula-section h4{margin:0 0 10px;color:var(--ink);font-size:14px;font-weight:900;text-transform:uppercase;letter-spacing:.03em}
+        .formula-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+        .formula-list{display:grid;gap:8px}
+        .formula-card{border:1px solid var(--line);border-radius:8px;background:#fff;padding:10px 11px;box-shadow:0 8px 18px rgba(16,32,51,.04)}
+        .formula-card b{display:block;color:var(--ink);font-size:13px;font-weight:900;line-height:1.25}
+        .formula-card p{margin:4px 0 0;color:var(--muted);font-size:12px;line-height:1.38;font-weight:700}
+        .formula-card .formula-line{margin-top:7px;padding-top:7px;border-top:1px dashed var(--grid);color:var(--ink);font-size:12px;font-weight:800;line-height:1.35;white-space:pre-line}
+        .formula-card .formula-line span{color:var(--muted);font-weight:850;text-transform:uppercase}
+        @media (max-width: 760px){
+            .formula-pair{grid-template-columns:1fr}
+        }
     </style>
 </head>
 <body>
+<div class="global-loading-overlay" id="globalLoadingOverlay" aria-live="polite" aria-busy="true">
+    <div class="global-loading-card">
+        <img alt="Loading" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%23176b87' stroke-width='6' stroke-linecap='round'%3E%3Cpath opacity='.2' d='M32 8a24 24 0 1 1 0 48a24 24 0 1 1 0-48'/%3E%3Cpath d='M32 8a24 24 0 0 1 24 24'/%3E%3C/g%3E%3C/svg%3E">
+        <span>Loading data</span>
+    </div>
+</div>
 <div class="page">
     <header class="top">
         <div class="title" data-i18n="app_title">DASHBOARD HEAT TRANSFER</div>
@@ -156,10 +587,23 @@
             <button type="button" data-view="analytic" data-i18n="analytic">Analytic</button>
             <button type="button" data-view="listOrder" data-i18n="list_order">List Order</button>
         </nav>
-        <div class="delivery-toggle" id="analyticsDeliveryToggle" aria-label="Jumlah delivery">
-            <button type="button" class="active" data-delivery-count="1">1 Delivery</button>
-            <button type="button" data-delivery-count="2">2 Delivery</button>
-            <button type="button" data-delivery-count="4">4 Delivery</button>
+        <div class="date-picker-control" id="analyticsDateControl" aria-label="Pilih rentang tanggal">
+            <label for="dashboardDateFrom">From:</label>
+            <input type="date" id="dashboardDateFrom" value="<?= html_escape($selected_date_from ?? date('Y-m-01')) ?>">
+            <label for="dashboardDateTo">To:</label>
+            <input type="date" id="dashboardDateTo" value="<?= html_escape($selected_date_to ?? date('Y-m-15')) ?>">
+            <button type="button" class="date-refresh-btn" id="btnDateRefresh" title="Refresh Dashboard" aria-label="Refresh Data">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <polyline points="1 20 1 14 7 14"></polyline>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+                <span>Refresh</span>
+            </button>
+        </div>
+        <div class="unit-toggle capacity-header-toggle" id="capacityHeaderToggle" aria-label="Pilih Tampilan Kapasitas: Mesin, Minutes">
+            <button type="button" class="unit-btn active" data-cap-mode="mesin" data-i18n="capacity_mode_machine">Mesin</button>
+            <button type="button" class="unit-btn" data-cap-mode="minutes" data-i18n="capacity_mode_minutes">Minutes</button>
         </div>
         <div class="last-update" id="lastUpdateBox">
             <button type="button" id="lastUpdate">*Last Update : -</button>
@@ -174,36 +618,145 @@
         <section class="left">
             <div class="top-charts">
                 <div class="box chart-box qty">
-                    <h2 class="chart-title" data-i18n="qty_pdk_output_chart">QTY PDK vs QTY OUTPUT</h2>
+                    <h2 class="chart-title" data-i18n="qty_pdk_output_chart">Target vs Aktual</h2>
                     <div id="qtyPdkOutputChart"></div>
-                    <div class="legend"><span><i class="dot"></i><span data-i18n="qty_pdk">QTY PDK</span></span><span><i class="dot alt"></i><span data-i18n="qty_out">QTY OUT</span></span></div>
+                    <div class="legend"><span><i class="dot"></i><span data-i18n="qty_pdk">Target</span></span><span><i class="dot alt"></i><span data-i18n="qty_out">Aktual</span></span></div>
                 </div>
                 <div class="box chart-box ready">
-                    <h2 class="chart-title" data-i18n="ready_to_load_chart">READY TO LOAD PRODUCTION</h2>
+                    <h2 class="chart-title" data-i18n="ready_to_load_chart">Ready TO Production</h2>
                     <div id="readyToLoadChart"></div>
+                    <div class="legend"><span><i class="dot"></i><span data-i18n="completed">Completed</span></span><span><i class="dot alt"></i><span data-i18n="uncompleted">Uncompleted</span></span></div>
                 </div>
             </div>
-                <div class="box chart-box capacity">
-                    <h2 class="chart-title" data-i18n="capacity_output_input_chart">KAPASITAS vs OUTPUT vs INPUT</h2>
-                    <div id="outputCapacityChart"></div>
-                <div class="legend"><span><i class="dot"></i><span data-i18n="capacity">KAPASITAS</span></span><span><i class="dot output"></i><span data-i18n="output">OUTPUT</span></span><span><i class="line-key"></i><span data-i18n="input">INPUT</span></span></div>
+            <div class="box chart-box capacity">
+                <h2 class="chart-title" data-i18n="capacity_output_input_chart">KAPASITAS vs OUT vs IN</h2>
+                <div id="outputCapacityChart"></div>
+                <div class="legend"><span><i class="bar-key in"></i><span>IN</span></span><span><i class="bar-key out"></i><span>OUT</span></span><span><i class="line-key capacity"></i><span>KAPASITAS</span></span></div>
             </div>
         </section>
 
         <section class="right">
             <div class="kpis">
-                <article class="kpi"><span data-i18n="total_output_label">Total Output :</span><strong><b id="totalOutput">-</b> <small data-i18n="pcs">Pcs</small></strong></article>
-                <article class="kpi"><span data-i18n="balance_qty_label">Balance Qty :</span><strong><b id="balanceQty">-</b> <small data-i18n="pcs">Pcs</small></strong><div class="kpi-remaining-days"><span id="remainingDaysLabel">Remaining from today (1 Delivery)</span><strong><span id="remainingDays">-</span> <small data-i18n="days">Days</small></strong></div></article>
-                <article class="kpi balance-detail"><span data-i18n="qty_short_label">Qty Yang Kurang :</span><div class="kpi-balance-list" id="balanceBreakdown"></div></article>
+                <article class="kpi total-output-balance-card" style="padding:10px 16px;justify-content:center;">
+                    <div class="kpi-composite-list" style="display:grid;gap:6px;">
+                        <div class="kpi-composite-item" style="display:grid;gap:1px;min-width:0;">
+                            <span data-i18n="total_output_label" style="font-size:clamp(11px,.75vw,13px);font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Total Output :</span>
+                            <strong style="display:flex;align-items:baseline;gap:6px;margin:0;font-size:clamp(20px,1.55vw,30px);line-height:1.1;font-weight:900;"><b id="totalOutput">-</b> <small id="totalOutputUnit" data-i18n="pcs" style="font-size:clamp(12px,.85vw,15px);font-weight:700;color:var(--muted);">Pcs</small></strong>
+                        </div>
+                        <div class="kpi-composite-item" style="display:grid;gap:1px;min-width:0;padding-top:6px;border-top:1px dashed var(--line);">
+                            <span data-i18n="total_balance_qty_label" style="font-size:clamp(11px,.75vw,13px);font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Total Balance Qty :</span>
+                            <strong style="display:flex;align-items:baseline;gap:6px;margin:0;font-size:clamp(20px,1.55vw,30px);line-height:1.1;font-weight:900;"><b id="balanceQty">-</b> <small id="balanceQtyUnit" data-i18n="pcs" style="font-size:clamp(12px,.85vw,15px);font-weight:700;color:var(--muted);">Pcs</small></strong>
+                        </div>
+                    </div>
+                </article>
+                <article class="kpi balance-detail">
+                    <span data-i18n="qty_short_label">Balance Qty :</span>
+                    <div class="kpi-balance-list" id="balanceBreakdown"></div>
+                </article>
+<?php
+$initial_smv_list = array();
+if (isset($style_smv_catalog['running_styles']) && is_array($style_smv_catalog['running_styles'])) {
+    $initial_smv_list = $style_smv_catalog['running_styles'];
+} elseif (isset($style_smv_catalog['styles']) && is_array($style_smv_catalog['styles'])) {
+    foreach ($style_smv_catalog['styles'] as $s) {
+        if (!empty($s['is_running'])) {
+            $initial_smv_list[] = $s;
+        }
+    }
+}
+$initial_smv_vals = array();
+$initial_total_processes = 0;
+$initial_total_qty = 0;
+$initial_total_weighted_smv = 0;
+foreach ($initial_smv_list as $s) {
+    $s_name = isset($s['style']) ? (string) $s['style'] : '';
+    if (stripos($s_name, 'OFC') !== FALSE) {
+        continue;
+    }
+    if (isset($s['smv']) && is_numeric($s['smv']) && (float) $s['smv'] > 0) {
+        $initial_smv_vals[] = (float) $s['smv'];
+        $p_smvs = isset($s['process_smvs']) && is_array($s['process_smvs']) ? $s['process_smvs'] : array();
+        $p_cnt = isset($s['process_count']) && (int) $s['process_count'] > 0 ? (int) $s['process_count'] : 1;
+        $proc_count = (!empty($p_smvs) ? count($p_smvs) : $p_cnt);
+        $qty_pdk = isset($s['qty_pdk']) && is_numeric($s['qty_pdk']) ? (float) $s['qty_pdk'] : 0;
+        $initial_total_processes += ($proc_count * $qty_pdk);
+        $initial_total_qty += $qty_pdk;
+        $initial_total_weighted_smv += ((float) $s['smv'] * $qty_pdk);
+    }
+}
+$initial_total_running = count($initial_smv_list);
+$initial_is_complete = ($initial_total_running > 0 && count($initial_smv_vals) === $initial_total_running);
+$initial_avg_smv = ($initial_total_qty > 0 && $initial_total_weighted_smv > 0)
+    ? ($initial_total_weighted_smv / $initial_total_qty)
+    : null;
+$initial_w_avg_process = $initial_total_qty > 0 ? ($initial_total_processes / $initial_total_qty) : null;
+$initial_machine_req_daily = ($initial_w_avg_process > 0 && $initial_total_qty > 0) ? ($initial_total_qty / $initial_w_avg_process) : null;
+$initial_m_without = $initial_machine_req_daily !== null ? round($initial_machine_req_daily) : null;
+$initial_m_with = $initial_m_without !== null ? max(0, $initial_m_without - 2) : null;
+?>
+                <article class="kpi process-smv-card" id="processSmvCard" style="padding:10px 16px;justify-content:center;">
+                    <div style="display:grid;grid-template-columns:1.2fr 0.8fr;gap:8px;align-items:center;">
+                        <!-- Sebelah Kiri: Proses (atas-bawah) -->
+                        <div class="kpi-composite-list" style="display:grid;gap:6px;min-width:0;">
+                            <div class="kpi-composite-item" style="display:grid;gap:1px;min-width:0;">
+                                <span data-i18n="total_process_label" style="font-size:clamp(11px,.75vw,13px);font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Total Proses :</span>
+                                <strong style="display:flex;align-items:baseline;gap:6px;margin:0;font-size:clamp(20px,1.55vw,30px);line-height:1.1;font-weight:900;"><b id="totalProcesses"><?= ($initial_is_complete || $initial_total_processes > 0) ? number_format(round($initial_total_processes)) : '-' ?></b> <small data-i18n="process_unit" style="font-size:clamp(12px,.85vw,15px);font-weight:700;color:var(--muted);">Proses</small></strong>
+                            </div>
+                            <div class="kpi-composite-item" style="display:grid;gap:1px;min-width:0;padding-top:6px;border-top:1px dashed var(--line);">
+                                <span data-i18n="w_avg_process_label" style="font-size:clamp(11px,.75vw,13px);font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="Weight Average Process = Total Proses / Total Qty">W.Avg Process :</span>
+                                <strong style="display:flex;align-items:baseline;gap:6px;margin:0;font-size:clamp(20px,1.55vw,30px);line-height:1.1;font-weight:900;"><b id="wAvgProcessVal"><?= $initial_w_avg_process !== null ? number_format($initial_w_avg_process, 2, '.', '') : '-' ?></b> <small data-i18n="process_unit" style="font-size:clamp(12px,.85vw,15px);font-weight:700;color:var(--muted);">Proses</small></strong>
+                            </div>
+                        </div>
+
+                        <!-- Sebelah Kanan: SMV -->
+                        <div style="min-width:0;border-left:1px solid var(--grid);padding-left:10px;display:flex;flex-direction:column;justify-content:center;">
+                            <span data-i18n="smv_label" style="font-size:clamp(11px,.75vw,13px);font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">W. Avg SMV :</span>
+                            <strong style="display:flex;align-items:baseline;gap:6px;margin-top:4px;font-size:clamp(22px,1.65vw,32px);line-height:1.1;font-weight:900;"><b id="avgSmvVal"><?= $initial_avg_smv !== null ? number_format($initial_avg_smv, 2) : '-' ?></b></strong>
+                            <div class="kpi-sub-text" id="avgSmvSub" style="color:var(--muted);font-size:clamp(9px,.62vw,11px);font-weight:700;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?= count($initial_smv_vals) > 0 ? count($initial_smv_vals) . ' style berjalan' : '-' ?></div>
+                        </div>
+                    </div>
+                </article>
+                <article class="kpi" id="machineReqCard" style="padding:10px 16px;justify-content:center;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:20px;margin-bottom:4px;">
+                        <span id="capacityCardHeaderLabel" data-i18n="machine_req_label" style="font-size:clamp(11px,.75vw,13px);font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Kebutuhan Mesin</span>
+                        <span id="machineReqTotalDirectBadge" style="display:none;font-size:clamp(10px,.68vw,12px);font-weight:800;color:var(--brand);background:rgba(23,107,135,.1);padding:1px 7px;border-radius:4px;white-space:nowrap;">Kebutuhan: <b id="machineReqTotalDirectVal"><?= $initial_m_without !== null ? number_format($initial_m_without, 0, ',', '.') . ' Mesin' : '-' ?></b></span>
+                    </div>
+
+                    <!-- Mode 1: Mesin -->
+                    <div id="capViewMesin" class="cap-view-pane" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:start;">
+                        <div style="min-width:0;">
+                            <div style="font-size:clamp(11px,.72vw,13px);font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-i18n="machine_cond_without_m2">Opsi 1 : M1</div>
+                            <strong style="display:flex;align-items:baseline;gap:6px;margin-top:4px;font-size:clamp(20px,1.6vw,30px);line-height:1.1;font-weight:900;"><b id="machineReqWithoutM2"><?= $initial_m_without !== null ? number_format($initial_m_without, 0, ',', '.') : '-' ?></b> <small data-i18n="machine_unit" style="font-size:clamp(12px,.85vw,15px);font-weight:700;color:var(--muted);">Mesin</small></strong>
+                        </div>
+                        <div style="min-width:0;border-left:1px solid var(--grid);padding-left:8px;">
+                            <div style="font-size:clamp(11px,.72vw,13px);font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-i18n="machine_cond_with_m2">Opsi 2 : M2</div>
+                            <strong style="display:flex;align-items:baseline;gap:6px;margin-top:4px;font-size:clamp(20px,1.6vw,30px);line-height:1.1;font-weight:900;"><b id="machineReqWithM2"><?= $initial_m_with !== null ? number_format($initial_m_with, 0, ',', '.') : '-' ?></b> <small data-i18n="machine_unit" style="font-size:clamp(12px,.85vw,15px);font-weight:700;color:var(--muted);">Mesin</small></strong>
+                        </div>
+                    </div>
+
+                    <!-- Mode 2: Minutes -->
+                    <div id="capViewMinutes" class="cap-view-pane" style="display:none;grid-template-columns:1fr 1fr;gap:8px;align-items:start;margin-top:4px;">
+                        <div style="min-width:0;">
+                            <div style="font-size:clamp(10px,.68vw,12px);font-weight:800;color:#16a34a;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-i18n="capacity_prod_label">Kapasitas Harian</div>
+                            <strong style="margin-top:2px;font-size:clamp(20px,1.6vw,30px);"><b id="capMinutesVal">-</b> <small data-i18n="minutes_unit">Menit</small></strong>
+                            <div class="kpi-sub-text" id="capMinutesSub" style="color:var(--muted);font-size:clamp(9px,.62vw,11px);font-weight:700;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">-</div>
+                        </div>
+                        <div style="min-width:0;border-left:1px solid var(--grid);padding-left:8px;">
+                            <div style="font-size:clamp(10px,.68vw,12px);font-weight:800;color:var(--muted);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-i18n="daily_demand_label">Demand Harian</div>
+                            <strong style="margin-top:2px;font-size:clamp(20px,1.6vw,30px);"><b id="capDemandMinutesVal">-</b> <small data-i18n="minutes_unit">Menit</small></strong>
+                            <div class="kpi-sub-text" id="capDemandMinutesSub" style="color:var(--muted);font-size:clamp(9px,.62vw,11px);font-weight:700;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">-</div>
+                        </div>
+                    </div>
+                </article>
             </div>
-            <div class="box priority">
+            <div class="box priority" style="display:none;">
                 <div class="priority-header">
                     <h2 data-i18n="top_priority_title">Material To Load :</h2>
                     <button type="button" class="download-btn" onclick="downloadMaterialToLoad()">Download Excel</button>
                 </div>
                 <div class="table-scroll">
                     <table>
-                        <thead><tr><th>No.</th><th>Order</th><th>Style</th><th data-i18n="delivery_date">Tgl. Delivery</th><th data-i18n="qty_ready">Qty Ready</th></tr></thead>
+                        <thead><tr><th>No.</th><th>Order</th><th>Style</th><th data-i18n="delivery_date">Tanggal</th><th data-i18n="qty_ready">Qty Ready</th></tr></thead>
                         <tbody id="priorityRows"></tbody>
                     </table>
                 </div>
@@ -253,7 +806,10 @@
     <main class="view list-order-view" id="listOrderView">
         <section class="box priority list-order">
             <div class="priority-header">
-                <h2 data-i18n="list_order_title">List Order : <span id="listOrderPeriodLabel">-</span></h2>
+                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                    <h2 data-i18n="list_order_title">List Order : <span id="listOrderPeriodLabel">-</span></h2>
+                    <span class="list-order-count-badge" id="listOrderCountBadge" style="display:none;"></span>
+                </div>
             </div>
             <div class="list-order-summary" id="listOrderSummary"></div>
             <div class="table-scroll">
@@ -263,10 +819,11 @@
                             <th>No.</th>
                             <th data-i18n="cost_center">Cost Centre</th>
                             <th>Style</th>
-                            <th data-i18n="delivery_date">Tgl. Delivery</th>
-                            <th data-i18n="qty_pdk">Qty PDK</th>
+                            <th data-i18n="process">Process</th>
+                            <th data-i18n="delivery_date">Tanggal</th>
+                            <th data-i18n="qty_pdk">Target</th>
                             <th data-i18n="qty_in">Qty In</th>
-                            <th data-i18n="qty_out">Qty Out</th>
+                            <th data-i18n="qty_out">Aktual</th>
                             <th data-i18n="qty_balance">Qty Balance</th>
                         </tr>
                     </thead>
@@ -319,26 +876,6 @@
     </section>
 </div>
 
-<div class="modal-backdrop" id="calendarLoginModal" role="dialog" aria-modal="true" aria-labelledby="calendarLoginTitle">
-    <section class="detail-modal login-modal">
-        <div class="modal-head">
-            <h3 id="calendarLoginTitle">Login Management</h3>
-            <button type="button" class="modal-close" id="calendarLoginClose" aria-label="Tutup login">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div class="login-fields">
-                <label><span data-i18n="username">Username</span><input type="text" id="calendarUsername" autocomplete="username"></label>
-                <label><span data-i18n="password">Password</span><input type="password" id="calendarPassword" autocomplete="current-password"></label>
-            </div>
-            <div class="modal-actions">
-                <span class="login-message" id="calendarLoginMessage"></span>
-                <button type="button" id="calendarLoginCancel" data-i18n="cancel">Batal</button>
-                <button type="button" class="primary" id="calendarLoginSubmit" data-i18n="login">Login</button>
-            </div>
-        </div>
-    </section>
-</div>
-
 <div class="modal-backdrop" id="analyticsMenuModal" role="dialog" aria-modal="true" aria-labelledby="analyticsMenuTitle">
     <section class="detail-modal analytics-menu">
         <div class="modal-head">
@@ -364,7 +901,7 @@
             <button type="button" class="modal-close" id="managementModalClose" aria-label="Tutup management">&times;</button>
         </div>
         <div class="modal-body management-body">
-            <p class="management-note" data-i18n="management_note">Satu login untuk production calendar, riwayat QTY, dan analytics display. Delivery selection tersedia langsung di header analytics.</p>
+            <p class="management-note" data-i18n="management_note">Satu login untuk production calendar, riwayat QTY, dan analytics display. Filter tanggal tersedia langsung di header.</p>
             <div class="management-grid">
                 <section class="management-card">
                     <div class="management-card-head">
@@ -390,8 +927,26 @@
                     <p data-i18n="analytics_note">Atur kartu analytics yang ingin ditampilkan di dashboard.</p>
                     <button type="button" class="primary" id="managementAnalyticsOpen" data-i18n="open">Buka</button>
                 </section>
+                <section class="management-card">
+                    <div class="management-card-head">
+                        <b data-i18n="formula_guide">Rumus Dashboard</b>
+                        <span data-i18n="formula_guide_access">Guide</span>
+                    </div>
+                    <p data-i18n="formula_guide_note">Lihat referensi rumus yang dipakai dashboard heat.</p>
+                    <button type="button" class="primary" id="managementFormulaOpen" data-i18n="open">Buka</button>
+                </section>
             </div>
         </div>
+    </section>
+</div>
+
+<div class="modal-backdrop" id="formulaGuideModal" role="dialog" aria-modal="true" aria-labelledby="formulaGuideTitle">
+    <section class="detail-modal" style="width:min(920px,94vw)">
+        <div class="modal-head">
+            <h3 id="formulaGuideTitle" data-i18n="formula_guide">Rumus Dashboard</h3>
+            <button type="button" class="modal-close" id="formulaGuideClose" aria-label="Tutup rumus">&times;</button>
+        </div>
+        <div class="modal-body" id="formulaGuideBody"></div>
     </section>
 </div>
 
@@ -412,8 +967,8 @@
                     <thead>
                         <tr>
                             <th style="padding:8px 10px;text-align:center;position:sticky;top:0;background:var(--surface-soft);z-index:2;">Tanggal</th>
-                            <th style="padding:8px 10px;text-align:center;position:sticky;top:0;background:var(--surface-soft);z-index:2;">QTY PDK</th>
-                            <th style="padding:8px 10px;text-align:center;position:sticky;top:0;background:var(--surface-soft);z-index:2;">QTY Output</th>
+                            <th style="padding:8px 10px;text-align:center;position:sticky;top:0;background:var(--surface-soft);z-index:2;">Target</th>
+                            <th style="padding:8px 10px;text-align:center;position:sticky;top:0;background:var(--surface-soft);z-index:2;">Aktual</th>
                             <th style="padding:8px 10px;text-align:center;position:sticky;top:0;background:var(--surface-soft);z-index:2;">Balance QTY</th>
                             <th style="padding:8px 10px;text-align:center;position:sticky;top:0;background:var(--surface-soft);z-index:2;">Catatan</th>
                         </tr>
@@ -430,22 +985,34 @@
 const urls = {
     status: <?= json_encode($status_url) ?>,
     saveWorkdays: <?= json_encode($save_workdays_url) ?>,
-    calendarLogin: <?= json_encode($calendar_login_url) ?>,
-    calendarLogout: <?= json_encode($calendar_logout_url) ?>,
     run: <?= json_encode($run_url) ?>,
     download: <?= json_encode($download_url) ?>,
     materialToLoadDownload: <?= json_encode($material_to_load_download_url) ?>,
     qtyHistory: <?= json_encode($qty_history_url) ?>
 };
 const initialDashboardPayload = <?= json_encode($initial_dashboard_payload ?? array(), JSON_UNESCAPED_UNICODE) ?>;
-const initialDeliveryCountValue = Number(<?= json_encode($initial_delivery_count ?? 1) ?>);
-const initialDeliveryCount = [1, 2, 4].includes(initialDeliveryCountValue) ? initialDeliveryCountValue : 1;
+const initialSelectedDateFrom = <?= json_encode($selected_date_from ?? ($selected_date ?? date('Y-m-01'))) ?>;
+const initialSelectedDateTo = <?= json_encode($selected_date_to ?? ($selected_date ?? date('Y-m-15'))) ?>;
+let selectedDateFrom = initialSelectedDateFrom;
+let selectedDateTo = initialSelectedDateTo;
+let selectedDate = selectedDateFrom;
 const featureVisibility = {
     criticalOrders: false,
     internalAnalytics: false
 };
 const analyticsCardStorageKey = 'heatAnalyticsVisibleCards';
 const analyticsLangStorageKey = 'heatAnalyticsLanguage';
+const initialAnalyticsSettings = initialDashboardPayload?.analytics_settings || {};
+let serverAnalyticsSettings = {
+    visible_cards: Array.isArray(initialAnalyticsSettings?.visible_cards) ? initialAnalyticsSettings.visible_cards : [],
+    language: initialAnalyticsSettings?.language === 'en' ? 'en' : 'id',
+    direct_actual: initialAnalyticsSettings?.direct_actual === null || initialAnalyticsSettings?.direct_actual === undefined || initialAnalyticsSettings?.direct_actual === ''
+        ? null
+        : Number(initialAnalyticsSettings.direct_actual),
+    double_machine_active: initialAnalyticsSettings?.double_machine_active !== undefined
+        ? parseInt(initialAnalyticsSettings.double_machine_active, 10)
+        : 2,
+};
 const defaultAnalyticsCards = [
     'production_status',
     'output_achievement',
@@ -462,19 +1029,26 @@ const analyticsText = {
         last_update: 'Last Update',
         total_output_label: 'Total Output :',
         balance_qty_label: 'Balance Qty :',
-        qty_short_label: 'Short Qty :',
-        qty_pdk_output_chart: 'QTY PDK vs QTY OUTPUT',
-        ready_to_load_chart: 'READY TO LOAD PRODUCTION',
-        capacity_output_input_chart: 'CAPACITY vs OUTPUT vs INPUT',
-        qty_pdk: 'QTY PDK',
-        qty_out: 'QTY OUT',
+        total_balance_qty_label: 'Total Balance Qty :',
+        qty_short_label: 'Balance Qty :',
+        total_process_label: 'Total Process :',
+        process_card_label: 'Process :',
+        w_avg_process_label: 'W.Avg Process :',
+        smv_label: 'W. Avg SMV :',
+        qty_pdk_output_chart: 'Target vs Aktual',
+        ready_to_load_chart: 'Ready TO Production',
+        completed: 'Completed',
+        uncompleted: 'Uncompleted',
+        capacity_output_input_chart: 'KAPASITAS vs OUT vs IN',
+        qty_pdk: 'Target',
+        qty_out: 'Aktual',
         qty_in: 'QTY IN',
         qty_balance: 'QTY BALANCE',
         input: 'Input',
         cost_center: 'Cost Centre',
         top_priority_title: 'Material To Load :',
         list_order_title: 'List Order :',
-        delivery_date: 'Delivery Date',
+        delivery_date: 'Date',
         qty_ready: 'Qty Ready',
         main_condition: 'Main Area Condition :',
         shortage: 'Shortage',
@@ -500,9 +1074,10 @@ const analyticsText = {
         close_calendar: 'Close calendar',
         close_login: 'Close login',
         close_analytics_display: 'Close analytics display',
+        close_formula_guide: 'Close formula guide',
         detail: 'Detail',
         detail_empty: 'Detail data is not available.',
-        no_capacity_data: 'KAPASITAS vs OUTPUT chart data is not available.',
+        no_capacity_data: 'DEMAND vs OUTPUT chart data is not available.',
         no_short_qty: 'No short qty.',
         dashboard_unavailable: 'Dashboard data is not available.',
         logging_in: 'Logging in...',
@@ -513,7 +1088,7 @@ const analyticsText = {
         choose_one_card: 'Choose at least 1 card.',
         valid_sequence: 'Data sequence valid',
         valid_sequence_text: 'No period sequence issue detected.',
-        capacity: 'Capacity',
+        capacity: 'Demand',
         input_32a: 'Input 32a',
         output: 'Output',
         gap: 'Gap',
@@ -531,59 +1106,38 @@ const analyticsText = {
         analyticsDisplay: 'Analytics Display',
         management_panel: 'Management Access',
         open_management: 'Management',
-        management_note: 'One login for delivery, production calendar, qty history, and analytics display.',
-        delivery_selection: 'Delivery Selection',
-        delivery_note: 'Choose the active delivery horizon.',
+        management_note: 'Access for production calendar, qty history, and analytics display.',
+        delivery_selection: 'Date Selection',
+        delivery_note: 'Choose the active date.',
         calendar_access: 'Calendar',
         calendar_note: 'Adjust working days, holidays, and production calendar settings.',
         history_access: 'History',
         qty_history_note: 'Review daily QTY PDK, output, and balance history.',
         display_access: 'Display',
         analytics_note: 'Choose which analytics cards are shown on the dashboard.',
+        formula_guide: 'Dashboard Formula Guide',
+        formula_guide_access: 'Guide',
+        formula_guide_note: 'Review the calculation references used by the heat dashboard.',
         login_management: 'Login Management',
         open: 'Open',
         production_status: 'Production Status',
         output_achievement: 'Output Achievement',
         data_accuracy: 'Data Accuracy',
-        plan_completion: 'Plan Completion',
-        monitoring_coverage: 'Monitoring Coverage',
-        source_sync: 'Source Sync',
-        data_update: 'Data Update',
-        trend: 'Trend',
-        production_flow: 'Production Flow',
-        data_reliability: 'Data Reliability',
-        ready_coverage: 'Ready Coverage',
-        req_daily_output: 'Req. Daily Output',
-        total_ready_load: 'Total Ready Load',
-        avg_daily_output: 'Avg Daily Output',
-        avg_daily_capacity: 'Avg Daily Capacity',
-        capacity_gap: 'Capacity Gap',
-        capacity_surplus: 'Capacity Surplus',
-        sequence_issues: 'Sequence Issues',
+        ready_to_load: 'Ready to Load & Coverage',
+        avg_daily_capacity: 'Avg Daily Demand',
         critical_orders: 'Critical Orders',
+        coverage_subtext: 'Coverage: {days} Days',
         cap_data_accuracy: 'CAP Data Accuracy',
         cap_output_achievement: 'CAP Output Achievement',
         cap_coverage_ready: 'CAP Coverage Ready Load',
         cap_daily_output: 'CAP Daily Output Requirement',
-        cap_critical_order: 'CAP Critical Delivery Order',
+        cap_critical_order: 'CAP Critical Order',
         cap_controlled: 'CAP Controlled Condition',
         note_public_status: 'General status without operational detail.',
         note_percent_output: 'Production performance percentage.',
         note_percent_accuracy: 'Data accuracy percentage.',
-        note_plan_completion: 'Completion percentage from output data.',
-        note_monitoring: 'Coverage of dashboard modules being monitored.',
-        note_source_sync: 'Number of synced data sources.',
-        note_update: 'Latest update time from each data source.',
-        note_trend: 'General trend status.',
-        note_flow: 'General production flow status.',
-        note_reliability: 'Reliability based on data accuracy.',
-        note_internal_ready: 'Ready-load coverage data.',
-        note_internal_daily: 'Daily output requirement data.',
-        note_internal_total_ready: 'Total ready-load data.',
-        note_internal_avg_output: 'Average daily output data.',
-        note_internal_capacity: 'Average daily capacity data.',
-        note_internal_gap: 'Capacity gap/surplus data.',
-        note_internal_sequence: 'Data sequence issue count.',
+        note_internal_ready_to_load: 'Total ready load Qty with production coverage days.',
+        note_internal_capacity: 'Average daily demand data.',
         note_internal_critical: 'Critical order count.',
         note_internal_cap: 'Issue, cause, prevention, handling.',
         note_internal_cap_simple: 'Prevention and handling.',
@@ -599,8 +1153,8 @@ const analyticsText = {
         status: 'Status',
         validation: 'Validation',
         detail_qty_hidden: 'The percentage shows completion against plan. The table below shows the dashboard rows used by this card.',
-        production_status_formula: 'Production Status is summarized from active delivery condition, output achievement, and data validation.',
-        output_formula: 'Achievement = completed output / PDK plan x 100%.',
+        production_status_formula: 'Production Status is summarized from active period condition, output achievement, and data validation.',
+        output_formula: 'Achievement = total output / total PDK plan x 100%.',
         output_source: 'Plan and output data from synced RPA files.',
         accuracy_formula: 'Score = 100% minus data-sequence issue penalties.',
         monitoring_note: 'Monitoring Coverage shows dashboard modules included in the monitoring scope.',
@@ -622,25 +1176,46 @@ const analyticsText = {
         output_insight_text: 'Output performance on track at {value}%.',
         reliability: 'Data Reliability',
         reliability_text: 'Dashboard data validation is stable at {value}%.',
-        flow_text: 'Production progress is aligned with the active delivery plan.',
+        flow_text: 'Production progress is aligned with the active plan.',
         monitoring_status: 'Monitoring Status',
         monitoring_text: 'Dashboard monitoring is active and ready for review.',
         analytics_ready: 'Analytics display is ready.',
         production_status_insight: 'Production is {status}. Dashboard total output is {output} pcs with balance {balance} pcs.',
         output_achievement_insight: 'Output achievement is {value} based on dashboard output {output} pcs.',
         data_accuracy_insight: 'Data accuracy is {value}; validation follows the period rows shown in dashboard detail.',
-        monitoring_coverage_insight: 'Monitoring covers {value} of active dashboard modules.',
-        source_sync_insight: 'Source sync is {value}; available source data is ready for dashboard calculation.',
-        data_update_insight: 'Latest dashboard data update is {value}.',
-        ready_coverage_insight: 'Ready coverage is {value}; total ready load is {ready} pcs.',
-        req_daily_output_insight: 'Required daily output is {value}; dashboard balance is {balance} pcs.',
-        total_ready_load_insight: 'Total ready load is {value}, taken from dashboard ready-to-load data.',
-        avg_daily_output_insight: 'Average daily output is {value}, compared with current dashboard capacity.',
-        avg_daily_capacity_insight: 'Average daily capacity is {value}, based on active delivery capacity calculation.',
-        capacity_gap_insight: '{label} is {value}; this compares daily output with available capacity.',
-        sequence_issues_insight: 'Sequence issues detected: {value}; this affects data validation status.',
+        ready_to_load_insight: 'Total ready load is {value} with {days} days of production coverage.',
+        avg_daily_capacity_insight: 'Average daily capacity is {value}, based on target per person multiplied by direct actual.',
         critical_orders_insight: 'Critical orders detected: {value}; detail follows the priority order list.',
-        cap_insight: '{label} is displayed as a follow-up item for the selected analytics card.'
+        cap_insight: '{label} is displayed as a follow-up item for the selected analytics card.',
+        process: 'Process',
+        filter_process: 'Process:',
+        filter_pcs: 'Pcs:',
+        all_processes: 'All Processes',
+        min_pcs: 'Min Pcs',
+        reset: 'Reset',
+        total_process_label: 'Total Process :',
+        process_card_label: 'Processes :',
+        total_sub_label: 'Total',
+        w_avg_process_label: 'W.Avg Process',
+        avg_smv_label: 'Average SMV :',
+        process_unit: 'Processes',
+        machine_req_label: 'Machine Requirement',
+        minutes_req_label: 'Minutes Capacity :',
+        manpower_req_label: 'Manpower Capacity :',
+        pcs_req_label: 'Output Capacity :',
+        machine_unit: 'Machines',
+        minutes_unit: 'Minutes',
+        manpower_unit: 'Operators',
+        capacity_mode_machine: 'Machine',
+        capacity_mode_minutes: 'Minutes',
+        capacity_mode_manpower: 'Man Power',
+        capacity_mode_pcs: 'Pcs',
+        direct_actual_label: 'Actual Direct',
+        direct_plan_label: 'Plan Direct',
+        capacity_prod_label: 'Daily Output',
+        daily_demand_label: 'Daily Demand',
+        machine_cond_without_m2: 'Option 1 : M1',
+        machine_cond_with_m2: 'Option 2 : M2'
     },
     id: {
         app_title: 'DASHBOARD HEAT TRANSFER',
@@ -652,19 +1227,52 @@ const analyticsText = {
         last_update: 'Last Update',
         total_output_label: 'Total Output :',
         balance_qty_label: 'Balance Qty :',
-        qty_short_label: 'Qty Yang Kurang :',
-        qty_pdk_output_chart: 'QTY PDK vs QTY OUTPUT',
-        ready_to_load_chart: 'READY TO LOAD PRODUCTION',
-        capacity_output_input_chart: 'KAPASITAS vs OUTPUT vs INPUT',
-        qty_pdk: 'QTY PDK',
-        qty_out: 'QTY OUT',
+        total_balance_qty_label: 'Total Balance Qty :',
+        total_process_label: 'Total Proses :',
+        process_card_label: 'Proses :',
+        total_sub_label: 'Total',
+        w_avg_process_label: 'W.Avg Process :',
+        avg_smv_label: 'Rata2 SMV :',
+        smv_label: 'W. Avg SMV :',
+        process_unit: 'Proses',
+        machine_req_label: 'Kebutuhan Mesin',
+        minutes_req_label: 'Kapasitas Menit :',
+        manpower_req_label: 'Kapasitas Manpower :',
+        pcs_req_label: 'Kapasitas Output :',
+        machine_unit: 'Mesin',
+        minutes_unit: 'Menit',
+        manpower_unit: 'Orang',
+        capacity_mode_machine: 'Mesin',
+        capacity_mode_minutes: 'Minutes',
+        capacity_mode_manpower: 'Man Power',
+        capacity_mode_pcs: 'Pcs',
+        direct_actual_label: 'Direct Aktual',
+        direct_plan_label: 'Direct Plan',
+        capacity_prod_label: 'Kapasitas Harian',
+        daily_demand_label: 'Demand Harian',
+        machine_cond_without_m2: 'Opsi 1 : M1',
+        machine_cond_with_m2: 'Opsi 2 : M2',
+        qty_short_label: 'Balance Qty :',
+        qty_pdk_output_chart: 'Target vs Aktual',
+        ready_to_load_chart: 'Ready TO Production',
+        completed: 'Completed',
+        uncompleted: 'Uncompleted',
+        capacity_output_input_chart: 'KAPASITAS vs OUT vs IN',
+        qty_pdk: 'Target',
+        qty_out: 'Aktual',
         qty_in: 'QTY IN',
         qty_balance: 'QTY BALANCE',
         input: 'Input',
         cost_center: 'Cost Centre',
         top_priority_title: 'Material To Load :',
         list_order_title: 'List Order :',
-        delivery_date: 'Tgl. Delivery',
+        process: 'Process',
+        filter_process: 'Process:',
+        filter_pcs: 'Pcs:',
+        all_processes: 'Semua Process',
+        min_pcs: 'Min Pcs',
+        reset: 'Reset',
+        delivery_date: 'Tanggal',
         qty_ready: 'Qty Ready',
         main_condition: 'Kondisi Utama Area :',
         shortage: 'Kurang',
@@ -690,9 +1298,10 @@ const analyticsText = {
         close_calendar: 'Tutup kalender',
         close_login: 'Tutup login',
         close_analytics_display: 'Tutup analytics display',
+        close_formula_guide: 'Tutup rumus',
         detail: 'Detail',
         detail_empty: 'Data detail belum tersedia.',
-        no_capacity_data: 'Data grafik KAPASITAS vs OUTPUT belum tersedia.',
+        no_capacity_data: 'Data grafik DEMAND vs OUTPUT belum tersedia.',
         no_short_qty: 'Tidak ada qty kurang.',
         dashboard_unavailable: 'Data dashboard belum tersedia.',
         logging_in: 'Login...',
@@ -703,11 +1312,11 @@ const analyticsText = {
         choose_one_card: 'Pilih minimal 1 card.',
         valid_sequence: 'Urutan data valid',
         valid_sequence_text: 'Tidak ada masalah urutan periode yang terdeteksi.',
-        capacity: 'Kapasitas',
+        capacity: 'Demand',
         input_32a: 'Input 32a',
         output: 'Output',
-        gap: 'Gap',
-        surplus: 'Surplus',
+        gap: 'Kurang',
+        surplus: 'Lebih',
         ready_periods: 'Ready periods',
         required_daily_output_label: 'Required daily output',
         production_status_label: 'Production Status:',
@@ -721,59 +1330,38 @@ const analyticsText = {
         analyticsDisplay: 'Tampilan Analytics',
         management_panel: 'Akses Manajemen',
         open_management: 'Manajemen',
-        management_note: 'Satu login untuk delivery, production calendar, riwayat QTY, dan analytics display.',
-        delivery_selection: 'Pemilihan Delivery',
-        delivery_note: 'Pilih horizon delivery yang sedang aktif.',
+        management_note: 'Akses untuk production calendar, riwayat QTY, dan analytics display.',
+        delivery_selection: 'Pemilihan Tanggal',
+        delivery_note: 'Pilih tanggal periode yang aktif.',
         calendar_access: 'Kalender',
         calendar_note: 'Atur hari kerja, libur, dan pengaturan production calendar.',
         history_access: 'Riwayat',
         qty_history_note: 'Lihat histori harian QTY PDK, output, dan balance.',
         display_access: 'Tampilan',
         analytics_note: 'Pilih kartu analytics yang ingin ditampilkan di dashboard.',
+        formula_guide: 'Rumus Dashboard',
+        formula_guide_access: 'Guide',
+        formula_guide_note: 'Lihat referensi rumus yang dipakai dashboard heat.',
         login_management: 'Login Manajemen',
         open: 'Buka',
         production_status: 'Status Produksi',
         output_achievement: 'Pencapaian Output',
         data_accuracy: 'Akurasi Data',
-        plan_completion: 'Penyelesaian Plan',
-        monitoring_coverage: 'Cakupan Monitoring',
-        source_sync: 'Sinkronisasi Sumber',
-        data_update: 'Update Data',
-        trend: 'Tren',
-        production_flow: 'Alur Produksi',
-        data_reliability: 'Reliabilitas Data',
-        ready_coverage: 'Coverage Ready',
-        req_daily_output: 'Kebutuhan Output Harian',
-        total_ready_load: 'Total Ready Load',
-        avg_daily_output: 'Rata-rata Output Harian',
-        avg_daily_capacity: 'Rata-rata Kapasitas Harian',
-        capacity_gap: 'Gap Kapasitas',
-        capacity_surplus: 'Surplus Kapasitas',
-        sequence_issues: 'Sequence Issues',
+        ready_to_load: 'Ready to Load & Coverage',
+        avg_daily_capacity: 'Rata-rata Demand Harian',
         critical_orders: 'Order Kritis',
+        coverage_subtext: 'Coverage: {days} Hari',
         cap_data_accuracy: 'CAP Akurasi Data',
         cap_output_achievement: 'CAP Pencapaian Output',
         cap_coverage_ready: 'CAP Coverage Ready Load',
         cap_daily_output: 'CAP Kebutuhan Output Harian',
-        cap_critical_order: 'CAP Order Delivery Kritis',
+        cap_critical_order: 'CAP Order Kritis',
         cap_controlled: 'CAP Kondisi Terkendali',
         note_public_status: 'Status umum tanpa detail operasional.',
         note_percent_output: 'Persentase performa produksi.',
         note_percent_accuracy: 'Persentase akurasi data.',
-        note_plan_completion: 'Persentase completion dari data output.',
-        note_monitoring: 'Cakupan modul dashboard yang sedang dipantau.',
-        note_source_sync: 'Jumlah sumber data yang tersinkron.',
-        note_update: 'Waktu update terakhir dari setiap sumber data.',
-        note_trend: 'Status tren umum.',
-        note_flow: 'Status alur produksi umum.',
-        note_reliability: 'Reliabilitas berdasarkan akurasi data.',
-        note_internal_ready: 'Data coverage ready load.',
-        note_internal_daily: 'Data kebutuhan output harian.',
-        note_internal_total_ready: 'Data total ready load.',
-        note_internal_avg_output: 'Data rata-rata output harian.',
-        note_internal_capacity: 'Data rata-rata kapasitas harian.',
-        note_internal_gap: 'Data gap/surplus kapasitas.',
-        note_internal_sequence: 'Jumlah issue urutan data.',
+        note_internal_ready_to_load: 'Total qty ready to load beserta cakupan hari produksi.',
+        note_internal_capacity: 'Data rata-rata demand harian.',
         note_internal_critical: 'Jumlah order kritis.',
         note_internal_cap: 'Masalah, penyebab, pencegahan, penanganan.',
         note_internal_cap_simple: 'Pencegahan dan penanganan.',
@@ -790,8 +1378,8 @@ const analyticsText = {
         status: 'Status',
         validation: 'Validasi',
         detail_qty_hidden: 'Persentase menunjukkan tingkat penyelesaian terhadap plan. Tabel di bawah menampilkan baris dashboard yang dipakai oleh card ini.',
-        production_status_formula: 'Status Produksi diringkas dari kondisi delivery aktif, pencapaian output, dan validasi data.',
-        output_formula: 'Achievement = output selesai / plan PDK x 100%.',
+        production_status_formula: 'Status Produksi diringkas dari kondisi periode aktif, pencapaian output, dan validasi data.',
+        output_formula: 'Achievement = qty total output / qty total PDK x 100%.',
         output_source: 'Data plan dan output dari file RPA yang sudah tersinkron.',
         accuracy_formula: 'Score = 100% dikurangi penalti issue urutan data.',
         monitoring_note: 'Cakupan Monitoring menunjukkan modul dashboard yang masuk area pantauan.',
@@ -813,23 +1401,15 @@ const analyticsText = {
         output_insight_text: 'Performa output berjalan sesuai target di {value}%.',
         reliability: 'Reliabilitas Data',
         reliability_text: 'Validasi data dashboard stabil di {value}%.',
-        flow_text: 'Progress produksi selaras dengan plan delivery aktif.',
+        flow_text: 'Progress produksi selaras dengan plan periode aktif.',
         monitoring_status: 'Status Monitoring',
         monitoring_text: 'Monitoring dashboard aktif dan siap direview.',
         analytics_ready: 'Tampilan analytics siap.',
         production_status_insight: 'Produksi {status}. Total output dashboard {output} pcs dengan balance {balance} pcs.',
         output_achievement_insight: 'Pencapaian output {value} berdasarkan output dashboard {output} pcs.',
         data_accuracy_insight: 'Akurasi data {value}; validasi mengikuti baris periode pada detail dashboard.',
-        monitoring_coverage_insight: 'Monitoring mencakup {value} modul dashboard aktif.',
-        source_sync_insight: 'Sinkronisasi sumber {value}; data source tersedia untuk kalkulasi dashboard.',
-        data_update_insight: 'Update data dashboard terakhir: {value}.',
-        ready_coverage_insight: 'Coverage ready {value}; total ready load {ready} pcs.',
-        req_daily_output_insight: 'Kebutuhan output harian {value}; balance dashboard {balance} pcs.',
-        total_ready_load_insight: 'Total ready load {value}, diambil dari data ready-to-load dashboard.',
-        avg_daily_output_insight: 'Rata-rata output harian {value}, dibandingkan dengan kapasitas dashboard saat ini.',
-        avg_daily_capacity_insight: 'Rata-rata kapasitas harian {value}, berdasarkan kalkulasi kapasitas delivery aktif.',
-        capacity_gap_insight: '{label} sebesar {value}; membandingkan output harian dengan kapasitas tersedia.',
-        sequence_issues_insight: 'Sequence issues terdeteksi: {value}; ini memengaruhi status validasi data.',
+        ready_to_load_insight: 'Total ready load {value} dengan coverage {days} hari kapasitas produksi.',
+        avg_daily_capacity_insight: 'Rata-rata kapasitas harian {value}, berdasarkan target per orang dikali direct actual.',
         critical_orders_insight: 'Order kritis terdeteksi: {value}; detail mengikuti daftar order prioritas.',
         cap_insight: '{label} ditampilkan sebagai item tindak lanjut dari card analytics yang dipilih.'
     }
@@ -838,16 +1418,8 @@ const analyticsCardDefinitions = [
     {key:'production_status', note:'note_public_status'},
     {key:'output_achievement', note:'note_percent_output'},
     {key:'data_accuracy', note:'note_percent_accuracy'},
-    {key:'monitoring_coverage', note:'note_monitoring'},
-    {key:'source_sync', note:'note_source_sync'},
-    {key:'data_update', note:'note_update'},
-    {key:'ready_coverage', note:'note_internal_ready'},
-    {key:'req_daily_output', note:'note_internal_daily'},
-    {key:'total_ready_load', note:'note_internal_total_ready'},
-    {key:'avg_daily_output', note:'note_internal_avg_output'},
+    {key:'ready_to_load', note:'note_internal_ready_to_load'},
     {key:'avg_daily_capacity', note:'note_internal_capacity'},
-    {key:'capacity_gap', note:'note_internal_gap'},
-    {key:'sequence_issues', note:'note_internal_sequence'},
     {key:'critical_orders', note:'note_internal_critical'},
     {key:'cap_data_accuracy', note:'note_internal_cap'},
     {key:'cap_output_achievement', note:'note_internal_cap'},
@@ -856,12 +1428,157 @@ const analyticsCardDefinitions = [
     {key:'cap_critical_order', note:'note_internal_cap'},
     {key:'cap_controlled', note:'note_internal_cap_simple'}
 ];
+const formulaGuideContent = {
+    en: [
+        {
+            title: 'Formulas',
+            items: [
+                {
+                    title: 'Target vs Aktual (APS)',
+                    description: 'Compares total PDK demand with actual output.',
+                    formula: 'Qty Total PDK - Qty total Output'
+                },
+                {
+                    title: 'TOTAL OUTPUT (APS)',
+                    description: 'Shows the actual output total.',
+                    formula: 'Add up Qty total Output'
+                },
+                {
+                    title: 'TOTAL BALANCE QTY (APS)',
+                    description: 'Shows the total remaining PDK quantity.',
+                    formula: 'Qty Total PDK - Qty total Output'
+                },
+                {
+                    title: 'Ready TO Production (Engage & CIUROX)',
+                    description: 'Shows material that is ready to be processed.',
+                    formula: 'Qty IN [acc = ok] - qty OUT'
+                },
+                {
+                    title: 'KAPASITAS vs OUT vs IN (Engage & APS)',
+                    description: 'Shows daily capacity, and material OUT and IN.',
+                    formula: 'Capacity = target per person x direct actual'
+                },
+                {
+                    title: 'TOP PRIORITY ORDER READY FOR PRODUCTION (Engage & APS)',
+                    description: 'Prioritizes orders to process first based on Material Ready and the nearest date.',
+                    formula: 'Break down Material Ready data by the nearest date'
+                }
+            ]
+        },
+        {
+            title: 'Additional Formulas',
+            items: [
+                {
+                    title: 'BALANCE QTY (APS)',
+                    description: 'Shows total PDK quantity shortage by period.',
+                    formula: 'Qty PDK per period - Qty total Output per period'
+                },
+                {
+                    title: 'SISA HARI KERJA',
+                    description: 'Shows the remaining days to finish the full quantity (-14).',
+                    formula: 'Set by SPV'
+                },
+                {
+                    title: 'KAPASITAS',
+                    description: 'Shows the production capacity per day based on active machines and weighted SMV.',
+                    formula: 'Kapasitas = Target per mesin x Jumlah mesin (Weighted SMV & 70% efisiensi)'
+                },
+                {
+                    title: 'DIRECT',
+                    description: 'Shows the operator/machine requirement per day based on the selected active styles and calendar working hours.',
+                    formula: 'SMV(style) = Weighted Average (SMV dikali Qty PDK tiap style).\nCalendar 6 days: Mon-Fri 7 hours, Sat 5 hours.\nCalendar 5 days: Mon-Fri 8 hours, Sat off.\ntarget per machine = ((1 x 60) / Weighted SMV) x working hours x 70%\ndirect plan = demand / target per machine\ndirect actual = input from admin panel'
+                },
+                {
+                    title: 'STYLE & SMV',
+                    description: 'Shows the active style and SMV.',
+                    formula: 'Set by SPV (number)'
+                }
+            ]
+        }
+    ],
+    id: [
+        {
+            title: 'Rumus',
+            items: [
+                {
+                    title: 'Target vs Aktual (APS)',
+                    description: 'Membandingkan total qty kebutuhan PDK dengan output aktual.',
+                    formula: 'Qty Total PDK - Qty total Output'
+                },
+                {
+                    title: 'TOTAL OUTPUT (APS)',
+                    description: 'Menampilkan Total output aktual.',
+                    formula: 'Menjumlahkan Qty total Output'
+                },
+                {
+                    title: 'TOTAL BALANCE QTY (APS)',
+                    description: 'Menampilkan Total kekurangan qty PDK.',
+                    formula: 'Qty Total PDK - Qty total Output'
+                },
+                {
+                    title: 'Ready TO Production (Engage & CIUROX)',
+                    description: 'Menampilkan material yang ready untuk di proses.',
+                    formula: 'Qty IN [ acc = ok ] - qty OUT'
+                },
+                {
+                    title: 'KAPASITAS vs OUT vs IN (Engage & APS)',
+                    description: 'Menampilkan kapasitas harian dan jumlah realisasi material OUT & IN.',
+                    formula: 'Kapasitas = Target per mesin x Jumlah mesin (Weighted SMV & 70% efisiensi)'
+                },
+                {
+                    title: 'TOP PRIORITY ORDER READY FOR PRODUCTION (Engage & APS)',
+                    description: 'Menampilkan prioritas order yang harus di proses terlebih dahulu berdasarkan "Material Ready" dengan tanggal terdekat.',
+                    formula: 'Menjabarkan data yang ada di "Material Ready" dengan tanggal terdekat.'
+                }
+            ]
+        },
+        {
+            title: 'Rumus Tambahan',
+            items: [
+                {
+                    title: 'BALANCE QTY (APS)',
+                    description: 'Menampilkan total qty kebutuhan PDK yang kurang berdasarkan tiap periode.',
+                    formula: 'Qty PDK tiap Periode - Qty total Output tiap Periode'
+                },
+                {
+                    title: 'STYLE & SMV',
+                    description: 'Menampilkan Style dan SMV yang berjalan.',
+                    formula: 'Di atur oleh SPV (Angka)'
+                },
+                {
+                    title: 'SISA HARI KERJA',
+                    description: 'Menampilkan informasi sisa hari untuk menyelesaikan full qty (-14).',
+                    formula: 'Di atur oleh SPV'
+                },
+                {
+                    title: 'KAPASITAS',
+                    description: 'Menampilkan kapasitas produksi harian.',
+                    formula: 'Kapasitas = Target per mesin x Jumlah mesin (Weighted SMV & 70% efisiensi)'
+                },
+                {
+                    title: 'DIRECT',
+                    description: 'Menampilkan kebutuhan operator per hari berdasarkan style aktif dan jam kerja kalender.',
+                    formula: 'SMV(style) = Weighted Average (SMV dikali Qty PDK tiap style).\nKalender 6 hari: Senin-Jumat 7 jam, Sabtu 5 jam.\nKalender 5 hari: Senin-Jumat 8 jam, Sabtu libur.\ntarget per mesin = ((1 x 60) / Weighted SMV) x jam kerja x 70%\ndirect plan = demand / target per mesin\ndirect actual = input jumlah mesin / operator dari panel admin'
+                }
+            ]
+        }
+    ]
+};
 const rupiah = new Intl.NumberFormat('id-ID');
 const percentNumber = new Intl.NumberFormat('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 const fmt = (value) => value === null || value === undefined || isNaN(Number(value)) ? '-' : rupiah.format(Number(value));
+const fmtDecimal = (value, digits = 2) => value === null || value === undefined || value === '' || isNaN(Number(value))
+    ? '-'
+    : Number(value).toLocaleString('id-ID', {minimumFractionDigits: 0, maximumFractionDigits: digits});
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
 const dateOnly = (value) => value ? new Intl.DateTimeFormat('id-ID', {day:'2-digit', month:'long', year:'numeric'}).format(new Date(value)) : '-';
 const dateTime = (value) => value ? new Intl.DateTimeFormat('id-ID', {day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit'}).format(new Date(value)) : '-';
+const timeOnly = (value) => {
+    if (!value) return '-';
+    const date = new Date(value);
+    if (isNaN(date.getTime())) return '-';
+    return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+};
 const excelSerialDate = (value) => {
     const num = Number(value);
     if (!Number.isFinite(num) || num <= 0) return '';
@@ -881,7 +1598,9 @@ const displayDate = (value) => {
     }
     return text;
 };
-let analyticsLanguage = localStorage.getItem(analyticsLangStorageKey) === 'en' ? 'en' : 'id';
+let analyticsLanguage = serverAnalyticsSettings.language === 'en'
+    ? 'en'
+    : (localStorage.getItem(analyticsLangStorageKey) === 'en' ? 'en' : 'id');
 const text = (key) => analyticsText[analyticsLanguage]?.[key] || analyticsText.en[key] || key;
 const textTemplate = (key, values = {}) => Object.keys(values).reduce(
     (result, name) => result.replaceAll(`{${name}}`, values[name]),
@@ -899,19 +1618,109 @@ function renderAppLanguage() {
     document.getElementById('analyticsMenuTitle').textContent = text('analyticsDisplay');
     document.getElementById('detailModalClose').setAttribute('aria-label', text('close_detail'));
     document.getElementById('workdayModalClose').setAttribute('aria-label', text('close_calendar'));
-    document.getElementById('calendarLoginClose').setAttribute('aria-label', text('close_login'));
     document.getElementById('analyticsMenuClose').setAttribute('aria-label', text('close_analytics_display'));
+    document.getElementById('formulaGuideClose').setAttribute('aria-label', text('close_formula_guide'));
+}
+
+function renderFormulaGuide() {
+    const body = document.getElementById('formulaGuideBody');
+    if (!body) return;
+
+    const sections = formulaGuideContent[analyticsLanguage] || formulaGuideContent.id || [];
+    const quickFormulas = analyticsLanguage === 'en' ? [
+        {
+            title: 'Demand',
+            formula: 'Demand = Balance qty / remaining workdays',
+            note: 'Shows the daily demand target derived from the remaining balance.'
+        },
+        {
+            title: 'Capacity',
+            formula: 'Capacity = target per person x direct actual',
+            note: 'Shows the daily capacity used by the dashboard.'
+        }
+    ] : [
+        {
+            title: 'Demand',
+            formula: 'Demand = Balance qty / sisa hari kerja',
+            note: 'Menunjukkan target demand harian dari sisa balance.'
+        },
+        {
+            title: 'Kapasitas',
+            formula: 'Kapasitas = target per orang x direct actual',
+            note: 'Menunjukkan kapasitas harian yang dipakai dashboard.'
+        }
+    ];
+    body.innerHTML = `
+        <div class="formula-guide">
+            ${sections.map(section => `
+                <section class="formula-section">
+                    <h4>${esc(section.title)}</h4>
+                    ${(() => {
+                        const items = Array.isArray(section.items) ? section.items : [];
+                        const pairItems = items.slice(0, 2);
+                        const restItems = items.slice(2);
+                        return `
+                            ${pairItems.length ? `
+                                <div class="formula-pair">
+                                    ${pairItems.map(item => `
+                                        <div class="formula-card">
+                                            <b>${esc(item.title)}</b>
+                                            <p>${esc(item.description)}</p>
+                                            <div class="formula-line"><span>Rumus :</span> ${esc(item.formula)}</div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                            ${restItems.length ? `
+                                <div class="formula-list" style="margin-top:8px;">
+                                    ${restItems.map(item => `
+                                        <div class="formula-card">
+                                            <b>${esc(item.title)}</b>
+                                            <p>${esc(item.description)}</p>
+                                            <div class="formula-line"><span>Rumus :</span> ${esc(item.formula)}</div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                        `;
+                    })()}
+                </section>
+            `).join('')}
+        </div>
+    `;
+}
+
+function openFormulaGuide() {
+    closeManagementModal(true);
+    renderFormulaGuide();
+    const modal = document.getElementById('formulaGuideModal');
+    modal.classList.add('open');
+    modal.style.display = 'flex';
+}
+
+function closeFormulaGuide() {
+    const modal = document.getElementById('formulaGuideModal');
+    modal.classList.remove('open');
+    modal.style.display = 'none';
 }
 let currentDashboard = null;
+let currentServerTime = null;
+let currentStyleCatalog = initialDashboardPayload?.style_smv_catalog || null;
 let calendarCursor = new Date();
 let selectedHolidays = new Set();
 let selectedHalfDays = new Set();
 let selectedQuarterDays = new Set();
 let selectedWorkDays = new Set();
 let calendarAuthenticated = false;
-let pendingLoginAction = null;
-const storedDeliveryCount = Number(localStorage.getItem('heatDeliveryCount'));
-let selectedDeliveryCount = [1, 2, 4].includes(storedDeliveryCount) ? storedDeliveryCount : initialDeliveryCount;
+const storedDateFrom = localStorage.getItem('heatDateFrom');
+const storedDateTo = localStorage.getItem('heatDateTo');
+if (storedDateFrom && /^\d{4}-\d{2}-\d{2}$/.test(storedDateFrom)) {
+    selectedDateFrom = storedDateFrom;
+}
+if (storedDateTo && /^\d{4}-\d{2}-\d{2}$/.test(storedDateTo)) {
+    selectedDateTo = storedDateTo;
+}
+selectedDate = selectedDateFrom;
 
 function floorDecimal(value, decimals) {
     const factor = Math.pow(10, decimals);
@@ -929,10 +1738,245 @@ function numberValue(...values) {
     return 0;
 }
 
+function selectedStyleSmvSummary(catalog) {
+    let items = [];
+    if (Array.isArray(catalog?.running_styles) && catalog.running_styles.length) {
+        items = catalog.running_styles.filter(s => !(s.style || '').toUpperCase().includes('OFC'));
+    } else if (Array.isArray(catalog?.styles)) {
+        items = catalog.styles.filter(s => !(s.style || '').toUpperCase().includes('OFC') && Boolean(s.is_running));
+    }
+
+    const totalRunning = items.length;
+    const filledItems = items.filter(s => Number(s?.smv) > 0);
+    const isComplete = totalRunning > 0 && filledItems.length === totalRunning;
+
+    if (!isComplete) {
+        return null;
+    }
+
+    const total = filledItems.reduce((sum, value) => sum + Number(value.smv), 0);
+    const totalPdk = filledItems.reduce((sum, value) => sum + (Number(value.qty_pdk) || 0), 0);
+    const weightedSum = filledItems.reduce((sum, value) => sum + (Number(value.smv) * (Number(value.qty_pdk) || 0)), 0);
+
+    const simpleAverage = totalRunning > 0 ? (total / totalRunning) : 0;
+    const weightedAverage = totalPdk > 0 && weightedSum > 0 ? (weightedSum / totalPdk) : null;
+
+    return {
+        count: totalRunning,
+        total,
+        simpleAverage,
+        weightedAverage,
+        average: weightedAverage,
+        totalPdk,
+        isComplete: true,
+    };
+}
+
+function isSaturdayWorkday(dashboard, targetDate = null) {
+    const calendar = dashboard?.management_analytics?.details?.daily_requirement?.period_calendar || {};
+    const satHours = Number(calendar?.working_hours_saturday);
+
+    const holidaySettings = dashboard?.holiday_settings 
+        || currentDashboard?.holiday_settings 
+        || initialDashboardPayload?.holiday_settings 
+        || {};
+    const holidays = new Set(Array.isArray(holidaySettings.holidays) ? holidaySettings.holidays : (Array.isArray(holidaySettings) ? holidaySettings : []));
+    const halfDays = new Set(Array.isArray(holidaySettings.half_days) ? holidaySettings.half_days : []);
+    const quarterDays = new Set(Array.isArray(holidaySettings.quarter_days) ? holidaySettings.quarter_days : []);
+    const workDays = new Set(Array.isArray(holidaySettings.work_days) ? holidaySettings.work_days : []);
+
+    if (typeof selectedHolidays !== 'undefined' && selectedHolidays instanceof Set) {
+        selectedHolidays.forEach(d => holidays.add(d));
+    }
+    if (typeof selectedHalfDays !== 'undefined' && selectedHalfDays instanceof Set) {
+        selectedHalfDays.forEach(d => halfDays.add(d));
+    }
+    if (typeof selectedQuarterDays !== 'undefined' && selectedQuarterDays instanceof Set) {
+        selectedQuarterDays.forEach(d => quarterDays.add(d));
+    }
+    if (typeof selectedWorkDays !== 'undefined' && selectedWorkDays instanceof Set) {
+        selectedWorkDays.forEach(d => workDays.add(d));
+    }
+
+    // Tentukan tanggal hari Sabtu pada minggu target (default: tanggal saat ini/server time)
+    const baseDate = targetDate ? new Date(targetDate) : (currentServerTime ? new Date(currentServerTime) : new Date());
+    const dayOfWeek = baseDate.getDay(); // 0 = Minggu, 1..5 = Senin..Jumat, 6 = Sabtu
+    const offset = dayOfWeek === 0 ? -1 : (6 - dayOfWeek);
+    const satDate = new Date(baseDate);
+    satDate.setDate(baseDate.getDate() + offset);
+    const satIso = isoDate(satDate);
+
+    // Cek status hari Sabtu tersebut langsung dari kalender:
+    if (holidays.has(satIso)) {
+        return false; // Sabtu libur (5 hari kerja)
+    }
+    if (workDays.has(satIso) || halfDays.has(satIso) || quarterDays.has(satIso)) {
+        return true; // Sabtu masuk/kerja (6 hari kerja)
+    }
+
+    if (calendar && typeof calendar.is_saturday_workday === 'boolean') {
+        return calendar.is_saturday_workday;
+    }
+
+    if (Number.isFinite(satHours)) {
+        return satHours > 0;
+    }
+
+    return true; // Default Sabtu masuk (6 hari kerja)
+}
+
+function currentWorkingHours(dashboard = {}, targetDate = null) {
+    const d = targetDate ? new Date(targetDate) : (currentServerTime ? new Date(currentServerTime) : new Date());
+    const dayOfWeek = d.getDay(); // 0 = Minggu, 1..5 = Senin..Jumat, 6 = Sabtu
+    const iso = isoDate(d);
+
+    const holidaySettings = dashboard?.holiday_settings 
+        || currentDashboard?.holiday_settings 
+        || initialDashboardPayload?.holiday_settings 
+        || {};
+    const holidays = new Set(Array.isArray(holidaySettings.holidays) ? holidaySettings.holidays : (Array.isArray(holidaySettings) ? holidaySettings : []));
+    const halfDays = new Set(Array.isArray(holidaySettings.half_days) ? holidaySettings.half_days : []);
+    const quarterDays = new Set(Array.isArray(holidaySettings.quarter_days) ? holidaySettings.quarter_days : []);
+    const workDays = new Set(Array.isArray(holidaySettings.work_days) ? holidaySettings.work_days : []);
+
+    if (typeof selectedHolidays !== 'undefined' && selectedHolidays instanceof Set) {
+        selectedHolidays.forEach(x => holidays.add(x));
+    }
+    if (typeof selectedHalfDays !== 'undefined' && selectedHalfDays instanceof Set) {
+        selectedHalfDays.forEach(x => halfDays.add(x));
+    }
+    if (typeof selectedQuarterDays !== 'undefined' && selectedQuarterDays instanceof Set) {
+        selectedQuarterDays.forEach(x => quarterDays.add(x));
+    }
+    if (typeof selectedWorkDays !== 'undefined' && selectedWorkDays instanceof Set) {
+        selectedWorkDays.forEach(x => workDays.add(x));
+    }
+
+    // Jika hari target ditandai libur di kalender:
+    if (holidays.has(iso)) {
+        return 0; // Libur
+    }
+
+    const satWorkday = isSaturdayWorkday(dashboard, d);
+
+    if (dayOfWeek === 0) {
+        // Hari Minggu: libur, kecuali ditandai kerja di kalender
+        if (workDays.has(iso)) {
+            return satWorkday ? 7 : 8;
+        }
+        if (halfDays.has(iso)) {
+            return (satWorkday ? 7 : 8) * 0.5;
+        }
+        if (quarterDays.has(iso)) {
+            return (satWorkday ? 7 : 8) * 0.25;
+        }
+        return 0; // Libur
+    }
+
+    if (dayOfWeek === 6) {
+        // Hari Sabtu: cek kalender apakah libur atau masuk
+        if (!satWorkday || holidays.has(iso)) {
+            return 0; // Sabtu libur
+        }
+        if (halfDays.has(iso)) {
+            return 2.5; // 1/2 hari kerja Sabtu (5 jam / 2)
+        }
+        if (quarterDays.has(iso)) {
+            return 1.25; // 1/4 hari kerja Sabtu (5 jam / 4)
+        }
+        return 5; // Sabtu masuk normal 5 jam
+    }
+
+    // Hari Senin - Jumat (1..5):
+    // Kalender 6 hari (Sabtu masuk): 7 jam.
+    // Kalender 5 hari (Sabtu libur): 8 jam.
+    const baseHours = satWorkday ? 7 : 8;
+    if (halfDays.has(iso)) {
+        return baseHours * 0.5;
+    }
+    if (quarterDays.has(iso)) {
+        return baseHours * 0.25;
+    }
+    return baseHours;
+}
+
+function calculateDirectRequirement(dashboard, targetDate = null) {
+    const db = dashboard || currentDashboard || initialDashboardPayload?.dashboard_data || {};
+    const styleSummary = selectedStyleSmvSummary(currentStyleCatalog || db?.style_smv_catalog || initialDashboardPayload?.style_smv_catalog);
+    const rawDirectActual = serverAnalyticsSettings?.direct_actual
+        ?? db?.analytics_settings?.direct_actual
+        ?? initialDashboardPayload?.analytics_settings?.direct_actual;
+    
+    const directActual = (rawDirectActual === null || rawDirectActual === undefined || rawDirectActual === '' || isNaN(Number(rawDirectActual)))
+        ? 0
+        : Number(rawDirectActual);
+
+    let parsedDate = null;
+    if (targetDate instanceof Date) {
+        parsedDate = targetDate;
+    } else if (typeof targetDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(targetDate)) {
+        parsedDate = new Date(targetDate + 'T12:00:00');
+    } else if (targetDate) {
+        parsedDate = new Date(targetDate);
+    }
+
+    const smv = Number(styleSummary?.average) || 0;
+    const workingHours = currentWorkingHours(db, parsedDate);
+    const satWorkday = isSaturdayWorkday(db, parsedDate);
+
+    const targetPerPerson = smv > 0 && workingHours > 0 ? ((1 * 60 / smv) * workingHours) * 0.70 : 0;
+    const capacity = Math.round(targetPerPerson * directActual);
+
+    const analyticsDetails = db?.management_analytics?.details || {};
+    const balanceQty = numberValue(
+        db?.kpis?.balance_qty,
+        analyticsDetails?.daily_requirement?.balance_qty,
+        analyticsDetails?.output?.balance_qty
+    ) || 0;
+    const daysLeft = numberValue(
+        db?.kpis?.prod_days_left,
+        analyticsDetails?.daily_requirement?.period_days_left,
+        analyticsDetails?.daily_requirement?.prod_days_left
+    ) || 0;
+    const rows = db?.output_vs_capacity || [];
+    let todayDemand = 0;
+    if (rows.length > 0) {
+        const todayDate = currentServerTime ? new Date(currentServerTime) : new Date();
+        const todayDay = todayDate.getDate();
+        const todayRow = rows.find(r => {
+            const m = String(r?.label || '').match(/^0?(\d+)/);
+            return m && parseInt(m[1], 10) === todayDay;
+        }) || rows[rows.length - 1];
+
+        if (todayRow) {
+            todayDemand = Number(todayRow.daily_demand ?? todayRow.demand ?? (todayRow.sisa_hari_kerja > 0 ? Math.round(todayRow.total_demand / todayRow.sisa_hari_kerja) : 0)) || 0;
+        }
+    }
+
+    const demand = todayDemand > 0 ? todayDemand : (
+        Number(analyticsDetails?.daily_requirement?.period_required_daily_output ?? analyticsDetails?.daily_requirement?.required_daily_output)
+        || (daysLeft > 0 ? (balanceQty / daysLeft) : 0)
+    );
+    const directPlan = targetPerPerson > 0 ? (demand / targetPerPerson) : 0;
+
+    return {
+        hasCapacity: smv > 0 && directActual > 0,
+        capacity: capacity,
+        directActual: directActual,
+        smv: smv,
+        workingHours: workingHours,
+        isSatWorkday: satWorkday,
+        targetPerPerson: targetPerPerson,
+        demand: demand,
+        direct: directPlan
+    };
+}
+
 function downloadMaterialToLoad() {
     const rows = (currentDashboard?.material_to_load || currentDashboard?.top_priority_orders || []);
+    const periodLabel = activePeriodLabel();
     if (!rows.length) {
-        const url = `${urls.materialToLoadDownload}?delivery_count=${encodeURIComponent(selectedDeliveryCount)}`;
+        const url = `${urls.materialToLoadDownload}?from=${encodeURIComponent(selectedDateFrom)}&to=${encodeURIComponent(selectedDateTo)}`;
         window.location.href = url;
         return;
     }
@@ -953,11 +1997,12 @@ th{background:#176b87;color:#fff;text-align:left;}
 </style>
 </head>
 <body>
-<h2>Material To Load - ${selectedDeliveryCount} Delivery</h2>
+<h2>Material To Load - ${esc(periodLabel || 'Periode Tanggal')}</h2>
+<h3 style="margin:0 0 8px;font-size:13px;color:#607287;">Current Period: ${esc(periodLabel || '-')}</h3>
 <div>Source: dashboard Heat Transfer</div>
 <br>
 <table>
-<thead><tr><th>No.</th><th>Order</th><th>Style</th><th>Item Nr</th><th>Tgl. Delivery</th><th class="num">Qty Ready</th><th>Source</th><th class="num">Qty PDK</th><th class="num">Qty Out APS</th><th class="num">Qty Out Engage</th></tr></thead>
+<thead><tr><th>No.</th><th>Order</th><th>Style</th><th>Item Nr</th><th>Tanggal</th><th class="num">Qty Ready</th><th>Source</th><th class="num">Target</th><th class="num">Aktual APS</th><th class="num">Aktual Engage</th></tr></thead>
 <tbody>
 ${rows.map((row, index) => `
 <tr>
@@ -965,7 +2010,7 @@ ${rows.map((row, index) => `
 <td>${esc(row.order)}</td>
 <td>${esc(row.style)}</td>
 <td>${esc(row.item || '-')}</td>
-<td>${esc(row.delivery)}</td>
+<td>${esc(row.delivery || '-')}</td>
 <td class="num">${fmtQty(row.qty_ready)}</td>
 <td>${esc(row.source || '-')}</td>
 <td class="num">${fmtQty(row.qty_pdk)}</td>
@@ -991,22 +2036,196 @@ function shortDelivery(value) {
     return String(value).replace(/\s+202\d$/, '').replace(/\s+/g, '-');
 }
 
+function parseDeliveryDate(val) {
+    if (!val) return null;
+    if (val instanceof Date && !isNaN(val.getTime())) return val;
+    const str = String(val).trim();
+    if (!str || str === '-') return null;
+
+    // YYYY-MM-DD
+    const isoMatch = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (isoMatch) {
+        return new Date(parseInt(isoMatch[1], 10), parseInt(isoMatch[2], 10) - 1, parseInt(isoMatch[3], 10));
+    }
+
+    // DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
+    const dmyMatch = str.match(/^(\d{1,2})[-\/\.](\d{1,2})[-\/\.](\d{4})/);
+    if (dmyMatch) {
+        return new Date(parseInt(dmyMatch[3], 10), parseInt(dmyMatch[2], 10) - 1, parseInt(dmyMatch[1], 10));
+    }
+
+    // DD Month YYYY or DD-Month-YYYY or DD-Month (e.g. "22 Sep 2026", "22-Sep", "18-Sep")
+    const months = {
+        jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, june: 5,
+        jul: 6, july: 6, aug: 7, sep: 8, sept: 8, oct: 9, nov: 10, dec: 11
+    };
+    const monMatch = str.match(/^(\d{1,2})[-\s]+([A-Za-z]+)(?:[-\s]+(\d{4}))?/i);
+    if (monMatch) {
+        const day = parseInt(monMatch[1], 10);
+        const monKey = monMatch[2].toLowerCase();
+        if (months[monKey] !== undefined) {
+            const currentYear = selectedDateFrom ? parseInt(selectedDateFrom.slice(0, 4), 10) : new Date().getFullYear();
+            const year = monMatch[3] ? parseInt(monMatch[3], 10) : currentYear;
+            return new Date(year, months[monKey], day);
+        }
+    }
+
+    const fallback = new Date(str);
+    return isNaN(fallback.getTime()) ? null : fallback;
+}
+
+function isDeliveryInSelectedRange(deliveryStr) {
+    if (!selectedDateFrom && !selectedDateTo) return true;
+    const dDate = parseDeliveryDate(deliveryStr);
+    if (!dDate) return true;
+    const year = dDate.getFullYear();
+    const month = String(dDate.getMonth() + 1).padStart(2, '0');
+    const day = String(dDate.getDate()).padStart(2, '0');
+    const iso = `${year}-${month}-${day}`;
+    if (selectedDateFrom && iso < selectedDateFrom) return false;
+    if (selectedDateTo && iso > selectedDateTo) return false;
+    return true;
+}
+
 function renderPriorityRows(rows) {
-    const body = (rows || []).map((row, index) => `
+    const periodLabel = activePeriodLabel();
+    const visibleRows = (rows || []).filter(row => {
+        if (Number(row?.qty_ready) <= 0) return false;
+        return isDeliveryInSelectedRange(row?.delivery);
+    });
+    const body = visibleRows.map((row, index) => {
+        const mult = currentUnitMode === 'proses' ? getProsesMultiplier(row) : 1;
+        const qtyReady = Number(row?.qty_ready || 0) * mult;
+        return `
         <tr>
             <td>${index + 1}.</td>
             <td class="order">${esc(row.order)}</td>
             <td class="style">${esc(row.style)}</td>
             <td class="delivery">${esc(shortDelivery(row.delivery))}</td>
-            <td class="num">${fmt(Math.round(row.qty_ready))}</td>
+            <td class="num">${fmt(Math.round(qtyReady))}</td>
         </tr>
-    `).join('');
+    `;
+    }).join('');
 
     document.getElementById('priorityRows').innerHTML = body || `
         <tr>
-            <td colspan="5" style="padding:16px 10px;text-align:center;color:var(--muted);font-weight:750;">Tidak ada data CSDB.</td>
+            <td colspan="5" style="padding:16px 10px;text-align:center;color:var(--muted);font-weight:750;">Tidak ada material ready.</td>
         </tr>
     `;
+}
+
+let currentMachineReqDaily = null;
+
+function renderRunningStyles(catalog) {
+    const list = document.getElementById('runningStyleList');
+    const count = document.getElementById('runningStyleCount');
+    const totalProcEl = document.getElementById('totalProcesses');
+    const totalProcSub = document.getElementById('totalProcessesSub');
+    const wAvgProcessEl = document.getElementById('wAvgProcessVal');
+    const avgSmvEl = document.getElementById('avgSmvVal');
+    const avgSmvSub = document.getElementById('avgSmvSub');
+
+    let items = [];
+    if (Array.isArray(catalog?.running_styles) && catalog.running_styles.length) {
+        items = catalog.running_styles.filter(s => !(s.style || '').toUpperCase().includes('OFC'));
+    } else if (Array.isArray(catalog?.styles)) {
+        items = catalog.styles.filter(s => !(s.style || '').toUpperCase().includes('OFC') && Boolean(s.is_running));
+    }
+
+    const totalRunning = items.length;
+    const filledItems = items.filter(s => Number(s?.smv) > 0);
+    const isComplete = totalRunning > 0 && filledItems.length === totalRunning;
+
+    let totalProcesses = 0;
+    let totalQty = 0;
+    filledItems.forEach(item => {
+        let procCount = 1;
+        if (Array.isArray(item.process_smvs) && item.process_smvs.length) {
+            procCount = item.process_smvs.length;
+        } else if (item.process_count && Number(item.process_count) > 0) {
+            procCount = Number(item.process_count);
+        }
+        const qtyPdk = Number(item.qty_pdk || item.qty || 0);
+        totalProcesses += (procCount * qtyPdk);
+        totalQty += qtyPdk;
+    });
+
+    const wAvgProcess = totalQty > 0 ? (totalProcesses / totalQty) : null;
+    const machineReqDaily = (wAvgProcess > 0 && totalQty > 0) ? (totalQty / wAvgProcess) : null;
+    currentMachineReqDaily = machineReqDaily;
+    const totalSmv = filledItems.reduce((sum, item) => sum + Number(item.smv), 0);
+    const weightedSmvSum = filledItems.reduce((sum, item) => sum + (Number(item.smv) * Number(item.qty_pdk || item.qty || 0)), 0);
+    const avgSmv = (totalQty > 0 && weightedSmvSum > 0)
+        ? (weightedSmvSum / totalQty)
+        : null;
+
+    if (totalProcEl) {
+        totalProcEl.textContent = (isComplete || totalProcesses > 0) ? fmt(Math.round(totalProcesses)) : '-';
+    }
+    if (wAvgProcessEl) {
+        wAvgProcessEl.textContent = (wAvgProcess !== null && (isComplete || totalProcesses > 0)) ? Number(wAvgProcess).toFixed(2) : '-';
+    }
+    if (totalProcSub) {
+        if (isComplete) {
+            totalProcSub.textContent = analyticsLanguage === 'en' ? `${totalRunning} styles active (Complete)` : `${totalRunning} style aktif (Lengkap)`;
+            totalProcSub.style.color = 'var(--muted)';
+        } else if (totalRunning > 0) {
+            totalProcSub.textContent = `${filledItems.length} / ${totalRunning} style terisi`;
+            totalProcSub.style.color = 'var(--warn)';
+        } else {
+            totalProcSub.textContent = '-';
+            totalProcSub.style.color = 'var(--muted)';
+        }
+    }
+
+    if (avgSmvEl) {
+        avgSmvEl.textContent = avgSmv !== null ? avgSmv.toFixed(2) : '-';
+    }
+    if (avgSmvSub) {
+        if (avgSmv !== null) {
+            avgSmvSub.textContent = analyticsLanguage === 'en' ? `${filledItems.length} running styles` : `${filledItems.length} style berjalan`;
+            avgSmvSub.style.color = 'var(--muted)';
+        } else if (totalRunning > 0) {
+            avgSmvSub.textContent = analyticsLanguage === 'en' ? 'Incomplete' : 'Belum lengkap';
+            avgSmvSub.style.color = 'var(--risk)';
+        } else {
+            avgSmvSub.textContent = '-';
+            avgSmvSub.style.color = 'var(--muted)';
+        }
+    }
+
+    if (count) {
+        count.textContent = isComplete ? `${totalRunning} style berjalan (Lengkap)` : `${filledItems.length}/${totalRunning} style terisi`;
+    }
+
+    if (list) {
+        if (!totalRunning) {
+            list.innerHTML = '<div class="running-style-empty">Tidak ada style berjalan di APS pada periode ini.</div>';
+            return;
+        }
+
+        if (!isComplete) {
+            list.innerHTML = `<div class="running-style-empty" style="color:var(--risk,#dc2626);font-size:11px;">SMV belum lengkap (${filledItems.length}/${totalRunning} style terisi). Harus diisi lengkap dulu.</div>`;
+            return;
+        }
+
+        let titleParts = [];
+        if (totalRunning > 1) {
+            titleParts.push(`Rata-rata dari ${totalRunning} style berjalan`);
+        }
+        items.forEach(s => {
+            if (Array.isArray(s.process_smvs) && s.process_smvs.length > 1) {
+                titleParts.push(`${s.style}: ${s.process_smvs.map(v => Number(v).toFixed(2)).join(' + ')} = ${Number(s.smv).toFixed(2)}`);
+            }
+        });
+        const titleText = titleParts.join(' | ');
+
+        list.innerHTML = `
+            <div class="running-style-chip" style="justify-content:center;" ${titleText ? `title="${esc(titleText)}"` : ''}>
+                <span class="style-smv" style="margin-left:0;font-size:clamp(16px,1.15vw,22px);">${avgSmv.toFixed(2)}</span>
+            </div>
+        `;
+    }
 }
 
 function activePeriodLabel() {
@@ -1042,18 +2261,179 @@ function pickNonEmptyRows(primary, fallback) {
 
     return [];
 }
-function renderListOrderRows(rows) {
-    const listRows = Array.isArray(rows) ? rows : [];
-    const periodLabelEl = document.getElementById('listOrderPeriodLabel');
-    const deliveryLabel = currentDashboard?.delivery_count ? `${Number(currentDashboard.delivery_count)} Delivery` : `${selectedDeliveryCount} Delivery`;
-    if (periodLabelEl) {
-        periodLabelEl.textContent = deliveryLabel;
+let rawListOrderRows = [];
+
+let currentUnitMode = localStorage.getItem('heat_unit_mode') || 'pcs'; // 'pcs' | 'proses'
+
+function getProsesMultiplier(row) {
+    const styleName = typeof row === 'string' ? row : (row?.style || '');
+    if (styleName) {
+        const cleanStyle = String(styleName).trim().toUpperCase();
+        const catalog = currentStyleCatalog || currentDashboard?.style_smv_catalog || initialDashboardPayload?.style_smv_catalog;
+
+        // 1. Cek dari process_map (lookup cepat O(1) yang disiapkan backend)
+        if (catalog?.process_map && typeof catalog.process_map === 'object') {
+            const val = Number(catalog.process_map[cleanStyle]);
+            if (!isNaN(val) && val > 0) {
+                return val;
+            }
+        }
+
+        // 2. Cek dari running_styles atau styles di catalog
+        if (catalog) {
+            const list = [
+                ...(Array.isArray(catalog.running_styles) ? catalog.running_styles : []),
+                ...(Array.isArray(catalog.styles) ? catalog.styles : [])
+            ];
+            const matched = list.find(s => String(s?.style || '').trim().toUpperCase() === cleanStyle);
+            if (matched) {
+                const pCount = Number(matched.process_count);
+                if (!isNaN(pCount) && pCount > 0) {
+                    return pCount;
+                }
+                if (Array.isArray(matched.process_smvs) && matched.process_smvs.length > 0) {
+                    return matched.process_smvs.length;
+                }
+            }
+        }
     }
+
+    // 3. Fallback bila style belum pernah diinput di admin panel
+    const route = typeof row === 'object' && row ? String(row.process || row.route || '').trim().toUpperCase() : '';
+    if (route.includes('_V3')) return 3;
+    if (route.includes('_V2')) return 2;
+    if (route.includes('_V1')) return 1;
+    return 1;
+}
+
+function setUnitMode(mode) {
+    currentUnitMode = mode === 'proses' ? 'proses' : 'pcs';
+    localStorage.setItem('heat_unit_mode', currentUnitMode);
+    document.querySelectorAll('#unitToggle .unit-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.unit === currentUnitMode);
+    });
+    refreshUnitDisplay();
+}
+
+function refreshUnitDisplay() {
+    if (!currentDashboard) return;
+    const unitLabel = currentUnitMode === 'proses' ? 'Proses' : 'Pcs';
+
+    const outUnitEl = document.getElementById('totalOutputUnit');
+    const balUnitEl = document.getElementById('balanceQtyUnit');
+    if (outUnitEl) outUnitEl.textContent = unitLabel;
+    if (balUnitEl) balUnitEl.textContent = unitLabel;
+
+    if (currentUnitMode === 'pcs') {
+        const analyticsDetails = currentDashboard.management_analytics?.details || {};
+        const balanceQty = numberValue(
+            currentDashboard.kpis?.balance_qty,
+            analyticsDetails.daily_requirement?.balance_qty,
+            analyticsDetails.output?.balance_qty
+        );
+        document.getElementById('totalOutput').textContent = fmt(Math.round(numberValue(currentDashboard.kpis?.total_output)));
+        document.getElementById('balanceQty').textContent = fmt(Math.round(balanceQty));
+        if (document.getElementById('dashboardView')?.classList.contains('active')) {
+            renderDashboardCharts(currentDashboard);
+        }
+        renderPriorityRows(currentDashboard.material_to_load || currentDashboard.top_priority_orders || []);
+    } else {
+        let totalOutProses = 0;
+        let totalBalProses = 0;
+        const periodAgg = {};
+
+        rawListOrderRows.forEach(r => {
+            const rawDel = r.delivery || '';
+            // Filter berdasarkan rentang tanggal delivery date yang dipilih
+            if (!isDeliveryInSelectedRange(rawDel)) {
+                return;
+            }
+
+            const mult = getProsesMultiplier(r);
+            const pdk = (Number(r.qty_pdk) || 0) * mult;
+            const out = (Number(r.qty_out ?? r.qty_out_aps ?? 0) || 0) * mult;
+            const bal = (Number(r.qty_balance ?? r.balance ?? Math.max(0, (Number(r.qty_pdk) || 0) - (Number(r.qty_out || 0)))) || 0) * mult;
+
+            totalOutProses += out;
+            totalBalProses += bal;
+
+            const dDate = parseDeliveryDate(rawDel);
+            let pLabel = '';
+            if (r.period && /^(MID|END)\s+/i.test(r.period)) {
+                pLabel = r.period.trim();
+            } else if (dDate) {
+                const isMid = dDate.getDate() <= 15;
+                const mName = monthNames[dDate.getMonth()] || 'Sept';
+                pLabel = `${isMid ? 'MID' : 'END'} ${mName}`;
+            } else {
+                pLabel = activePeriodLabel() || 'MID Sept';
+            }
+
+            let sortTime = 0;
+            const pMatch = String(pLabel).match(/^(MID|END)\s+([A-Za-z]+)$/i);
+            if (pMatch) {
+                const isMid = pMatch[1].toUpperCase() === 'MID';
+                const mKey = pMatch[2].toLowerCase();
+                const monthsMap = { jan:0, feb:1, mar:2, apr:3, may:4, june:5, july:6, aug:7, sept:8, sep:8, oct:9, nov:10, dec:11 };
+                const mIdx = monthsMap[mKey] !== undefined ? monthsMap[mKey] : (dDate ? dDate.getMonth() : 8);
+                const yr = dDate ? dDate.getFullYear() : (selectedDateFrom ? parseInt(selectedDateFrom.slice(0, 4), 10) : new Date().getFullYear());
+                sortTime = new Date(yr, mIdx, isMid ? 1 : 16).getTime();
+            } else if (dDate) {
+                sortTime = dDate.getTime();
+            }
+
+            if (!periodAgg[pLabel]) {
+                periodAgg[pLabel] = {
+                    label: pLabel,
+                    pdk: 0,
+                    output: 0,
+                    _sortTime: sortTime
+                };
+            }
+            periodAgg[pLabel].pdk += pdk;
+            periodAgg[pLabel].output += out;
+        });
+
+        // Urutkan periode secara kronologis
+        let sortedChartData = Object.values(periodAgg).sort((a, b) => (a._sortTime || 0) - (b._sortTime || 0));
+        if (!sortedChartData.length) {
+            const pFrom = getSinglePeriodInfo(selectedDateFrom);
+            const pTo = getSinglePeriodInfo(selectedDateTo);
+            if (pFrom.label === pTo.label) {
+                sortedChartData.push({ label: pFrom.label, pdk: 0, output: 0 });
+            } else {
+                sortedChartData.push({ label: pFrom.label, pdk: 0, output: 0 });
+                sortedChartData.push({ label: pTo.label, pdk: 0, output: 0 });
+            }
+        }
+
+        document.getElementById('totalOutput').textContent = fmt(Math.round(totalOutProses));
+        document.getElementById('balanceQty').textContent = fmt(Math.round(totalBalProses));
+
+        if (document.getElementById('dashboardView')?.classList.contains('active')) {
+            renderGroupedChart(document.getElementById('qtyPdkOutputChart'), sortedChartData, ['pdk', 'output'], { unit: 'proses' });
+        }
+        renderPriorityRows(currentDashboard.material_to_load || currentDashboard.top_priority_orders || []);
+    }
+
+    const displayListRows = rawListOrderRows.filter(r => isDeliveryInSelectedRange(r.delivery));
+    renderListOrderTableAndSummary(displayListRows);
+}
+
+function renderListOrderTableAndSummary(listRows) {
+    const periodLabelEl = document.getElementById('listOrderPeriodLabel');
+    const currentPeriodText = currentDashboard?.selected_period || (currentDashboard?.period_display_range ? `${currentDashboard.selected_period} (${currentDashboard.period_display_range})` : (activePeriodLabel() || '-'));
+    if (periodLabelEl) {
+        periodLabelEl.textContent = currentPeriodText;
+    }
+
+    const unitLabel = currentUnitMode === 'proses' ? 'Proses' : 'Pcs';
     const totals = listRows.reduce((acc, row) => {
-        const qtyPdk = Number(row.qty_pdk) || 0;
-        const qtyIn = Number(row.qty_in ?? row.qty_ready ?? row.qty_out_engage ?? qtyPdk) || 0;
-        const qtyOut = Number(row.qty_out ?? row.qty_out_aps ?? 0) || 0;
-        const qtyBalance = Number(row.qty_balance ?? row.balance ?? Math.max(0, qtyPdk - qtyOut)) || 0;
+        const mult = currentUnitMode === 'proses' ? getProsesMultiplier(row) : 1;
+        const qtyPdk = (Number(row.qty_pdk) || 0) * mult;
+        const qtyIn = (Number(row.qty_in ?? row.qty_ready ?? row.qty_out_engage ?? row.qty_pdk) || 0) * mult;
+        const qtyOut = (Number(row.qty_out ?? row.qty_out_aps ?? 0) || 0) * mult;
+        const qtyBalance = (Number(row.qty_balance ?? row.balance ?? Math.max(0, (Number(row.qty_pdk) || 0) - (Number(row.qty_out || 0)))) || 0) * mult;
         acc.qtyPdk += qtyPdk;
         acc.qtyOut += qtyOut;
         acc.qtyIn += qtyIn;
@@ -1065,41 +2445,44 @@ function renderListOrderRows(rows) {
     if (summaryEl) {
         summaryEl.innerHTML = `
             <div class="list-order-stat">
-                <span>Total QTY PDK</span>
+                <span>Total Target</span>
                 <strong>${fmt(Math.round(totals.qtyPdk))}</strong>
-                <small>Pcs</small>
+                <small>${unitLabel}</small>
             </div>
             <div class="list-order-stat">
                 <span>Total QTY IN</span>
                 <strong>${fmt(Math.round(totals.qtyIn))}</strong>
-                <small>Pcs</small>
+                <small>${unitLabel}</small>
             </div>
             <div class="list-order-stat">
-                <span>Total QTY OUT</span>
+                <span>Total Aktual</span>
                 <strong>${fmt(Math.round(totals.qtyOut))}</strong>
-                <small>Pcs</small>
+                <small>${unitLabel}</small>
             </div>
             <div class="list-order-stat">
                 <span>Total QTY BALANCE</span>
                 <strong>${fmt(Math.round(totals.qtyBalance))}</strong>
-                <small>Pcs</small>
+                <small>${unitLabel}</small>
             </div>
         `;
     }
 
     const body = listRows.map((row, index) => {
+        const mult = currentUnitMode === 'proses' ? getProsesMultiplier(row) : 1;
         const costCenter = row.cost_center || row.cost_centre || row.order || '-';
         const deliveryLabel = row.delivery || shortDelivery(row.delivery) || '-';
-        const qtyPdk = Number(row.qty_pdk) || 0;
-        const qtyIn = Number(row.qty_in ?? row.qty_ready ?? row.qty_out_engage ?? qtyPdk) || 0;
-        const qtyOut = Number(row.qty_out ?? row.qty_out_aps ?? 0) || 0;
-        const qtyBalance = Number(row.qty_balance ?? row.balance ?? Math.max(0, qtyPdk - qtyOut)) || 0;
+        const processLabel = row.process || row.route || '-';
+        const qtyPdk = (Number(row.qty_pdk) || 0) * mult;
+        const qtyIn = (Number(row.qty_in ?? row.qty_ready ?? row.qty_out_engage ?? row.qty_pdk) || 0) * mult;
+        const qtyOut = (Number(row.qty_out ?? row.qty_out_aps ?? 0) || 0) * mult;
+        const qtyBalance = (Number(row.qty_balance ?? row.balance ?? Math.max(0, (Number(row.qty_pdk) || 0) - (Number(row.qty_out || 0)))) || 0) * mult;
 
         return `
         <tr>
             <td>${index + 1}.</td>
             <td class="cost-center">${esc(costCenter)}</td>
             <td class="style">${esc(row.style)}</td>
+            <td class="process" title="${esc(processLabel)}">${esc(processLabel)}</td>
             <td class="delivery">${esc(deliveryLabel)}</td>
             <td class="num">${fmt(Math.round(qtyPdk))}</td>
             <td class="num qty-in">${fmt(Math.round(qtyIn))}</td>
@@ -1111,10 +2494,32 @@ function renderListOrderRows(rows) {
 
     document.getElementById('listOrderRows').innerHTML = body || `
         <tr>
-            <td colspan="8" style="padding:22px 10px;text-align:center;color:var(--muted);font-weight:750;">Tidak ada data list order.</td>
+            <td colspan="9" style="padding:22px 10px;text-align:center;color:var(--muted);font-weight:750;">Tidak ada data list order.</td>
         </tr>
     `;
 }
+
+function renderListOrderRows(rows) {
+    rawListOrderRows = Array.isArray(rows) ? rows : [];
+    const countBadge = document.getElementById('listOrderCountBadge');
+    if (countBadge) {
+        if (rawListOrderRows.length > 0) {
+            countBadge.style.display = 'inline-flex';
+            countBadge.textContent = `${fmt(rawListOrderRows.length)} Order`;
+        } else {
+            countBadge.style.display = 'none';
+        }
+    }
+    refreshUnitDisplay();
+}
+
+// Unit Toggle click handlers & initial state sync
+document.querySelectorAll('#unitToggle .unit-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.unit === currentUnitMode);
+    btn.addEventListener('click', () => {
+        setUnitMode(btn.dataset.unit);
+    });
+});
 
 function renderEmpty(data) {
     renderAppLanguage();
@@ -1135,7 +2540,8 @@ function compactChartValue(value) {
 function renderGroupedChart(target, rows, keys, options = {}) {
     const displayRows = options.limit ? rows.slice(-options.limit) : rows;
     const max = Math.max(...displayRows.flatMap(row => keys.map(key => Number(row[key]) || 0)), 1);
-    const maxBarHeight = Math.max(72, target.clientHeight - 72);
+    const maxBarHeight = Math.max(72, target.clientHeight - 84);
+    const unitText = options.unit || (currentUnitMode === 'proses' ? 'proses' : 'pcs');
     target.innerHTML = `
         <div class="chart-area ${options.clean ? 'clean' : ''}">
             ${displayRows.map(row => `
@@ -1147,7 +2553,9 @@ function renderGroupedChart(target, rows, keys, options = {}) {
                             const rounded = Math.round(value);
                             const className = index === 0 ? '' : (index === 1 ? 'alt' : 'third');
                             const label = options.compactLabels ? compactChartValue(rounded) : fmt(rounded);
-                            const title = `${key.toUpperCase()}: ${fmt(rounded)} pcs`;
+                            const keyLabels = { pdk: 'Target', output: 'Aktual', ready: 'Ready', completed: text('completed'), uncompleted: text('uncompleted') };
+                            const keyName = keyLabels[key] || key.toUpperCase();
+                            const title = `${keyName}: ${fmt(rounded)} ${unitText}`;
                             return `<div class="vbar ${className}" style="height:${height}px" title="${esc(title)}"><small class="label-${index}">${label}</small></div>`;
                         }).join('')}
                     </div>
@@ -1158,93 +2566,78 @@ function renderGroupedChart(target, rows, keys, options = {}) {
     `;
 }
 
-function renderCapacityChart(target, rows) {
-    const keys = ['capacity', 'output', 'input'];
-    const maxVal = Math.max(...rows.flatMap(row => keys.map(key => Number(row[key]) || 0)), 1);
+function renderCapacityChart(target, rows, dashboard) {
+    if (!target || !rows || !rows.length) {
+        if (target) target.innerHTML = '<div class="capacity-inline-chart"><div style="color:var(--muted);font-weight:750;margin:auto;">Tidak ada data</div></div>';
+        return;
+    }
 
-    // Calculate Y-axis step and ticks
-    const possibleSteps = [500, 1000, 2000, 2500, 5000, 10000, 20000, 25000, 50000, 100000];
-    let step = possibleSteps[possibleSteps.length - 1];
-    for (const s of possibleSteps) {
-        const ticksCount = Math.ceil(maxVal / s);
-        if (ticksCount >= 4 && ticksCount <= 8) {
-            step = s;
-            break;
+    const isHourly = rows.some(r => r.is_hourly || /^\d{1,2}:\d{2}$/.test(r.label || ''));
+    const capUnit = isHourly ? 'pcs/jam' : 'pcs/hari';
+
+    const getRowCapacity = (row) => {
+        if (isHourly || row.is_hourly || /^\d{1,2}:\d{2}$/.test(row.label || '')) {
+            return Number(row.hourly_capacity ?? row.capacity) || 0;
         }
-    }
-    const roundedMax = Math.ceil(maxVal / step) * step;
-    const ticks = [];
-    for (let val = 0; val <= roundedMax; val += step) {
-        ticks.push(val);
-    }
+        const targetDate = row.capacity_balance_day || row.label;
+        const req = calculateDirectRequirement(dashboard, targetDate);
+        return req && req.capacity > 0 ? req.capacity : (Number(row.daily_capacity) || 0);
+    };
 
-    const bottomOffset = 25; // glabel area height at bottom
-    const maxBarHeight = Math.max(72, target.clientHeight - 72);
+    const n = rows.length;
+    const barMax = Math.max(...rows.flatMap(row => {
+        const cap = getRowCapacity(row);
+        const out = Number(row.output) || 0;
+        const inp = Number(row.input) || 0;
+        return [cap, out, inp];
+    }), 1);
+    const maxBarHeight = Math.max(72, target.clientHeight - 84);
 
-    const barWidth = Math.max(34, Math.min(48, 0.0245 * window.innerWidth));
-    const gap = Math.max(4, Math.min(7, 0.0034 * window.innerWidth));
-    const pixelOffset = (barWidth + gap) / 2;
-    const chartWidth = Math.max(100, target.clientWidth - 64);
-    const shiftPercent = (pixelOffset / chartWidth) * 100;
+    const w = target.clientWidth || 800;
+    const h = target.clientHeight || 200;
+    const padLeft = 16;
+    const padRight = 16;
+    const padBottom = 34;
+    const usableWidth = Math.max(10, w - padLeft - padRight);
 
-    const inputPoints = rows.map((row, index) => {
-        const xCenter = rows.length > 0 ? ((index + 0.5) / rows.length) * 100 : 50;
-        const x = xCenter + shiftPercent;
-        const rawY = maxBarHeight - ((Number(row.input) || 0) / roundedMax * maxBarHeight);
-        const y = Math.max(0, Math.min(maxBarHeight, rawY));
-        const labelY = Math.max(0, Math.min(maxBarHeight - 18, y + 10));
-        return {x, y, labelY, value: Number(row.input) || 0, label: row.label || '-'};
-    });
-    const inputPath = inputPoints.map(point => `${point.x.toFixed(2)},${point.y.toFixed(2)}`).join(' ');
+    const polyPoints = rows.map((row, i) => {
+        const capVal = getRowCapacity(row);
+        const capH = capVal > 0 ? Math.max(2, (capVal / barMax) * maxBarHeight) : 2;
+        const x = padLeft + ((i + 0.5) / n) * usableWidth;
+        const y = h - padBottom - capH;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
 
     target.innerHTML = `
-        <div class="chart-area" style="flex: 1; min-height: 0; padding: 0;">
-            <!-- Gridlines -->
-            ${ticks.map(tick => {
-                const bottomPos = bottomOffset + (tick / roundedMax) * maxBarHeight;
-                return `<div class="chart-gridline" style="bottom: ${bottomPos.toFixed(1)}px; left: 52px; right: 12px;"></div>`;
-            }).join('')}
-            
-            <!-- Y-axis labels -->
-            ${ticks.map(tick => {
-                const bottomPos = bottomOffset + (tick / roundedMax) * maxBarHeight;
-                return `<div class="chart-y-label" style="bottom: ${bottomPos.toFixed(1)}px; left: 0; width: 44px; text-align: right; transform: translateY(50%);">${fmt(tick)}</div>`;
-            }).join('')}
-            
-            <!-- Input Line Chart SVG with circles -->
-            <svg class="input-line-chart" viewBox="0 0 100 ${maxBarHeight}" preserveAspectRatio="none" style="height:${maxBarHeight}px; left: 52px; right: 12px; width: calc(100% - 64px); bottom: ${bottomOffset}px;" aria-hidden="true">
-                <polyline points="${esc(inputPath)}"></polyline>
-                ${inputPoints.map(point => `
-                    <circle cx="${point.x.toFixed(2)}" cy="${point.y.toFixed(2)}" r="0.8" fill="#f59e0b"></circle>
-                `).join('')}
+        <div class="capacity-inline-chart" style="position:relative;">
+            <svg viewBox="0 0 ${w} ${h}" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:4;overflow:visible;">
+                <polyline points="${polyPoints}" fill="none" stroke="rgba(16,32,51,0.20)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+                <polyline points="${polyPoints}" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
-            
-            <!-- Input labels -->
-            <div class="input-line-labels" style="height:${maxBarHeight}px; left: 52px; right: 12px; width: calc(100% - 64px); bottom: ${bottomOffset}px;">
-                ${inputPoints.map(point => `
-                    <span class="input-value" style="left:${point.x.toFixed(2)}%;top:${point.labelY.toFixed(0)}px" title="INPUT ${esc(point.label)}: ${esc(fmt(Math.round(point.value)))} pcs">${esc(fmt(Math.round(point.value)))}</span>
-                `).join('')}
-            </div>
-            
-            <!-- Columns/Bars -->
-            <div class="chart-columns" style="margin-left: 52px; margin-right: 12px; height: 100%; display: flex; justify-content: space-around; position: relative; z-index: 2; width: calc(100% - 64px);">
-                ${rows.map(row => {
-                    return `
-                    <div class="group">
+            ${rows.map((row, index) => {
+                const capacityValue = getRowCapacity(row);
+                const inputValue = Number(row.input) || 0;
+                const outputValue = Number(row.output) || 0;
+                const inHeight = Math.max(2, (inputValue / barMax) * maxBarHeight);
+                const outputHeight = Math.max(2, (outputValue / barMax) * maxBarHeight);
+                const capacityHeight = capacityValue > 0 ? Math.max(2, (capacityValue / barMax) * maxBarHeight) : 2;
+
+                return `
+                    <div class="group" style="position:relative;z-index:2;">
                         <div class="bars">
-                            ${['capacity', 'output'].map((key, index) => {
-                                const value = Number(row[key]) || 0;
-                                const height = Math.max(2, value / roundedMax * maxBarHeight);
-                                const rounded = Math.round(value);
-                                const className = index ? 'alt' : '';
-                                const title = `${key.toUpperCase()}: ${fmt(rounded)} pcs`;
-                                return `<div class="vbar ${className}" style="height:${height}px" title="${esc(title)}"><small class="label-${index}">${fmt(rounded)}</small></div>`;
-                            }).join('')}
+                            <div class="vbar in" style="height:${inHeight.toFixed(1)}px" title="IN: ${esc(fmt(Math.round(inputValue)))} pcs"><small class="label-0">${esc(fmt(Math.round(inputValue)))}</small></div>
+                            <div class="vbar out" style="height:${outputHeight.toFixed(1)}px" title="OUT: ${esc(fmt(Math.round(outputValue)))} pcs"><small class="label-1">${esc(fmt(Math.round(outputValue)))}</small></div>
                         </div>
-                        <div class="glabel">${esc(row.label)}</div>
+                        <div class="demand-dot-marker" style="position:absolute;left:50%;bottom:${(capacityHeight + 26).toFixed(1)}px;transform:translate(-50%, 50%);width:8px;height:8px;border-radius:50%;background:#ef4444;border:1.5px solid #17202d;box-shadow:0 0 0 2px rgba(239,68,68,0.4);z-index:8;" title="KAPASITAS: ${esc(fmt(Math.round(capacityValue)))} ${capUnit}"></div>
+                        ${capacityValue > 0 ? `
+                            <div class="demand-node-badge" style="position:absolute;left:50%;bottom:${(capacityHeight + 36).toFixed(1)}px;transform:translateX(-50%);z-index:9;pointer-events:none;">
+                                <small style="background:#fee2e2;color:#991b1b;border-radius:4px;padding:1px 4px;font-size:10px;font-weight:900;white-space:nowrap;border:1px solid #f87171;box-shadow:0 1px 3px rgba(0,0,0,0.12);">KAP ${esc(fmt(Math.round(capacityValue)))}</small>
+                            </div>
+                        ` : ''}
+                        <div class="glabel">${esc(row.label || '-')}</div>
                     </div>
-                `}).join('')}
-            </div>
+                `;
+            }).join('')}
         </div>
     `;
 }
@@ -1332,11 +2725,11 @@ function openAnalyticsDetail(key) {
                 ${tableCell((Number(row.pdk) || 0) - (Number(row.output) || 0), true)}
             </tr>
         `);
-        renderDetailTable('Detail Output Achievement', ['Period', 'QTY PDK', 'QTY Output', 'Balance'], rows, [
-            ['Delivery Berjalan', current.label || '-'],
+        renderDetailTable('Detail Output Achievement', ['Period', 'Target', 'Aktual', 'Balance'], rows, [
+            ['Periode Berjalan', current.label || '-'],
             ['Total PDK', `${fmt(Math.round(totalPdk))} Pcs`],
             ['Achievement', `${percentNumber.format(floorDecimal(achievement, 2))}%`]
-        ], `Achievement = Total Output / Total PDK x 100. Tabel menampilkan delivery/periode yang sedang berjalan. Total output: ${fmt(Math.round(totalOutput))} pcs. Total balance dashboard: ${fmt(Math.round(balance))} pcs.`);
+        ], `Achievement = Total Output / Total PDK x 100. Tabel menampilkan periode yang sedang berjalan. Total output: ${fmt(Math.round(totalOutput))} pcs. Total balance dashboard: ${fmt(Math.round(balance))} pcs.`);
         return;
     }
 
@@ -1371,10 +2764,10 @@ function openAnalyticsDetail(key) {
             rows,
             [
             ['Total Ready', `${fmt(Math.round(totalReady))} Pcs`],
-            ['Avg Capacity', `${fmt(Math.round(avgCapacity))} Pcs/Day`],
+            ['Avg Demand', `${fmt(Math.round(avgCapacity))} Pcs/Day`],
             ['Coverage', `${fmt(coverage.toFixed(1))} Days`],
             ['Period Detail', currentLabel || '-']
-        ], 'Ready Coverage = Total Ready Load / Avg Daily Capacity. Target aman minimal 10 hari coverage.');
+        ], 'Ready Coverage = Total Ready Load / Avg Daily Demand. Target aman minimal 10 hari coverage.');
         return;
     }
 
@@ -1391,11 +2784,11 @@ function openAnalyticsDetail(key) {
                 ${tableCell(row.label === current.label ? 'Berjalan' : (checked.includes(row.label) ? 'Dicek' : '-'))}
             </tr>
         `);
-        renderDetailTable('Detail Delivery Berjalan', ['Period', 'PDK', 'Output', 'Balance', 'Ready', 'Status'], rows, [
-            ['Delivery Berjalan', current.label || '-'],
+        renderDetailTable('Detail Periode Berjalan', ['Period', 'PDK', 'Output', 'Balance', 'Ready', 'Status'], rows, [
+            ['Periode Berjalan', current.label || '-'],
             ['Periode Dicek', checked.join(', ') || '-'],
             ['Accuracy', `${percentNumber.format(Number(dataAccuracy.score || 0))}%`]
-        ], 'Delivery berjalan ditentukan dari periode pertama yang masih punya balance atau ready. Data Accuracy membandingkan periode berjalan dengan dua periode sebelumnya.');
+        ], 'Periode berjalan ditentukan dari periode pertama yang masih punya balance atau ready. Data Accuracy membandingkan periode berjalan dengan dua periode sebelumnya.');
         return;
     }
 
@@ -1406,11 +2799,14 @@ function openAnalyticsDetail(key) {
         const daysLeft = Number(daily.period_days_left ?? daily.prod_days_left) || 0;
         const requiredDaily = Number(daily.period_required_daily_output) || (daysLeft > 0 ? balanceQty / daysLeft : 0);
         const avgOutput = Number(daily.avg_daily_output) || 0;
-        const latestDaily = (dashboard.output_vs_capacity || []).slice(-1)[0] || {};
+        const capacityRows = (dashboard.daily_output_vs_capacity && dashboard.daily_output_vs_capacity.length)
+            ? dashboard.daily_output_vs_capacity
+            : (dashboard.output_vs_capacity || []);
+        const latestDaily = capacityRows.slice(-1)[0] || {};
         const latestBalanceQty = Number(latestDaily.balance_qty ?? latestDaily.total_demand) || balanceQty;
         const latestSisaHariKerja = Number(latestDaily.sisa_hari_kerja ?? latestDaily.hari_kerja) || daysLeft;
         const latestCapacity = Number(latestDaily.capacity) || (latestSisaHariKerja > 0 ? Math.round(latestBalanceQty / latestSisaHariKerja) : 0);
-        const rows = (dashboard.output_vs_capacity || []).map(row => `
+        const rows = capacityRows.map(row => `
             <tr>
                 ${tableCell(row.label)}
                 ${tableCell(row.output, true)}
@@ -1421,12 +2817,12 @@ function openAnalyticsDetail(key) {
                 ${tableCell((row.capacity_breakdown || []).map(item => `${item.label}: ${fmt(Math.round(item.balance_qty || item.total_demand || item.total_balance || item.balance || 0))} / ${fmt(Number(item.sisa_hari_kerja || item.hari_kerja || item.total_days_left || item.days_left || 0).toFixed(1))} = ${fmt(Math.round(item.daily_capacity || row.capacity || 0))}`).join(', ') || '-')}
             </tr>
         `);
-        renderDetailTable('Detail Daily Output', ['Hari', 'Output', 'Input 32a', 'Capacity', 'Gap', 'Snapshot', 'History Kapasitas'], rows, [
+        renderDetailTable('Detail Daily Output', ['Hari', 'Output', 'Input 32a', 'Demand', 'Gap', 'Snapshot', 'History Demand'], rows, [
             ['Balance Qty', `${fmt(Math.round(latestBalanceQty))} Pcs`],
             ['Sisa Hari Kerja', `${fmt(latestSisaHariKerja.toFixed(1))} Days`],
-            ['Kapasitas/Day', `${fmt(Math.round(latestCapacity))} Pcs/Day`],
+            ['Demand/Day', `${fmt(Math.round(latestCapacity))} Pcs/Day`],
             ['Req. Daily', `${fmt(Math.round(requiredDaily))} Pcs/Day`]
-        ], `Kapasitas/Day = Balance Qty / Sisa Hari Kerja (balance dari APS). Bar Output dan Input tetap dari Engage 32/32a. Sisa Hari Kerja = sisa hari kerja ke akhir delivery terakhir - buffer export (4 hari x jumlah delivery aktif). Avg Daily Output saat ini: ${fmt(Math.round(avgOutput))} pcs/day. Gap per hari = Capacity - Output.`);
+        ], `Demand = Balance Qty / Sisa Hari Kerja. Output dan Input tetap mengikuti data Engage harian. Sisa Hari Kerja diatur oleh SPV untuk periode aktif. Avg Daily Output saat ini: ${fmt(Math.round(avgOutput))} pcs/day. Gap per hari = Demand - Output.`);
         return;
     }
 
@@ -1461,7 +2857,7 @@ function openAnalyticsDetail(key) {
                 ${tableCell(row.qty_ready, true)}
             </tr>
         `);
-        renderDetailTable('Detail Critical Orders', ['Order', 'Style', 'Delivery', 'QTY PDK', 'QTY Ready'], rows, [
+        renderDetailTable('Detail Critical Orders', ['Order', 'Style', 'Delivery', 'Target', 'QTY Ready'], rows, [
             ['Critical Orders', `${fmt(criticalOrders)} Order`],
             ['Horizon', '5 Days'],
             ['Data Ditampilkan', `${fmt(rows.length)} Order`]
@@ -1478,12 +2874,30 @@ function detailKeyForMetric(label) {
     }[label] || '';
 }
 
+function mapLegacyAnalyticsCardKey(key) {
+    if (key === 'ready_coverage' || key === 'total_ready_load') return 'ready_to_load';
+    return key;
+}
+
 function getVisibleAnalyticsCards() {
+    const validKeys = new Set(analyticsCardDefinitions.map(item => item.key));
+    const serverCards = Array.isArray(serverAnalyticsSettings.visible_cards) ? serverAnalyticsSettings.visible_cards : [];
+    if (serverCards.length) {
+        const mappedServerCards = Array.from(new Set(serverCards.map(mapLegacyAnalyticsCardKey)));
+        const filteredServerCards = mappedServerCards.filter(key => validKeys.has(key));
+        if (filteredServerCards.length) {
+            try {
+                localStorage.setItem(analyticsCardStorageKey, JSON.stringify(filteredServerCards));
+            } catch (e) {}
+            return filteredServerCards;
+        }
+    }
+
     try {
         const saved = JSON.parse(localStorage.getItem(analyticsCardStorageKey) || 'null');
         if (Array.isArray(saved) && saved.length) {
-            const validKeys = new Set(analyticsCardDefinitions.map(item => item.key));
-            const filtered = saved.filter(key => validKeys.has(key));
+            const mappedSaved = Array.from(new Set(saved.map(mapLegacyAnalyticsCardKey)));
+            const filtered = mappedSaved.filter(key => validKeys.has(key));
             return filtered.length ? filtered : [...defaultAnalyticsCards];
         }
     } catch (error) {
@@ -1503,34 +2917,27 @@ function metricByLabel(metrics, label) {
 function analyticsCards(analytics) {
     const metrics = analytics?.metrics || [];
     const summary = analytics?.summary || {};
+    const details = analytics?.details || {};
     const outputMetric = metricByLabel(metrics, 'Output Achievement');
     const accuracyMetric = metricByLabel(metrics, 'Data Accuracy');
     const readyMetric = metricByLabel(metrics, 'Ready Coverage');
-    const dailyMetric = metricByLabel(metrics, 'Req. Daily Output');
-    const sources = currentDashboard?.sources || [];
-    const syncedSources = sources.filter(item => item.exists).length;
-    const totalSources = sources.length || 3;
-    const capacityGap = Number(summary.capacity_gap || 0);
-    const capacityGapLabel = capacityGap < 0 ? 'Capacity Surplus' : 'Capacity Gap';
+    const readyDays = Number(details.ready?.coverage_days ?? readyMetric.value ?? 0);
+    const readyDaysFormatted = Number.isFinite(readyDays) ? readyDays.toFixed(1) : '0';
+    const totalReadyQty = Math.round(summary.total_ready || 0);
 
     const cards = {
         production_status: {label:text('production_status'), value:text('on_track'), suffix:'', status:'good'},
         output_achievement: {...outputMetric, label:text('output_achievement')},
         data_accuracy: {...accuracyMetric, label:text('data_accuracy')},
-        plan_completion: {label:text('plan_completion'), value: outputMetric.value ?? 0, suffix:'%', status: outputMetric.status || 'good'},
-        monitoring_coverage: {label:text('monitoring_coverage'), value: 100, suffix:'%', status:'good'},
-        source_sync: {label:text('source_sync'), value: `${syncedSources}/${totalSources}`, suffix:'', status: syncedSources >= totalSources ? 'good' : 'watch'},
-        data_update: {label:text('data_update'), value:text('today'), suffix:'', status:'good'},
-        trend: {label:text('trend'), value:text('stable'), suffix:'', status:'good'},
-        production_flow: {label:text('production_flow'), value:text('on_track'), suffix:'', status:'good'},
-        data_reliability: {label:text('data_reliability'), value: accuracyMetric.value ?? 0, suffix:'%', status: accuracyMetric.status || 'good'},
-        ready_coverage: {...readyMetric, label:text('ready_coverage')},
-        req_daily_output: {...dailyMetric, label:text('req_daily_output')},
-        total_ready_load: {label:text('total_ready_load'), value: Math.round(summary.total_ready || 0), suffix:text('pcs'), status:'good'},
-        avg_daily_output: {label:text('avg_daily_output'), value: Math.round(summary.avg_daily_output || 0), suffix:text('pcs'), status:'good'},
+        ready_to_load: {
+            label: text('ready_to_load'),
+            value: totalReadyQty,
+            suffix: text('pcs'),
+            subtext: textTemplate('coverage_subtext', {days: readyDaysFormatted}),
+            coverageDays: readyDaysFormatted,
+            status: readyMetric.status || (readyDays >= 10 ? 'good' : (readyDays >= 5 ? 'watch' : 'risk'))
+        },
         avg_daily_capacity: {label:text('avg_daily_capacity'), value: Math.round(summary.avg_daily_capacity || 0), suffix:text('pcs'), status:'good'},
-        capacity_gap: {label:capacityGap < 0 ? text('capacity_surplus') : text('capacity_gap'), value: Math.round(Math.abs(capacityGap)), suffix:text('pcs'), status: capacityGap < 0 ? 'good' : 'watch'},
-        sequence_issues: {label:text('sequence_issues'), value: Math.round(summary.sequence_issues || 0), suffix:text('issue'), status: Number(summary.sequence_issues || 0) > 0 ? 'watch' : 'good'},
         critical_orders: {label:text('critical_orders'), value: Math.round(summary.critical_orders || 0), suffix:text('order'), status: Number(summary.critical_orders || 0) > 0 ? 'risk' : 'good'}
     };
 
@@ -1573,45 +2980,13 @@ function analyticsInsightForCard(key, card, analytics) {
             title: text('data_accuracy'),
             text: textTemplate('data_accuracy_insight', {value: cardValue})
         },
-        monitoring_coverage: {
-            title: text('monitoring_coverage'),
-            text: textTemplate('monitoring_coverage_insight', {value: cardValue})
-        },
-        source_sync: {
-            title: text('source_sync'),
-            text: textTemplate('source_sync_insight', {value: cardValue})
-        },
-        data_update: {
-            title: text('data_update'),
-            text: textTemplate('data_update_insight', {value: latestSourceUpdateLabel()})
-        },
-        ready_coverage: {
-            title: text('ready_coverage'),
-            text: textTemplate('ready_coverage_insight', {value: cardValue, ready: fmt(Math.round(summary.total_ready || 0))})
-        },
-        req_daily_output: {
-            title: text('req_daily_output'),
-            text: textTemplate('req_daily_output_insight', {value: cardValue, balance: fmt(Math.round(balance))})
-        },
-        total_ready_load: {
-            title: text('total_ready_load'),
-            text: textTemplate('total_ready_load_insight', {value: cardValue})
-        },
-        avg_daily_output: {
-            title: text('avg_daily_output'),
-            text: textTemplate('avg_daily_output_insight', {value: cardValue})
+        ready_to_load: {
+            title: text('ready_to_load'),
+            text: textTemplate('ready_to_load_insight', {value: cardValue, days: card.coverageDays || '0'})
         },
         avg_daily_capacity: {
             title: text('avg_daily_capacity'),
             text: textTemplate('avg_daily_capacity_insight', {value: cardValue})
-        },
-        capacity_gap: {
-            title: card.label || text('capacity_gap'),
-            text: textTemplate('capacity_gap_insight', {label: card.label || text('capacity_gap'), value: cardValue})
-        },
-        sequence_issues: {
-            title: text('sequence_issues'),
-            text: textTemplate('sequence_issues_insight', {value: cardValue})
         },
         critical_orders: {
             title: text('critical_orders'),
@@ -1654,7 +3029,7 @@ function actionMatchesCard(item, key) {
         cap_output_achievement: title === '2. Output Achievement',
         cap_coverage_ready: title === '3. Coverage Ready Load',
         cap_daily_output: title === '4. Kebutuhan Output Harian',
-        cap_critical_order: title === '5. Order Delivery Kritis',
+        cap_critical_order: title === '5. Order Kritis' || title === '5. Order Delivery Kritis',
         cap_controlled: title === 'Kondisi terkendali'
     }[key] || false;
 }
@@ -1682,17 +3057,26 @@ function openAnalyticsCardDetail(key) {
         <tr>
             ${tableCell(row.label)}
             ${tableCell(row.ready, true)}
+            ${tableCell(row.completed ?? '-', true)}
+            ${tableCell(row.uncompleted ?? '-', true)}
         </tr>
     `);
-    const capacityRows = (dashboard.output_vs_capacity || []).map(row => `
-        <tr>
-            ${tableCell(row.label)}
-            ${tableCell(row.output, true)}
-            ${tableCell(row.input, true)}
-            ${tableCell(row.capacity, true)}
-            ${tableCell((Number(row.capacity) || 0) - (Number(row.output) || 0), true)}
-        </tr>
-    `);
+    const capacitySourceRows = (dashboard.daily_output_vs_capacity && dashboard.daily_output_vs_capacity.length)
+        ? dashboard.daily_output_vs_capacity
+        : (dashboard.output_vs_capacity || []);
+    const capacityRows = capacitySourceRows.map(row => {
+        const capReq = calculateDirectRequirement(dashboard, row.capacity_balance_day || row.label);
+        const capVal = capReq && capReq.capacity > 0 ? capReq.capacity : (Number(row.daily_capacity ?? row.capacity) || 0);
+        return `
+            <tr>
+                ${tableCell(row.label)}
+                ${tableCell(row.output, true)}
+                ${tableCell(row.input, true)}
+                ${tableCell(capVal, true)}
+                ${tableCell(capVal - (Number(row.output) || 0), true)}
+            </tr>
+        `;
+    });
     const orderRows = (dashboard.material_to_load || dashboard.top_priority_orders || []).map(row => `
         <tr>
             ${tableCell(row.order)}
@@ -1711,20 +3095,20 @@ function openAnalyticsCardDetail(key) {
     `);
 
     if (key === 'production_status') {
-        return renderDetailTable(`Detail ${card.label || text('production_status')}`, ['Order', 'Style', 'Delivery', 'QTY PDK', 'QTY Ready'], orderRows, [
+        return renderDetailTable(`Detail ${card.label || text('production_status')}`, ['Order', 'Style', 'Delivery', 'Target', 'QTY Ready'], orderRows, [
             [text('card_value'), value],
             [text('formula'), text('production_status_formula')]
         ], text('display_note'));
     }
 
-    if (key === 'output_achievement' || key === 'plan_completion') {
-        return renderDetailTable(`Detail ${card.label || text('output_achievement')}`, ['Period', 'QTY PDK', 'QTY Output', 'Balance'], periodRows, [
+    if (key === 'output_achievement') {
+        return renderDetailTable(`Detail ${card.label || text('output_achievement')}`, ['Period', 'Target', 'Aktual', 'Balance'], periodRows, [
             [text('card_value'), value],
             [text('formula'), text('output_formula')]
         ], text('detail_qty_hidden'));
     }
 
-    if (key === 'data_accuracy' || key === 'data_reliability') {
+    if (key === 'data_accuracy') {
         const rows = (dataAccuracy.periods || []).map(row => `
             <tr>
                 ${tableCell(row.label)}
@@ -1740,90 +3124,20 @@ function openAnalyticsCardDetail(key) {
         ], text('accuracy_formula'));
     }
 
-    if (key === 'monitoring_coverage') {
-        const modules = [
-            'APS JO Tracking',
-            'Engage 32a Inflow',
-            'Engage 32a Outflow',
-            'Accessories Controlist',
-            'Dashboard Analytics'
-        ];
-        const rows = modules.map(module => `
-            <tr>
-                ${tableCell(module)}
-                ${tableCell(text('monitored'))}
-            </tr>
-        `);
-        return renderDetailTable(`Detail ${card.label || text('monitoring_coverage')}`, [text('module'), text('status')], rows, [
-            [text('card_value'), value]
-        ], text('monitoring_note'));
-    }
-
-    if (key === 'source_sync') {
-        const sources = dashboard.sources || [];
-        const rows = sources.map(source => `
-            <tr>
-                ${tableCell(source.label || source.key || '-')}
-                ${tableCell(source.exists ? text('synced') : text('missing'))}
-            </tr>
-        `);
-        return renderDetailTable(`Detail ${card.label || text('source_sync')}`, ['Source', text('status')], rows, [
-            [text('card_value'), value]
-        ], text('source_sync_formula'));
-    }
-
-    if (key === 'data_update') {
-        const sources = dashboard.sources || [];
-        const rows = sources.map(source => `
-            <tr>
-                ${tableCell(source.label || source.key || '-')}
-                ${tableCell(dateTime(source.updated_at))}
-                ${tableCell(source.exists ? text('synced') : text('missing'))}
-            </tr>
-        `);
-        return renderDetailTable(`Detail ${card.label || text('data_update')}`, [text('source'), text('last_update'), text('status')], rows, [
-            [text('card_value'), value]
-        ], text('data_update_formula'));
-    }
-
-    if (['trend', 'production_flow'].includes(key)) {
-        return renderDetailTable(`Detail ${card.label || 'Analytics Card'}`, ['Order', 'Style', 'Delivery', 'QTY PDK', 'QTY Ready'], orderRows, [
-            [text('card_value'), value]
-        ], text('general_indicator_note'));
-    }
-
-    if (key === 'ready_coverage') {
-        return renderDetailTable(`Detail ${card.label || text('ready_coverage')}`, ['Period', 'Ready Load'], readyRows, [
-            [text('card_value'), value]
-        ], 'Ready Coverage = Total Ready Load / Avg Daily Capacity.');
-    }
-
-    if (key === 'req_daily_output') {
-        return renderDetailTable(`Detail ${card.label || text('req_daily_output')}`, ['Period', 'QTY PDK', 'QTY Output', 'Balance'], periodRows, [
+    if (key === 'ready_to_load' || key === 'ready_coverage' || key === 'total_ready_load') {
+        const coverageDaysText = card.coverageDays ? `${card.coverageDays} ${text('days')}` : (details.ready?.coverage_days ? `${Number(details.ready.coverage_days).toFixed(1)} ${text('days')}` : '-');
+        return renderDetailTable(`Detail ${card.label || text('ready_to_load')}`, ['Period', 'Ready Load', 'Completed', 'Uncompleted'], readyRows, [
             [text('card_value'), value],
-            ['Export Days Left', `${fmt(Number(details.daily_requirement?.period_days_left || 0).toFixed(1))} ${text('days')}`]
-        ], 'Required Daily Output = balance delivery aktif / sisa hari kerja export.');
+            ['Coverage', coverageDaysText]
+        ], 'Total Ready Load = total ready dari periode yang tampil di dashboard. Coverage = Total Ready Load / Avg Daily Demand.');
     }
 
-    if (['total_ready_load', 'avg_daily_output', 'avg_daily_capacity', 'capacity_gap', 'sequence_issues', 'critical_orders'].includes(key)) {
-        if (key === 'total_ready_load') {
-            return renderDetailTable(`Detail ${card.label}`, ['Period', 'Ready Load'], readyRows, [[text('card_value'), value]], 'Total Ready Load = total ready dari periode yang tampil di dashboard.');
-        }
-        if (['avg_daily_output', 'avg_daily_capacity', 'capacity_gap'].includes(key)) {
-            return renderDetailTable(`Detail ${card.label}`, ['Hari', 'Output', 'Input', 'Capacity', 'Gap'], capacityRows, [[text('card_value'), value]], 'Data berasal dari grafik kapasitas vs output vs input.');
-        }
-        if (key === 'critical_orders') {
-            return renderDetailTable(`Detail ${card.label}`, ['Order', 'Style', 'Delivery', 'QTY PDK', 'QTY Ready'], orderRows, [[text('card_value'), value]], 'Critical Orders dihitung dari order prioritas dalam horizon delivery.');
-        }
-        return renderDetailTable(`Detail ${card.label}`, ['Period', 'PDK', 'Output', 'Balance', 'Ready'], (dataAccuracy.periods || []).map(row => `
-            <tr>
-                ${tableCell(row.label)}
-                ${tableCell(row.pdk, true)}
-                ${tableCell(row.output, true)}
-                ${tableCell(row.balance, true)}
-                ${tableCell(row.ready, true)}
-            </tr>
-        `), [[text('card_value'), value]], 'Sequence Issues berasal dari validasi urutan periode dashboard.');
+    if (key === 'avg_daily_capacity') {
+        return renderDetailTable(`Detail ${card.label || text('avg_daily_capacity')}`, ['Hari', 'Output', 'Input', 'Kapasitas', 'Gap'], capacityRows, [[text('card_value'), value]], 'Data berasal dari grafik kapasitas vs out vs in. Kapasitas = Target per Mesin x Jumlah Mesin (Weighted SMV & 70% Efisiensi).');
+    }
+
+    if (key === 'critical_orders') {
+        return renderDetailTable(`Detail ${card.label || text('critical_orders')}`, ['Order', 'Style', 'Delivery', 'Target', 'QTY Ready'], orderRows, [[text('card_value'), value]], 'Critical Orders dihitung dari order prioritas dalam horizon delivery.');
     }
 
     if (key.startsWith('cap_')) {
@@ -1854,7 +3168,7 @@ function renderAnalytics(analytics) {
     const accuracyIssues = dataAccuracy.issues || [];
     const actions = analytics?.action_plan || [];
     const capacityGap = Number(summary.capacity_gap || 0);
-    const capacityGapLabel = capacityGap < 0 ? 'Capacity Surplus' : 'Capacity Gap';
+    const capacityGapLabel = capacityGap < 0 ? 'Demand Surplus' : 'Demand Gap';
     const selectedCards = getVisibleAnalyticsCards();
     const selectedCapCards = selectedCards.filter(key => key.startsWith('cap_'));
     const visibleActions = featureVisibility.internalAnalytics
@@ -1885,6 +3199,7 @@ function renderAnalytics(analytics) {
         <div class="metric ${esc(item.status || '')}">
             <span>${esc(item.label)}</span>
             <strong>${metricValue(item)} <small>${esc(item.suffix)}</small></strong>
+            ${item.subtext ? `<small class="metric-subtext" style="display:block;margin-top:4px;font-size:clamp(10px,.72vw,12px);color:var(--muted);font-weight:700;">${esc(item.subtext)}</small>` : ''}
             <button type="button" class="detail-btn" onclick="openAnalyticsCardDetail('${esc(item.key || '')}')">${esc(text('detail'))}</button>
         </div>
     `).join('');
@@ -1899,17 +3214,18 @@ function renderAnalytics(analytics) {
         </div>
     `).join('');
 
+    const readyDaysVal = Number(details.ready?.coverage_days ?? 0);
     const summaryCards = [
-        [text('total_ready_load'), `${fmt(Math.round(summary.total_ready || 0))} ${text('pcs')}`, [`${text('ready_periods')}: ${(details.ready?.periods || []).map(row => `${row.label} ${fmt(Math.round(row.ready || 0))} ${text('pcs').toLowerCase()}`).join(', ') || '-'}`], 'ready'],
-        [text('avg_daily_output'), `${fmt(Math.round(summary.avg_daily_output || 0))} ${text('pcs')}`, [`${text('required_daily_output_label')}: ${fmt(Math.round(details.daily_requirement?.required_daily_output || 0))} ${text('pcs')}/day`], 'daily'],
-        [text('avg_daily_capacity'), `${fmt(Math.round(summary.avg_daily_capacity || 0))} ${text('pcs')}`, ['Capacity = total balance delivery aktif / total sisa hari MID + END.'], 'daily'],
-        [capacityGap < 0 ? text('capacity_surplus') : text('capacity_gap'), `${fmt(Math.round(Math.abs(capacityGap)))} ${text('pcs')}`, ['Selisih total kapasitas dengan output harian.'], 'daily'],
-        [text('data_accuracy'), `${fmt(Math.round(summary.data_accuracy_score || 0))}%`, accuracyIssues.map(item => `${item.title}: ${item.text}`), 'accuracy'],
-        [text('sequence_issues'), `${fmt(Math.round(summary.sequence_issues || 0))} ${text('issue')}`, accuracyIssues.map(item => `${item.title}: ${item.text}`), 'accuracy']
+        [text('ready_to_load'), `${fmt(Math.round(summary.total_ready || 0))} ${text('pcs')}`, [
+            `Coverage: ${readyDaysVal.toFixed(1)} ${text('days')}`,
+            `${text('ready_periods')}: ${(details.ready?.periods || []).map(row => `${row.label} ${fmt(Math.round(row.ready || 0))} ${text('pcs').toLowerCase()}`).join(', ') || '-'}`
+        ], 'ready'],
+        [text('avg_daily_capacity'), `${fmt(Math.round(summary.avg_daily_capacity || 0))} ${text('pcs')}`, ['Kapasitas = Target per Mesin x Jumlah Mesin (Weighted SMV & 70% Efisiensi).'], 'daily'],
+        [text('data_accuracy'), `${fmt(Math.round(summary.data_accuracy_score || 0))}%`, accuracyIssues.map(item => `${item.title}: ${item.text}`), 'accuracy']
     ];
 
     if (featureVisibility.criticalOrders && featureVisibility.internalAnalytics) {
-        summaryCards.splice(4, 0, [text('critical_orders'), `${fmt(Math.round(summary.critical_orders || 0))} ${text('order')}`, (details.priority?.orders || []).slice(0, 3).map(row => `${row.order} ${row.delivery}: ${fmt(Math.round(row.qty_ready || 0))} ${text('pcs').toLowerCase()}`), 'critical']);
+        summaryCards.push([text('critical_orders'), `${fmt(Math.round(summary.critical_orders || 0))} ${text('order')}`, (details.priority?.orders || []).slice(0, 3).map(row => `${row.order} ${row.delivery}: ${fmt(Math.round(row.qty_ready || 0))} ${text('pcs').toLowerCase()}`), 'critical']);
     }
 
     document.getElementById('analyticsSummary').innerHTML = summaryCards.map((item, index) => `
@@ -1969,6 +3285,9 @@ function renderAnalyticsCardOptions() {
 }
 
 function openAnalyticsMenu() {
+    if (!calendarAuthenticated) {
+        return;
+    }
     closeManagementModal(true);
     renderAnalyticsCardOptions();
     document.getElementById('analyticsMenuMessage').textContent = '';
@@ -1985,13 +3304,12 @@ function closeAnalyticsMenu() {
 
 function closeAnalyticsMenuAndLogout() {
     closeAnalyticsMenu();
-    if (calendarAuthenticated) {
-        logoutCalendar();
-    }
 }
 
 function openManagementModal() {
-    renderDeliveryToggle();
+    if (!calendarAuthenticated) {
+        return;
+    }
     const modal = document.getElementById('managementModal');
     modal.classList.add('open');
     modal.style.display = 'flex';
@@ -2001,9 +3319,6 @@ function closeManagementModal(skipLogout = false) {
     const modal = document.getElementById('managementModal');
     modal.classList.remove('open');
     modal.style.display = 'none';
-    if (!skipLogout && calendarAuthenticated) {
-        logoutCalendar();
-    }
 }
 
 function ensureManagementAccess(action) {
@@ -2011,8 +3326,6 @@ function ensureManagementAccess(action) {
         action();
         return;
     }
-    pendingLoginAction = action;
-    openCalendarLoginModal();
 }
 
 function saveAnalyticsMenu() {
@@ -2021,6 +3334,7 @@ function saveAnalyticsMenu() {
         document.getElementById('analyticsMenuMessage').textContent = text('choose_one_card');
         return;
     }
+    serverAnalyticsSettings.visible_cards = [...selected];
     setVisibleAnalyticsCards(selected);
     if (currentDashboard?.management_analytics) {
         renderAnalytics(currentDashboard.management_analytics);
@@ -2029,6 +3343,7 @@ function saveAnalyticsMenu() {
 }
 
 function resetAnalyticsMenu() {
+    serverAnalyticsSettings.visible_cards = [...defaultAnalyticsCards];
     setVisibleAnalyticsCards(defaultAnalyticsCards);
     renderAnalyticsCardOptions();
     if (currentDashboard?.management_analytics) {
@@ -2037,14 +3352,65 @@ function resetAnalyticsMenu() {
 }
 
 function renderDashboardCharts(dashboard) {
-    renderGroupedChart(document.getElementById('qtyPdkOutputChart'), dashboard.qty_pdk_vs_output || [], ['pdk', 'output']);
-    renderGroupedChart(document.getElementById('readyToLoadChart'), dashboard.ready_to_load || [], ['ready']);
-    renderCapacityChart(document.getElementById('outputCapacityChart'), dashboard.output_vs_capacity || []);
+    if (currentUnitMode === 'proses') {
+        refreshUnitDisplay();
+    } else {
+        renderGroupedChart(document.getElementById('qtyPdkOutputChart'), dashboard.qty_pdk_vs_output || [], ['pdk', 'output']);
+    }
+    renderGroupedChart(document.getElementById('readyToLoadChart'), dashboard.ready_to_load || [], ['completed', 'uncompleted']);
+    renderCapacityChart(document.getElementById('outputCapacityChart'), dashboard.output_vs_capacity || [], dashboard);
+}
+
+let dashboardChartResizeTimer = null;
+window.addEventListener('resize', () => {
+    window.clearTimeout(dashboardChartResizeTimer);
+    dashboardChartResizeTimer = window.setTimeout(() => {
+        if (currentDashboard && document.getElementById('dashboardView')?.classList.contains('active')) {
+            renderDashboardCharts(currentDashboard);
+        }
+    }, 150);
+});
+
+function renderLastUpdateSummary(dashboard, serverTime) {
+    const dailyRows = dashboard?.daily_output_vs_capacity || [];
+    const latestCapacity = dailyRows.slice(-1)[0] || (dashboard?.output_vs_capacity || []).slice(-1)[0] || {};
+    const sourceUpdatedAt = dashboard?.source_updated_at || '';
+    const sourceTime = sourceUpdatedAt ? timeOnly(sourceUpdatedAt) : '-';
+    let latestLabel = latestCapacity.label || '-';
+    if (/^\d{1,2}:\d{2}$/.test(latestLabel)) {
+        latestLabel = dashboard?.selected_date_to ? displayDate(dashboard.selected_date_to) : (dashboard?.selected_date ? displayDate(dashboard.selected_date) : latestLabel);
+    }
+    const button = document.getElementById('lastUpdate');
+
+    if (button) {
+        button.textContent = `*${text('last_update')} : ${latestLabel}${sourceTime !== '-' ? ` ${sourceTime}` : ''}`;
+    }
 }
 
 function renderLastUpdateList(dashboard, serverTime) {
-    const capacityRows = (dashboard.output_vs_capacity || []).slice(-5).reverse();
-    document.getElementById('lastUpdateRows').innerHTML = capacityRows.length ? `
+    const dailyRows = (dashboard?.daily_output_vs_capacity && dashboard.daily_output_vs_capacity.length)
+        ? dashboard.daily_output_vs_capacity
+        : (dashboard.output_vs_capacity || []);
+    const capacityRows = dailyRows.slice(-5).reverse();
+    const summaryContainer = document.getElementById('lastUpdateRows');
+    const latestCapacity = dailyRows.slice(-1)[0] || {};
+    const sourceUpdatedAt = dashboard?.source_updated_at || '';
+    const sourceTime = sourceUpdatedAt ? timeOnly(sourceUpdatedAt) : '-';
+    const renderLabel = serverTime ? dateTime(serverTime) : '-';
+    let latestLabel = latestCapacity.label || '-';
+    if (/^\d{1,2}:\d{2}$/.test(latestLabel)) {
+        latestLabel = dashboard?.selected_date_to ? displayDate(dashboard.selected_date_to) : latestLabel;
+    }
+    const sourceSummary = `
+        <div class="db-last-item db-last-summary">
+            <b>${esc(text('last_update'))}</b>
+            <p>${esc(text('source'))}: ${esc(dashboard?.source || 'RPA')}</p>
+            <p>Tanggal data terbaru: ${esc(latestLabel)}</p>
+            <p>Jam last update: ${esc(sourceTime)}</p>
+            <p>Waktu dashboard dimuat: ${esc(renderLabel)}</p>
+        </div>
+    `;
+    const capacitySummary = capacityRows.length ? `
         <div class="db-last-list">
             ${capacityRows.map(row => {
                 const output = Number(row.output) || 0;
@@ -2062,6 +3428,10 @@ function renderLastUpdateList(dashboard, serverTime) {
             `}).join('')}
         </div>
     ` : `<div class="db-last-empty">${esc(text('no_capacity_data'))}</div>`;
+
+    if (summaryContainer) {
+        summaryContainer.innerHTML = sourceSummary + capacitySummary;
+    }
 }
 
 function renderBalanceBreakdown(rows) {
@@ -2070,8 +3440,7 @@ function renderBalanceBreakdown(rows) {
             label: row.label || '-',
             balance: Math.max(0, (Number(row.pdk) || 0) - (Number(row.output) || 0))
         }))
-        .filter(row => row.balance > 0)
-        .slice(0, 4);
+        .filter(row => row.balance > 0);
 
     document.getElementById('balanceBreakdown').innerHTML = items.length ? items.map(row => `
         <div class="kpi-balance-row">
@@ -2084,15 +3453,224 @@ function renderBalanceBreakdown(rows) {
 }
 
 function renderRemainingDays(dashboard) {
-    const remainingDays = numberValue(dashboard?.kpis?.prod_days_left);
+    const raw = dashboard?.kpis?.prod_days_left;
     const label = document.getElementById('remainingDaysLabel');
     const value = document.getElementById('remainingDays');
     if (label) {
-        label.textContent = `Remaining from today (${selectedDeliveryCount} Delivery)`;
+        label.textContent = 'Remaining from today';
+        label.removeAttribute('title');
     }
     if (value) {
-        value.textContent = fmt(remainingDays);
+        if (raw === null || raw === undefined || raw === '' || isNaN(Number(raw))) {
+            value.textContent = '-';
+        } else {
+            value.textContent = Number(raw).toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+        }
     }
+}
+
+function renderDirectDailyOutput(dashboard) {
+    const directData = calculateDirectRequirement(dashboard);
+    const value = document.getElementById('directDailyOutput');
+    const target = document.getElementById('directTargetPerPerson');
+    if (value) {
+        value.textContent = (directData && directData.direct > 0) ? fmt(Math.ceil(directData.direct)) : '-';
+    }
+    if (target) {
+        if (directData && directData.targetPerPerson > 0) {
+            const isEn = analyticsLanguage === 'en';
+            target.textContent = isEn
+                ? `Target per person: ${fmt(Math.ceil(directData.targetPerPerson))} pcs/day`
+                : `Target per orang: ${fmt(Math.ceil(directData.targetPerPerson))} pcs/hari`;
+            target.removeAttribute('title');
+        } else {
+            target.textContent = analyticsLanguage === 'en' ? 'Target per person: -' : 'Target per orang: -';
+            target.removeAttribute('title');
+        }
+    }
+}
+
+function renderDirectActual() {
+    const value = document.getElementById('directActualOutput');
+    if (!value) return;
+    const raw = serverAnalyticsSettings?.direct_actual
+        ?? currentDashboard?.analytics_settings?.direct_actual
+        ?? initialDashboardPayload?.analytics_settings?.direct_actual;
+    if (raw === null || raw === undefined || raw === '') {
+        value.textContent = '-';
+        return;
+    }
+    const formatted = fmtDecimal(raw, 2);
+    value.textContent = formatted;
+}
+
+function calculateMachineRequirement(directCount, doubleMachineActive = 2) {
+    const direct = Math.max(0, Math.ceil(Number(directCount) || 0));
+    const m2Active = Math.max(0, Math.min(2, parseInt(doubleMachineActive, 10) || 0));
+
+    const directForM2 = Math.min(direct, m2Active * 2);
+    const m2Used = Math.ceil(directForM2 / 2);
+    const directSingle = Math.max(0, direct - (m2Used * 2));
+    const m1Used = directSingle;
+
+    const totalMachines = m2Used + m1Used;
+    const minM2Used = Math.ceil(Math.min(direct, 4) / 2);
+    const minTotal = minM2Used + Math.max(0, direct - (minM2Used * 2));
+    const maxTotal = direct;
+
+    return {
+        direct,
+        m2Active,
+        m2Used,
+        m1Used,
+        totalMachines,
+        minTotal,
+        maxTotal,
+    };
+}
+
+let currentCapMode = localStorage.getItem('heat_capacity_view_mode') || 'mesin';
+if (!['mesin', 'minutes'].includes(currentCapMode)) currentCapMode = 'mesin';
+
+function setCapacityMode(mode) {
+    if (!['mesin', 'minutes'].includes(mode)) mode = 'mesin';
+    currentCapMode = mode;
+    localStorage.setItem('heat_capacity_view_mode', mode);
+    renderCapacityView(currentDashboard);
+}
+
+function renderCapacityView(dashboard) {
+    const card = document.getElementById('machineReqCard');
+    if (!card) return;
+
+    const directData = calculateDirectRequirement(dashboard);
+    const directPlan = directData && directData.direct > 0 ? Math.ceil(directData.direct) : 0;
+    const directActual = directData && directData.directActual > 0 ? Math.ceil(directData.directActual) : 0;
+
+    const baseDirect = directPlan > 0 ? directPlan : directActual;
+    const isPlan = directPlan > 0;
+    const isEn = analyticsLanguage === 'en';
+    const hasCapacity = directData && directData.hasCapacity;
+
+    // Check saved mode or default from server analytics settings
+    const savedMode = localStorage.getItem('heat_capacity_view_mode')
+        || serverAnalyticsSettings?.default_capacity_mode
+        || currentDashboard?.analytics_settings?.default_capacity_mode
+        || 'mesin';
+    currentCapMode = ['mesin', 'minutes'].includes(savedMode) ? savedMode : 'mesin';
+
+    // Update switcher buttons active state
+    document.querySelectorAll('[data-cap-mode]').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-cap-mode') === currentCapMode);
+    });
+
+    // Update view panes visibility
+    const paneMesin = document.getElementById('capViewMesin');
+    const paneMinutes = document.getElementById('capViewMinutes');
+    if (paneMesin) paneMesin.style.display = currentCapMode === 'mesin' ? 'grid' : 'none';
+    if (paneMinutes) paneMinutes.style.display = currentCapMode === 'minutes' ? 'grid' : 'none';
+
+    // Elements
+    const headerLabel = document.getElementById('capacityCardHeaderLabel');
+    const badgeEl = document.getElementById('machineReqTotalDirectBadge');
+
+    // 1. Data Calculation: Mesin
+    const withM2El = document.getElementById('machineReqWithM2');
+    const withM2Sub = document.getElementById('machineReqWithM2Sub');
+    const withoutM2El = document.getElementById('machineReqWithoutM2');
+    const withoutM2Sub = document.getElementById('machineReqWithoutM2Sub');
+
+    const machineCount = (currentMachineReqDaily !== null && currentMachineReqDaily > 0)
+        ? Math.round(currentMachineReqDaily)
+        : (baseDirect > 0 ? baseDirect : 0);
+
+    if (machineCount > 0) {
+        const mWith = calculateMachineRequirement(machineCount, 2);
+        const mWithout = calculateMachineRequirement(machineCount, 0);
+        if (withM2El) withM2El.textContent = fmt(mWith.totalMachines);
+        if (withM2Sub) {
+            if (mWith.m2Used > 0 && mWith.m1Used > 0) {
+                withM2Sub.textContent = `${mWith.m2Used} M2 + ${fmt(mWith.m1Used)} M1`;
+            } else if (mWith.m2Used > 0) {
+                withM2Sub.textContent = `${mWith.m2Used} M2`;
+            } else {
+                withM2Sub.textContent = `${fmt(mWith.m1Used)} M1`;
+            }
+            withM2Sub.title = isEn
+                ? `Uses 2 dual-operator machines (M2). Base requirement: ${fmt(machineCount)} machines.`
+                : `Menggunakan 2 unit mesin ganda (M2). Kebutuhan dasar: ${fmt(machineCount)} mesin.`;
+        }
+
+        if (withoutM2El) withoutM2El.textContent = fmt(mWithout.totalMachines);
+        if (withoutM2Sub) {
+            withoutM2Sub.textContent = `Qty PDK / W.Avg (${fmt(machineCount)})`;
+            withoutM2Sub.title = isEn
+                ? `Total Qty PDK / W.Avg Process = ${fmt(machineCount)} machines.`
+                : `Total Qty PDK / W.Avg Process = ${fmt(machineCount)} mesin.`;
+        }
+    } else {
+        if (withM2El) withM2El.textContent = '-';
+        if (withoutM2El) withoutM2El.textContent = '-';
+        const emptyMsg = isEn ? 'Data not available' : 'Data belum tersedia';
+        if (withM2Sub) withM2Sub.textContent = emptyMsg;
+        if (withoutM2Sub) withoutM2Sub.textContent = emptyMsg;
+    }
+
+    // 2. Data Calculation: Minutes
+    const minutesValEl = document.getElementById('capMinutesVal');
+    const minutesSubEl = document.getElementById('capMinutesSub');
+    const demandMinutesValEl = document.getElementById('capDemandMinutesVal');
+    const demandMinutesSubEl = document.getElementById('capDemandMinutesSub');
+
+    const capMinutes = hasCapacity && directData.smv > 0 ? Math.round(directData.capacity * directData.smv) : 0;
+    const demandMinutes = directData && directData.demand > 0 && directData.smv > 0 ? Math.round(directData.demand * directData.smv) : 0;
+    const diffMinutes = capMinutes - demandMinutes;
+
+    let minutesDiffText = '';
+    let minutesColor = 'var(--muted)';
+    if (hasCapacity && directData.smv > 0) {
+        const isMore = diffMinutes > 0;
+        const isExact = diffMinutes === 0;
+        const st = isMore ? (isEn ? 'Surplus' : 'Lebih') : (isExact ? (isEn ? 'Exact' : 'Pas') : (isEn ? 'Short' : 'Kurang'));
+        const unitName = isEn ? 'mins' : 'menit';
+        minutesDiffText = `${isMore ? '+' : ''}${fmt(diffMinutes)} ${unitName} (${st})`;
+        minutesColor = diffMinutes >= 0 ? 'var(--ok)' : 'var(--risk)';
+    }
+
+    if (minutesValEl) minutesValEl.textContent = hasCapacity && capMinutes > 0 ? fmt(capMinutes) : '-';
+    if (minutesSubEl) minutesSubEl.textContent = isEn ? 'Estimated daily minutes output' : 'Estimasi output menit/hari';
+    if (demandMinutesValEl) demandMinutesValEl.textContent = demandMinutes > 0 ? fmt(demandMinutes) : '-';
+    if (demandMinutesSubEl) {
+        if (minutesDiffText) {
+            demandMinutesSubEl.innerHTML = `<span style="color:${minutesColor};font-weight:700;">${minutesDiffText}</span>`;
+        } else {
+            demandMinutesSubEl.textContent = isEn ? 'Daily demand minutes' : 'Target demand menit harian';
+        }
+    }
+
+    // Update Header Label & Badge depending on currentCapMode
+    if (currentCapMode === 'mesin') {
+        if (headerLabel) headerLabel.textContent = text('machine_req_label') || (isEn ? 'Machine Requirement' : 'Kebutuhan Mesin');
+        if (badgeEl) {
+            badgeEl.style.display = 'none';
+        }
+    } else if (currentCapMode === 'minutes') {
+        if (headerLabel) headerLabel.textContent = text('minutes_req_label') || (isEn ? 'Minutes Capacity :' : 'Kapasitas Menit :');
+        if (badgeEl) {
+            if (minutesDiffText) {
+                badgeEl.style.display = '';
+                badgeEl.style.background = diffMinutes >= 0 ? 'rgba(34,197,94,.12)' : 'rgba(239,68,68,.12)';
+                badgeEl.style.color = diffMinutes >= 0 ? '#16a34a' : '#dc2626';
+                badgeEl.innerHTML = `<b>${minutesDiffText}</b>`;
+            } else {
+                badgeEl.style.display = 'none';
+            }
+        }
+    }
+}
+
+function renderMachineRequirement(dashboard) {
+    renderCapacityView(dashboard);
 }
 
 function calendarPeriods() {
@@ -2215,10 +3793,10 @@ function renderCalendar() {
 
 function renderCalendarSummary() {
     const items = currentDashboard?.delivery_workdays || [];
-    document.getElementById('calendarSummary').innerHTML = items.length ? items.slice(0, 4).map(item => `
+    document.getElementById('calendarSummary').innerHTML = items.length ? items.map(item => `
         <div class="calendar-summary-item">
             <span>${esc(item.label)}</span>
-            <b>${fmt(calendarEffectiveWorkdays(item))} ${esc(text('days'))}</b>
+            <b>${Number(calendarEffectiveWorkdays(item)).toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 1})} ${esc(text('days'))}</b>
             <small>Setelah buffer export: ${fmt(Math.max(0, numberValue(item.export_prep_days) || 4))} ${esc(text('days').toLowerCase())}</small>
         </div>
     `).join('') : '';
@@ -2238,7 +3816,9 @@ function cycleCalendarDay(date) {
     selectedWorkDays.delete(date);
 
     if (isSunday) {
-        selectedWorkDays.add(date);
+        if (!isWork) {
+            selectedWorkDays.add(date);
+        }
         return;
     }
 
@@ -2249,13 +3829,16 @@ function cycleCalendarDay(date) {
     } else if (isQuarter) {
         selectedWorkDays.add(date);
     } else if (isWork) {
-        selectedHolidays.add(date);
+        // Kembali ke default kerja (tidak masuk list khusus)
     } else {
-        selectedHalfDays.add(date);
+        selectedHolidays.add(date);
     }
 }
 
 function openWorkdayModal() {
+    if (!calendarAuthenticated) {
+        return;
+    }
     closeManagementModal(true);
     const periods = calendarPeriods();
     if (periods.length) {
@@ -2282,67 +3865,11 @@ function closeWorkdayModal() {
 
 function closeWorkdayModalAndLogout() {
     closeWorkdayModal();
-    if (calendarAuthenticated) {
-        logoutCalendar();
-    }
-}
-
-function openCalendarLoginModal() {
-    document.getElementById('calendarLoginMessage').textContent = '';
-    document.getElementById('calendarUsername').value = '';
-    document.getElementById('calendarPassword').value = '';
-    document.getElementById('calendarLoginTitle').textContent = text('login_management');
-    const modal = document.getElementById('calendarLoginModal');
-    modal.classList.add('open');
-    modal.style.display = 'flex';
-    setTimeout(() => document.getElementById('calendarUsername').focus(), 0);
-}
-
-function closeCalendarLoginModal() {
-    const modal = document.getElementById('calendarLoginModal');
-    modal.classList.remove('open');
-    modal.style.display = 'none';
-}
-
-async function loginCalendar() {
-    const button = document.getElementById('calendarLoginSubmit');
-    const message = document.getElementById('calendarLoginMessage');
-    const username = document.getElementById('calendarUsername').value;
-    const password = document.getElementById('calendarPassword').value;
-
-    button.disabled = true;
-    message.textContent = text('logging_in');
-
-    try {
-        const response = await fetch(urls.calendarLogin, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({username, password})
-        });
-        const result = await response.json();
-        if (!response.ok || !result.ok) {
-            throw new Error(result.message || text('login_failed'));
-        }
-        calendarAuthenticated = true;
-        closeCalendarLoginModal();
-        const action = pendingLoginAction;
-        pendingLoginAction = null;
-        if (typeof action === 'function') {
-            action();
-        } else {
-            openManagementModal();
-        }
-    } catch (error) {
-        message.textContent = error.message || text('login_failed');
-    } finally {
-        button.disabled = false;
-    }
 }
 
 async function saveWorkdays() {
     if (!calendarAuthenticated) {
-        closeWorkdayModal();
-        openCalendarLoginModal();
+        document.getElementById('workdayMessage').textContent = 'Akses manajemen belum aktif.';
         return;
     }
 
@@ -2366,9 +3893,6 @@ async function saveWorkdays() {
         });
         const result = await response.json();
         if (!response.ok || !result.ok) {
-            if (response.status === 401) {
-                calendarAuthenticated = false;
-            }
             throw new Error(result.message || text('save_failed'));
         }
         await loadStatus();
@@ -2382,15 +3906,6 @@ async function saveWorkdays() {
     }
 }
 
-async function logoutCalendar() {
-    calendarAuthenticated = false;
-    try {
-        await fetch(urls.calendarLogout, {method: 'POST'});
-    } catch (error) {
-        // Login kalender tetap dianggap selesai di browser setelah submit.
-    }
-}
-
 function setActiveView(name) {
     document.querySelectorAll('.menu button').forEach(button => button.classList.toggle('active', button.dataset.view === name));
     document.getElementById('dashboardView').classList.toggle('active', name === 'dashboard');
@@ -2398,33 +3913,71 @@ function setActiveView(name) {
     document.getElementById('listOrderView').classList.toggle('active', name === 'listOrder');
 
     if (name === 'dashboard' && currentDashboard) {
-        renderDashboardCharts(currentDashboard);
+        applyGlobalFilter();
     }
 }
 
 function render(data) {
     calendarAuthenticated = !!data.calendar_authenticated;
+    if (data?.analytics_settings && typeof data.analytics_settings === 'object') {
+        const directActualFromServer = data.analytics_settings.direct_actual === null || data.analytics_settings.direct_actual === undefined || data.analytics_settings.direct_actual === ''
+            ? null
+            : Number(data.analytics_settings.direct_actual);
+        serverAnalyticsSettings = {
+            visible_cards: Array.isArray(data.analytics_settings.visible_cards) ? data.analytics_settings.visible_cards : serverAnalyticsSettings.visible_cards,
+            language: data.analytics_settings.language === 'en' ? 'en' : 'id',
+            direct_actual: directActualFromServer,
+            double_machine_active: data.analytics_settings.double_machine_active !== undefined
+                ? parseInt(data.analytics_settings.double_machine_active, 10)
+                : (serverAnalyticsSettings.double_machine_active ?? 2),
+        };
+        analyticsLanguage = serverAnalyticsSettings.language === 'en'
+            ? 'en'
+            : (localStorage.getItem(analyticsLangStorageKey) === 'en' ? 'en' : 'id');
+    }
     const dashboard = data.dashboard_data;
     if (!dashboard || !dashboard.available) {
         renderEmpty(dashboard);
+        setGlobalLoading(false);
         return;
     }
 
     currentDashboard = dashboard;
+    currentServerTime = data.server_time || currentServerTime;
+    currentStyleCatalog = data.style_smv_catalog || dashboard.style_smv_catalog || currentStyleCatalog || null;
     renderAppLanguage();
+    if (dashboard.selected_period) {
+        const pill = document.getElementById('dashboardPeriodPill');
+        if (pill) {
+            pill.textContent = dashboard.selected_period;
+            const pType = dashboard.period_type || (dashboard.selected_period.startsWith('MID') ? 'MID' : (dashboard.selected_period.startsWith('END') ? 'END' : 'RANGE'));
+            pill.className = `period-pill ${pType.toLowerCase()}`;
+        }
+    }
+    if (dashboard.selected_date_from && typeof dateFromEl !== 'undefined' && dateFromEl && dateFromEl.value !== dashboard.selected_date_from) {
+        dateFromEl.value = dashboard.selected_date_from;
+        selectedDateFrom = dashboard.selected_date_from;
+    }
+    if (dashboard.selected_date_to && typeof dateToEl !== 'undefined' && dateToEl && dateToEl.value !== dashboard.selected_date_to) {
+        dateToEl.value = dashboard.selected_date_to;
+        selectedDateTo = dashboard.selected_date_to;
+    }
     const analyticsDetails = dashboard.management_analytics?.details || {};
     const balanceQty = numberValue(
         dashboard.kpis?.balance_qty,
         analyticsDetails.daily_requirement?.balance_qty,
         analyticsDetails.output?.balance_qty
     );
-    const latestCapacity = (dashboard.output_vs_capacity || []).slice(-1)[0] || {};
-    document.getElementById('lastUpdate').textContent = `*${text('last_update')} : ${latestCapacity.label || '-'}`;
+    renderLastUpdateSummary(dashboard, data.server_time);
     renderLastUpdateList(dashboard, data.server_time);
     document.getElementById('totalOutput').textContent = fmt(Math.round(numberValue(dashboard.kpis?.total_output)));
     document.getElementById('balanceQty').textContent = fmt(Math.round(balanceQty));
     renderBalanceBreakdown(dashboard.balance_breakdown || dashboard.qty_pdk_vs_output);
     renderRemainingDays(dashboard);
+    renderDirectDailyOutput(dashboard);
+    renderDirectActual();
+    renderMachineRequirement(dashboard);
+    renderRunningStyles(currentStyleCatalog);
 
     if (document.getElementById('dashboardView').classList.contains('active')) {
         renderDashboardCharts(dashboard);
@@ -2433,22 +3986,28 @@ function render(data) {
 
     renderPriorityRows(dashboard.material_to_load || dashboard.top_priority_orders || []);
     renderListOrderRows(pickNonEmptyRows(dashboard.list_orders, dashboard.top_priority_orders));
+    setGlobalLoading(false);
 }
 
 function refreshLanguage() {
     renderAppLanguage();
-    renderDeliveryToggle();
     if (!currentDashboard) return;
-    const latestCapacity = (currentDashboard.output_vs_capacity || []).slice(-1)[0] || {};
-    document.getElementById('lastUpdate').textContent = `*${text('last_update')} : ${latestCapacity.label || '-'}`;
-    renderLastUpdateList(currentDashboard);
+    renderLastUpdateSummary(currentDashboard, currentServerTime);
+    renderLastUpdateList(currentDashboard, currentServerTime);
     renderBalanceBreakdown(currentDashboard.balance_breakdown || currentDashboard.qty_pdk_vs_output);
     renderRemainingDays(currentDashboard);
+    renderDirectDailyOutput(currentDashboard);
+    renderDirectActual();
+    renderMachineRequirement(currentDashboard);
+    renderRunningStyles(currentStyleCatalog);
     if (document.getElementById('dashboardView').classList.contains('active')) {
         renderDashboardCharts(currentDashboard);
     }
     if (document.getElementById('workdayModal').classList.contains('open')) {
         renderCalendar();
+    }
+    if (document.getElementById('formulaGuideModal').classList.contains('open')) {
+        renderFormulaGuide();
     }
     if (currentDashboard.management_analytics) {
         renderAnalytics(currentDashboard.management_analytics);
@@ -2457,16 +4016,65 @@ function refreshLanguage() {
     renderListOrderRows(pickNonEmptyRows(currentDashboard.list_orders, currentDashboard.top_priority_orders));
 }
 
-async function loadStatus() {
-    const statusUrl = `${urls.status}?delivery_count=${encodeURIComponent(selectedDeliveryCount)}`;
-    const response = await fetch(statusUrl, {cache:'no-store'});
-    render(await response.json());
+const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+function getSinglePeriodInfo(dateStr) {
+    if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        return { label: 'MID Sept', type: 'MID', month: 'Sept' };
+    }
+    const parts = dateStr.split('-');
+    const day = parseInt(parts[2], 10);
+    const monthIdx = parseInt(parts[1], 10) - 1;
+    const month = monthNames[monthIdx] || 'Sept';
+    const type = day <= 15 ? 'MID' : 'END';
+    return {
+        label: `${type} ${month}`,
+        type: type,
+        month: month
+    };
 }
 
-function renderDeliveryToggle() {
-    document.querySelectorAll('#analyticsDeliveryToggle button').forEach(button => {
-        button.classList.toggle('active', Number(button.dataset.deliveryCount) === selectedDeliveryCount);
-    });
+function resolvePeriodInfo(fromStr, toStr) {
+    const fromInfo = getSinglePeriodInfo(fromStr);
+    if (!toStr || toStr === fromStr) {
+        return fromInfo;
+    }
+    const toInfo = getSinglePeriodInfo(toStr);
+    if (fromInfo.label === toInfo.label) {
+        return fromInfo;
+    }
+    return {
+        label: `${fromInfo.label} - ${toInfo.label}`,
+        type: 'RANGE'
+    };
+}
+
+function updatePeriodPill(fromStr, toStr) {
+    const pill = document.getElementById('dashboardPeriodPill');
+    if (!pill) return;
+    const info = resolvePeriodInfo(fromStr, toStr);
+    pill.textContent = info.label;
+    pill.className = `period-pill ${info.type.toLowerCase()}`;
+}
+
+async function loadStatus() {
+    setGlobalLoading(true);
+    try {
+        const statusUrl = `${urls.status}?from=${encodeURIComponent(selectedDateFrom)}&to=${encodeURIComponent(selectedDateTo)}`;
+        const response = await fetch(statusUrl, {cache:'no-store'});
+        const data = await response.json();
+        render(data);
+    } catch (error) {
+        setGlobalLoading(false);
+        throw error;
+    }
+}
+
+function setGlobalLoading(isLoading) {
+    const overlay = document.getElementById('globalLoadingOverlay');
+    if (overlay) {
+        overlay.classList.toggle('active', !!isLoading);
+    }
+    document.body.style.overflow = isLoading ? 'hidden' : '';
 }
 
 document.querySelectorAll('.menu button').forEach(button => {
@@ -2481,32 +4089,80 @@ document.querySelectorAll('[data-analytics-lang]').forEach(button => {
     });
 });
 
-document.querySelectorAll('#analyticsDeliveryToggle button').forEach(button => {
-    button.addEventListener('click', async () => {
-        const deliveryCount = Number(button.dataset.deliveryCount);
-
-        // Hanya izinkan 1, 2, atau 4
-        selectedDeliveryCount = [1, 2, 4].includes(deliveryCount) ? deliveryCount : 4;
-
-        localStorage.setItem('heatDeliveryCount', selectedDeliveryCount);
-        document.cookie = `heatDeliveryCount=${selectedDeliveryCount}; path=/; max-age=31536000`;
-
-        renderDeliveryToggle();
-
-        if (
-            selectedDeliveryCount === initialDeliveryCount &&
-            initialDashboardPayload?.dashboard_data
-        ) {
-            render(initialDashboardPayload);
-        } else {
-            await loadStatus();
-        }
+document.querySelectorAll('[data-cap-mode]').forEach(button => {
+    button.addEventListener('click', (e) => {
+        e.preventDefault();
+        setCapacityMode(button.dataset.capMode);
     });
 });
 
+const dateFromEl = document.getElementById('dashboardDateFrom');
+const dateToEl = document.getElementById('dashboardDateTo');
+const btnDateRefresh = document.getElementById('btnDateRefresh');
+
+function syncDatesAndReload() {
+    if (!dateFromEl || !dateToEl) return;
+    let fromVal = dateFromEl.value;
+    let toVal = dateToEl.value;
+    if (!fromVal && !toVal) return;
+    if (!fromVal) { fromVal = toVal; dateFromEl.value = fromVal; }
+    if (!toVal) { toVal = fromVal; dateToEl.value = toVal; }
+    if (fromVal > toVal) {
+        toVal = fromVal;
+        dateToEl.value = toVal;
+    }
+    selectedDateFrom = fromVal;
+    selectedDateTo = toVal;
+    selectedDate = selectedDateFrom;
+    updatePeriodPill(selectedDateFrom, selectedDateTo);
+    localStorage.setItem('heatDateFrom', selectedDateFrom);
+    localStorage.setItem('heatDateTo', selectedDateTo);
+    document.cookie = `heatDateFrom=${selectedDateFrom}; path=/; max-age=31536000`;
+    document.cookie = `heatDateTo=${selectedDateTo}; path=/; max-age=31536000`;
+    loadStatus();
+}
+
+if (dateFromEl) {
+    dateFromEl.value = selectedDateFrom;
+    dateFromEl.addEventListener('change', () => {
+        if (dateToEl && dateToEl.value && dateToEl.value < dateFromEl.value) {
+            dateToEl.value = dateFromEl.value;
+        }
+    });
+    dateFromEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            syncDatesAndReload();
+        }
+    });
+}
+if (dateToEl) {
+    dateToEl.value = selectedDateTo;
+    dateToEl.addEventListener('change', () => {
+        if (dateFromEl && dateFromEl.value && dateFromEl.value > dateToEl.value) {
+            dateFromEl.value = dateToEl.value;
+        }
+    });
+    dateToEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            syncDatesAndReload();
+        }
+    });
+}
+if (btnDateRefresh) {
+    btnDateRefresh.addEventListener('click', () => {
+        syncDatesAndReload();
+    });
+}
+
 renderAppLanguage();
-renderDeliveryToggle();
-if (initialDashboardPayload?.dashboard_data && selectedDeliveryCount === initialDeliveryCount) {
+updatePeriodPill(selectedDateFrom, selectedDateTo);
+if (
+    initialDashboardPayload?.dashboard_data &&
+    initialDashboardPayload?.selected_date_from === selectedDateFrom &&
+    initialDashboardPayload?.selected_date_to === selectedDateTo
+) {
     render(initialDashboardPayload);
 } else {
     loadStatus();
@@ -2536,18 +4192,12 @@ document.getElementById('detailModal').addEventListener('click', event => {
 document.getElementById('analyticsSecret').addEventListener('click', () => {
     if (calendarAuthenticated) {
         openAnalyticsMenu();
-    } else {
-        pendingLoginAction = openAnalyticsMenu;
-        openCalendarLoginModal();
     }
 });
 
 document.getElementById('analyticsTune').addEventListener('click', () => {
     if (calendarAuthenticated) {
         openManagementModal();
-    } else {
-        pendingLoginAction = openManagementModal;
-        openCalendarLoginModal();
     }
 });
 
@@ -2617,13 +4267,9 @@ document.getElementById('managementAnalyticsOpen').addEventListener('click', () 
     openAnalyticsMenu();
 });
 
-renderAppLanguage();
-renderDeliveryToggle();
-if (initialDashboardPayload?.dashboard_data && selectedDeliveryCount === initialDeliveryCount) {
-    render(initialDashboardPayload);
-} else {
-    loadStatus();
-}
+document.getElementById('managementFormulaOpen').addEventListener('click', () => {
+    openFormulaGuide();
+});
 
 document.getElementById('managementModal').addEventListener('click', event => {
     if (event.target.id === 'managementModal') {
@@ -2631,30 +4277,13 @@ document.getElementById('managementModal').addEventListener('click', event => {
     }
 });
 
-document.getElementById('calendarLoginClose').addEventListener('click', () => {
-    pendingLoginAction = null;
-    closeCalendarLoginModal();
+document.getElementById('formulaGuideClose').addEventListener('click', () => {
+    closeFormulaGuide();
 });
 
-document.getElementById('calendarLoginCancel').addEventListener('click', () => {
-    pendingLoginAction = null;
-    closeCalendarLoginModal();
-});
-
-document.getElementById('calendarLoginSubmit').addEventListener('click', () => {
-    loginCalendar();
-});
-
-document.getElementById('calendarPassword').addEventListener('keydown', event => {
-    if (event.key === 'Enter') {
-        loginCalendar();
-    }
-});
-
-document.getElementById('calendarLoginModal').addEventListener('click', event => {
-    if (event.target.id === 'calendarLoginModal') {
-        pendingLoginAction = null;
-        closeCalendarLoginModal();
+document.getElementById('formulaGuideModal').addEventListener('click', event => {
+    if (event.target.id === 'formulaGuideModal') {
+        closeFormulaGuide();
     }
 });
 
@@ -2664,19 +4293,20 @@ document.addEventListener('keydown', event => {
         closeAnalyticsMenuAndLogout();
         closeWorkdayModalAndLogout();
         closeManagementModal();
-        closeCalendarLoginModal();
+        closeFormulaGuide();
         closeQtyHistoryModal();
     }
 });
 
 // ---- QTY History ----
 async function loadQtyHistory() {
+    setGlobalLoading(true);
     const tableBody = document.getElementById('qtyHistoryRows');
     const emptyMessage = document.getElementById('qtyHistoryEmpty');
     const summaryGrid = document.getElementById('qtyHistorySummary');
     
     try {
-        const response = await fetch(`${urls.qtyHistory}?delivery_count=${encodeURIComponent(selectedDeliveryCount)}`, {cache:'no-store'});
+        const response = await fetch(`${urls.qtyHistory}?date=${encodeURIComponent(selectedDate)}`, {cache:'no-store'});
         const data = await response.json();
         
         if (!data.ok || !Array.isArray(data.data) || !data.data.length) {
@@ -2695,8 +4325,8 @@ async function loadQtyHistory() {
         const lastBalance = Number(lastRow?.balance_qty) || 0;
         
         summaryGrid.innerHTML = `
-            <div class="calendar-summary-item"><span>Total QTY PDK</span><b>${fmt(Math.round(totalPdk))}</b></div>
-            <div class="calendar-summary-item"><span>Total QTY Output</span><b>${fmt(Math.round(totalOutput))}</b></div>
+            <div class="calendar-summary-item"><span>Total Target</span><b>${fmt(Math.round(totalPdk))}</b></div>
+            <div class="calendar-summary-item"><span>Total Aktual</span><b>${fmt(Math.round(totalOutput))}</b></div>
             <div class="calendar-summary-item"><span>Balance Terakhir</span><b>${fmt(Math.round(lastBalance))}</b></div>
             <div class="calendar-summary-item"><span>Total Hari</span><b>${fmt(data.data.length)} Hari</b></div>
         `;
@@ -2727,6 +4357,9 @@ async function loadQtyHistory() {
         emptyMessage.style.display = 'block';
         emptyMessage.textContent = 'Gagal memuat data riwayat.';
     }
+    finally {
+        setGlobalLoading(false);
+    }
 }
 
 function openQtyHistoryModal() {
@@ -2741,9 +4374,6 @@ function closeQtyHistoryModal() {
     const modal = document.getElementById('qtyHistoryModal');
     modal.classList.remove('open');
     modal.style.display = 'none';
-    if (calendarAuthenticated) {
-        logoutCalendar();
-    }
 }
 
 document.getElementById('qtyHistoryModalClose').addEventListener('click', () => {
@@ -2760,7 +4390,33 @@ document.getElementById('qtyHistoryModal').addEventListener('click', event => {
     }
 });
 
-setInterval(loadStatus, 60 * 60 * 1000);
+// Refresh dashboard otomatis tepat di menit :00 dan :30 setiap jam (sinkron jam dinding)
+function scheduleNextAlignedRefresh() {
+    const now = new Date();
+    const minutes = now.getMinutes();
+    const seconds = now.getSeconds();
+    const milliseconds = now.getMilliseconds();
+
+    // Hitung sisa waktu hingga menit :00 atau :30 berikutnya
+    const minutesUntilNext = minutes < 30 ? (30 - minutes) : (60 - minutes);
+    let msUntilNext = (minutesUntilNext * 60 * 1000) - (seconds * 1000) - milliseconds;
+
+    if (msUntilNext < 1000) {
+        msUntilNext = 30 * 60 * 1000;
+    }
+
+    setTimeout(async () => {
+        try {
+            await loadStatus();
+        } catch (e) {
+            console.warn('Auto-refresh gagal:', e);
+        } finally {
+            scheduleNextAlignedRefresh();
+        }
+    }, msUntilNext);
+}
+
+scheduleNextAlignedRefresh();
 </script>
 </body>
 </html>

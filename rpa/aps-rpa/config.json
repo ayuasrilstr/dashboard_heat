@@ -1,409 +1,686 @@
 {
-    "shortcut_path":  "C:\\Users\\iso\\Desktop\\IOS-APS - Shortcut.lnk",
-    "window_title_contains":  [
-                                  "Login",
-                                  "FrmWelcomeLoading",
-                                  "IOS-APS"
-                              ],
-    "window_timeout_seconds":  60,
-    "launch":  {
-                   "bypass_zone_check":  true
-               },
-    "security_warning":  {
-                             "enabled":  true,
-                             "title_contains":  [
-                                                    "Open File",
-                                                    "Security Warning"
-                                                ],
-                             "timeout_seconds":  8,
-                             "steps":  [
-                                           {
-                                               "action":  "key",
-                                               "key":  "enter"
-                                           },
-                                           {
-                                               "action":  "hotkey",
-                                               "keys":  [
-                                                            "alt",
-                                                            "r"
-                                                        ]
-                                           }
-                                       ]
-                         },
-    "already_running_warning":  {
-                                    "enabled":  true,
-                                    "title_contains":  [
-                                                           "Error"
-                                                       ],
-                                    "timeout_seconds":  2,
-                                    "steps":  [
-                                                  {
-                                                      "action":  "key",
-                                                      "key":  "enter"
-                                                  }
-                                              ]
-                                },
-    "steps":  [
-                  {
-                      "name":  "Tunggu form login siap",
-                      "action":  "wait",
-                      "seconds":  3
-                  },
-                  {
-                      "name":  "Klik field username",
-                      "action":  "click",
-                      "x":  1027,
-                      "y":  539
-                  },
-                  {
-                      "name":  "Pilih semua isi username lama",
-                      "action":  "hotkey",
-                      "keys":  [
-                                   "ctrl",
-                                   "a"
-                               ]
-                  },
-                  {
-                      "name":  "Hapus username lama",
-                      "action":  "key",
-                      "key":  "delete"
-                  },
-                  {
-                      "name":  "Bersihkan sisa username lama",
-                      "action":  "key",
-                      "key":  "backspace",
-                      "count":  30
-                  },
-                  {
-                      "name":  "Isi username dari .env",
-                      "action":  "type_env",
-                      "env":  "APS_USERNAME"
-                  },
-                  {
-                      "name":  "Klik field password",
-                      "action":  "click",
-                      "x":  1054,
-                      "y":  578
-                  },
-                  {
-                      "name":  "Pilih semua isi password lama",
-                      "action":  "hotkey",
-                      "keys":  [
-                                   "ctrl",
-                                   "a"
-                               ]
-                  },
-                  {
-                      "name":  "Hapus password lama",
-                      "action":  "key",
-                      "key":  "delete"
-                  },
-                  {
-                      "name":  "Bersihkan sisa password lama",
-                      "action":  "key",
-                      "key":  "backspace",
-                      "count":  30
-                  },
-                  {
-                      "name":  "Isi password dari .env",
-                      "action":  "type_env",
-                      "env":  "APS_PASSWORD"
-                  },
-                  {
-                      "name":  "Klik tombol Login",
-                      "action":  "click",
-                      "x":  1054,
-                      "y":  672
-                  },
-                  {
-                      "name":  "Tunggu halaman utama APS terbuka",
-                      "action":  "wait",
-                      "seconds":  15
-                  },
-                  {
-                      "name":  "Klik menu Analysis",
-                      "action":  "click",
-                    
-                      "x":  339,
-                      "y":  27
-                  },
-                  {
-                      "name":  "Klik sub menu JO Tracking Report",
-                      "action":  "click",
-                      "x":  353,
-                      "y":  55
-                  },
-                  {
-                      "name":  "Tunggu halaman JO Tracking Report terbuka",
-                      "action":  "wait",
-                      "seconds": 20
-                  },
-                  {
-                      "name":  "Buka dropdown filter",
-                      "action":  "click",
-                      "x":  282,
-                      "y":  119
-                  },
-                  {
-                      "name":  "Tunggu dropdown filter terbuka",
-                      "action":  "wait",
-                      "seconds":  1.5
-                  },
-                  {
-                      "name":  "Pilih nilai filter",
-                      "action":  "click",
-                      "x":  227,
-                      "y":  156
-                  },
-                  {
-                      "name":  "Klik OK filter",
-                      "action":  "click",
-                      "x":  301,
-                      "y":  192
-                  },
-                  {
-                      "name":  "Tunggu nilai filter terpilih",
-                      "action":  "wait",
-                      "seconds":  1
-                  },
-                  {
-                      "name":  "Buka dropdown Floor",
-                      "action":  "click",
-                      "x":  435,
-                      "y":  116
-                  },
-                  {
-                      "name":  "Tunggu dropdown Floor terbuka",
-                      "action":  "wait",
-                      "seconds":  1.5
-                  },
-                  {
-                      "name":  "Pilih nilai Floor",
-                      "action":  "click",
-                      "x":  391,
-                      "y":  137
-                  },
-                  {
-                      "name":  "Klik OK Floor",
-                      "action":  "click",
-                      "x":  469,
-                      "y":  267
-                  },
-                  {
-                      "name":  "Tunggu nilai Floor terpilih",
-                      "action":  "wait",
-                      "seconds":  1
-                  },
-                  {
-                      "name":  "Klik field Delivery Date From",
-                      "action":  "click",
-                      "x":  628,
-                      "y":  116,
-                      "count":  2
-                  },
-                  {
-                      "name":  "Tunggu fokus Delivery Date From",
-                      "action":  "wait",
-                      "seconds":  0.5
-                  },
-                  {
-                      "name":  "Pilih semua tanggal From lama",
-                      "action":  "hotkey",
-                      "keys":  [
-                                   "ctrl",
-                                   "a"
-                               ]
-                  },
-                  {
-                      "name":  "Hapus tanggal From lama",
-                      "action":  "key",
-                      "key":  "delete"
-                  },
-                  {
-                      "name":  "Bersihkan sisa tanggal From lama",
-                      "action":  "key",
-                      "key":  "backspace",
-                      "count":  12
-                  },
-                  {
-                      "name":  "Isi tanggal From awal bulan lalu",
-                      "action":  "paste_month_date",
-                      "which":  "start",
-                      "months_offset":  -1,
-                      "format":  "%d/%m/%Y"
-                  },
-                  {
-                      "name":  "Klik field Delivery Date To",
-                      "action":  "click",
-                      "x":  791,
-                      "y":  120
-                  },
-                  {
-                      "name":  "Isi tanggal To akhir 2 bulan ke depan",
-                      "action":  "paste_month_date",
-                      "which":  "end",
-                      "months_offset":  2,
-                      "format":  "%d/%m/%Y"
-                  },
-                  {
-                      "name":  "Buka dropdown Status",
-                      "action":  "click",
-                      "x":  969,
-                      "y":  120
-                  },
-                  {
-                      "name":  "Tunggu dropdown Status terbuka",
-                      "action":  "wait",
-                      "seconds":  1.5
-                  },
-                  {
-                      "name":  "Pilih nilai Status",
-                      "action":  "click",
-                      "x":  940,
-                      "y":  205
-                  },
-                  {
-                      "name":  "Tunggu nilai Status terpilih",
-                      "action":  "wait",
-                      "seconds":  1
-                  },
-                  {
-                      "name":  "Klik Ok pada status terpilih",
-                      "action":  "click",
-                      "x":  996,
-                      "y":  216
-                  },
-                  {
-                      "name":  "Tunggu nilai Status terpilih",
-                      "action":  "wait",
-                      "seconds":  1
-                  },
-                  {
-                      "name":  "Buka dropdown Firm Order",
-                      "action":  "click",
-                      "x":  972,
-                      "y":  144
-                  },
-                  {
-                      "name":  "Tunggu dropdown Firm Order terbuka",
-                      "action":  "wait",
-                      "seconds":  1.5
-                  },
-                  {
-                      "name":  "Pilih nilai Firm Order",
-                      "action":  "click",
-                      "x":  940,
-                      "y":  205
-                  },
-                  {
-                      "name":  "Tunggu nilai Firm Order terpilih",
-                      "action":  "wait",
-                      "seconds":  1
-                  },
-                  {
-                      "name":  "Buka dropdown Customer Name",
-                      "action":  "click",
-                      "x":  689,
-                      "y":  173
-                  },
-                  {
-                      "name":  "Tunggu dropdown Customer Name terbuka",
-                      "action":  "wait",
-                      "seconds":  1.5
-                  },
-                  {
-                      "name":  "Pilih nilai Customer Name",
-                      "action":  "click",
-                      "x":  612,
-                      "y":  207
-                  },
-                  {
-                      "name":  "Klik OK Customer Name",
-                      "action":  "click",
-                      "x":  736,
-                      "y":  365
-                  },
-                  {
-                      "name":  "Tunggu nilai Customer Name terpilih",
-                      "action":  "wait",
-                      "seconds":  1
-                  },
-                  {
-                      "name":  "Klik Refresh",
-                      "action":  "click",
-                      "x":  879,
-                      "y":  56
-                  },
-                   {
-                      "name":  "Tunggu loading data selesai",
-                      "action":  "wait",
-                      "seconds":  100
-                  },
-                  {
-                      "name":  "Klik export To Excel",
-                      "action":  "click",
-                      "x":  1678,
-                      "y":  1027
-                  },
-                  {
-                      "name":  "Simpan file Excel ke folder downloads",
-                      "action":  "save_as",
-                      "title_contains":  [
-                                             "Save As",
-                                             "Save"
-                                         ],
-                      "timeout_seconds":  30,
-                      "directory":  "downloads",
-                      "filename":  "JO",
-                      "save_timeout_seconds":  120,
-                      "stable_seconds":  2
-                  },
-                  {
-                      "name":  "Tunggu proses export Excel",
-                      "action":  "wait",
-                      "seconds":  5
-                  },
-                  {
-                      "name":  "Tutup workbook hasil export",
-                      "action":  "hotkey",
-                      "keys":  [
-                                   "alt",
-                                   "f4"
-                               ]
-                  },
-                  {
-                      "name":  "Tunggu workbook tertutup",
-                      "action":  "wait",
-                      "seconds":  2
-                  },
-                  {
-                      "name":  "Tutup APS",
-                      "action":  "hotkey",
-                      "keys":  [
-                                   "alt",
-                                   "f4"
-                               ]
-                  },
-                  {
-                      "name":  "Tunggu APS tertutup",
-                      "action":  "wait",
-                      "seconds":  2
-                  },
-                  {
-                      "name":  "Tutup peringatan aplikasi sudah berjalan (jika muncul)",
-                      "action":  "key",
-                      "key":  "enter"
-                  }
-              ],
-    "copy_downloads":  {
-                           "enabled":  false,
-                           "source_dir":  "downloads",
-                           "archive_dir":  "archive",
-                           "timeout_seconds":  120,
-                           "patterns":  [
-                                            "*.xlsx",
-                                            "*.csv",
-                                            "*.zip"
-                                        ]
-                       }
+    "shortcut_path": "\\\\172.23.1.10\\ios-aps\\IOS-APS.exe",
+    "window_title_contains": [
+        "Login",
+        "FrmWelcomeLoading",
+        "IOS-APS"
+    ],
+    "window_timeout_seconds": 180,
+    "launch": {
+        "bypass_zone_check": true
+    },
+    "security_warning": {
+        "enabled": true,
+        "title_contains": [
+            "Open File",
+            "Security Warning"
+        ],
+        "timeout_seconds": 8,
+        "steps": [
+            {
+                "action": "key",
+                "key": "enter"
+            },
+            {
+                "action": "hotkey",
+                "keys": [
+                    "alt",
+                    "r"
+                ]
+            }
+        ]
+    },
+    "already_running_warning": {
+        "enabled": true,
+        "title_contains": [
+            "Error"
+        ],
+        "timeout_seconds": 2,
+        "steps": [
+            {
+                "action": "key",
+                "key": "enter"
+            }
+        ]
+    },
+    "steps": [
+        {
+            "name": "Tunggu form login siap",
+            "action": "wait",
+            "seconds": 3,
+            "window_title_contains": [
+                "Login"
+            ],
+            "window_timeout_seconds": 120
+        },
+        {
+            "name": "Klik field username",
+            "action": "click",
+            "x": 795,
+            "y": 368
+        },
+        {
+            "name": "Pilih semua isi username lama",
+            "action": "hotkey",
+            "keys": [
+                "ctrl",
+                "a"
+            ]
+        },
+        {
+            "name": "Hapus username lama",
+            "action": "key",
+            "key": "delete"
+        },
+        {
+            "name": "Bersihkan sisa username lama",
+            "action": "key",
+            "key": "backspace",
+            "count": 30
+        },
+        {
+            "name": "Isi username dari .env",
+            "action": "type_env",
+            "env": "APS_USERNAME"
+        },
+        {
+            "name": "Klik field password",
+            "action": "click",
+            "x": 795,
+            "y": 402
+        },
+        {
+            "name": "Pilih semua isi password lama",
+            "action": "hotkey",
+            "keys": [
+                "ctrl",
+                "a"
+            ]
+        },
+        {
+            "name": "Hapus password lama",
+            "action": "key",
+            "key": "delete"
+        },
+        {
+            "name": "Bersihkan sisa password lama",
+            "action": "key",
+            "key": "backspace",
+            "count": 30
+        },
+        {
+            "name": "Isi password dari .env",
+            "action": "type_env",
+            "env": "APS_PASSWORD"
+        },
+        {
+            "name": "Klik tombol Login",
+            "action": "click",
+            "x": 773,
+            "y": 497
+        },
+        {
+            "name": "Tekan Enter setelah login",
+            "action": "key",
+            "key": "enter"
+        },
+        {
+            "name": "Tunggu halaman utama APS terbuka",
+            "action": "wait",
+            "seconds": 10,
+            "window_title_contains": [
+                "IOS-APS",
+                "Dashboard",
+                "Main",
+                "Home",
+                "APS",
+                "Dashboard - APS",
+                "APS Dashboard",
+                "APS – Dashboard",
+                "Aps"
+            ],
+            "window_timeout_seconds": 300,
+            "handle_popup": {
+                "title_contains": [
+                    "Prompt",
+                    "Message",
+                    "Warning",
+                    "Error",
+                    "Query"
+                ],
+                "keys": [
+                    "enter"
+                ],
+                "check_interval_seconds": 1,
+                "after_seconds": 0.5
+            }
+        },
+        {
+            "name": "Klik menu Analysis",
+            "action": "click",
+            "x": 352,
+            "y": 33,
+            "window_title_contains": [
+                "IOS-APS"
+            ]
+        },
+        {
+            "name": "Tunggu menu Analysis terbuka",
+            "action": "wait",
+            "seconds": 1,
+            "keep_current_window": true
+        },
+        {
+            "name": "Klik sub menu JO Tracking Report",
+            "action": "click",
+            "x": 347,
+            "y": 62,
+            "keep_current_window": true
+        },
+        {
+            "name": "Tunggu halaman JO Tracking Report terbuka",
+            "action": "wait",
+            "seconds": 2,
+            "window_title_contains": [
+                "IOS-APS"
+            ]
+        },
+        {
+            "name": "Buka dropdown filter",
+            "action": "click",
+            "x": 166,
+            "y": 117
+        },
+        {
+            "name": "Tunggu dropdown filter terbuka",
+            "action": "wait",
+            "seconds": 3
+        },
+        {
+            "name": "Pilih nilai filter",
+            "action": "click",
+            "x": 79,
+            "y": 161
+        },
+        {
+            "name": "Klik OK filter",
+            "action": "click",
+            "x": 159,
+            "y": 204
+        },
+        {
+            "name": "Tunggu setelah memilih factory",
+            "action": "wait",
+            "seconds": 1.5
+        },
+        {
+            "name": "Klik field Delivery Date From",
+            "action": "click",
+            "x": 533,
+            "y": 119,
+            "window_title_contains": [
+                "IOS-APS"
+            ]
+        },
+        {
+            "name": "Tunggu fokus Delivery Date From",
+            "action": "wait",
+            "seconds": 0.3,
+            "keep_current_window": true
+        },
+        {
+            "name": "Pindah kursor ke awal tanggal From (Day)",
+            "action": "key",
+            "key": "left",
+            "count": 3,
+            "keep_current_window": true
+        },
+        {
+            "name": "Isi tanggal From awal periode delivery sebelumnya",
+            "action": "type_delivery_date",
+            "periods_offset": -1,
+            "boundary": "start",
+            "format": "%d%m%Y",
+            "keep_current_window": true
+        },
+        {
+            "name": "Klik field Delivery Date To",
+            "action": "click",
+            "x": 654,
+            "y": 118,
+            "keep_current_window": true
+        },
+        {
+            "name": "Tunggu fokus Delivery Date To",
+            "action": "wait",
+            "seconds": 0.3,
+            "keep_current_window": true
+        },
+        {
+            "name": "Pindah kursor ke awal tanggal To (Day)",
+            "action": "key",
+            "key": "left",
+            "count": 3,
+            "keep_current_window": true
+        },
+        {
+            "name": "Isi tanggal To akhir periode delivery ke-2 ke depan (Batch 1)",
+            "action": "type_delivery_date",
+            "periods_offset": 2,
+            "boundary": "end",
+            "format": "%d%m%Y",
+            "keep_current_window": true
+        },
+        {
+            "name": "Buka dropdown Customer Name",
+            "action": "click",
+            "x": 681,
+            "y": 173
+        },
+        {
+            "name": "Tunggu dropdown Customer Name terbuka",
+            "action": "wait",
+            "seconds": 2
+        },
+        {
+            "name": "Pilih nilai Customer Name",
+            "action": "click",
+            "x": 457,
+            "y": 212
+        },
+        {
+            "name": "Klik OK Customer Name",
+            "action": "click",
+            "x": 571,
+            "y": 373
+        },
+        {
+            "name": "Tunggu nilai Customer Name terpilih",
+            "action": "wait",
+            "seconds": 2
+        },
+        {
+            "name": "Klik Refresh",
+            "action": "click",
+            "x": 879,
+            "y": 69
+        },
+        {
+            "name": "Tunggu loading data selesai",
+            "action": "wait",
+            "seconds": 150,
+            "exit_on_handled": true,
+            "post_handle_stable_seconds": 5,
+            "post_handle_stable_timeout": 120,
+            "post_handle_stable_threshold": 3.0,
+            "post_handle_stable_interval": 2.0,
+            "window_title_contains": [
+                "IOS-APS"
+            ],
+            "handle_popup": {
+                "title_contains": [
+                    "Prompt",
+                    "Message",
+                    "Warning",
+                    "Error"
+                ],
+                "keys": [
+                    "enter"
+                ],
+                "check_interval_seconds": 1,
+                "after_seconds": 0.5
+            }
+        },
+        {
+            "name": "Klik export To Excel",
+            "action": "click",
+            "x": 1129,
+            "y": 678,
+            "window_title_contains": [
+                "IOS-APS"
+            ]
+        },
+        {
+            "name": "Tunggu aplikasi Excel terbuka",
+            "action": "wait",
+            "seconds": 5,
+            "window_title_contains": [
+                "WPS Office",
+                "WPS",
+                "Spreadsheets",
+                "Microsoft Excel 2010",
+                "Microsoft Excel",
+                "Excel",
+                "Worksheet",
+                "Book",
+                "JO"
+            ],
+            "window_timeout_seconds": 240,
+            "handle_popup": {
+                "title_contains": [
+                    "Prompt",
+                    "Message",
+                    "Warning",
+                    "Error",
+                    "Query"
+                ],
+                "keys": [
+                    "enter"
+                ],
+                "check_interval_seconds": 1,
+                "after_seconds": 0.5
+            }
+        },
+        {
+            "name": "Buka dialog Save As di Excel",
+            "action": "key",
+            "key": "f12",
+            "window_title_contains": [
+                "WPS Office",
+                "WPS",
+                "Spreadsheets",
+                "Microsoft Excel 2010",
+                "Microsoft Excel",
+                "Excel",
+                "Worksheet",
+                "Book",
+                "JO"
+            ],
+            "window_timeout_seconds": 60,
+            "after_seconds": 1.5
+        },
+        {
+            "name": "Simpan file Excel Batch 1 ke folder downloads",
+            "action": "save_as",
+            "assume_open": true,
+            "keep_current_window": true,
+            "title_contains": [
+                "Save As",
+                "Simpan Sebagai",
+                "Save",
+                "Simpan",
+                "WPS Office",
+                "WPS",
+                "Spreadsheets",
+                "Microsoft Excel",
+                "Excel",
+                "Book",
+                "JO"
+            ],
+            "timeout_seconds": 30,
+            "directory": "downloads",
+            "filename": "JO_part1.xlsx",
+            "save_timeout_seconds": 180,
+            "stable_seconds": 2,
+            "close_after_save": true
+        },
+        {
+            "name": "Tunggu proses simpan Excel Batch 1 selesai",
+            "action": "wait",
+            "seconds": 2
+        },
+        {
+            "name": "Tutup Excel Batch 1",
+            "action": "close_excel",
+            "optional": true
+        },
+        {
+            "name": "Tunggu Excel Batch 1 tertutup",
+            "action": "wait",
+            "seconds": 2,
+            "optional": true
+        },
+        {
+            "name": "Fokus kembali ke IOS-APS untuk Batch 2",
+            "action": "wait",
+            "seconds": 1,
+            "window_title_contains": [
+                "IOS-APS"
+            ],
+            "window_timeout_seconds": 30
+        },
+        {
+            "name": "Klik field Delivery Date From (Batch 2)",
+            "action": "click",
+            "x": 533,
+            "y": 119,
+            "window_title_contains": [
+                "IOS-APS"
+            ]
+        },
+        {
+            "name": "Tunggu fokus Delivery Date From (Batch 2)",
+            "action": "wait",
+            "seconds": 0.3,
+            "keep_current_window": true
+        },
+        {
+            "name": "Pindah kursor ke awal tanggal From Batch 2 (Day)",
+            "action": "key",
+            "key": "left",
+            "count": 3,
+            "keep_current_window": true
+        },
+        {
+            "name": "Isi tanggal From awal periode delivery ke-3 ke depan (Batch 2)",
+            "action": "type_delivery_date",
+            "periods_offset": 3,
+            "boundary": "start",
+            "format": "%d%m%Y",
+            "keep_current_window": true
+        },
+        {
+            "name": "Klik field Delivery Date To (Batch 2)",
+            "action": "click",
+            "x": 654,
+            "y": 118,
+            "keep_current_window": true
+        },
+        {
+            "name": "Tunggu fokus Delivery Date To (Batch 2)",
+            "action": "wait",
+            "seconds": 0.3,
+            "keep_current_window": true
+        },
+        {
+            "name": "Pindah kursor ke awal tanggal To Batch 2 (Day)",
+            "action": "key",
+            "key": "left",
+            "count": 3,
+            "keep_current_window": true
+        },
+        {
+            "name": "Isi tanggal To akhir periode delivery ke-5 ke depan (Batch 2)",
+            "action": "type_delivery_date",
+            "periods_offset": 5,
+            "boundary": "end",
+            "format": "%d%m%Y",
+            "keep_current_window": true
+        },
+        {
+            "name": "Klik Refresh (Batch 2)",
+            "action": "click",
+            "x": 879,
+            "y": 69
+        },
+        {
+            "name": "Tunggu loading data Batch 2 selesai",
+            "action": "wait",
+            "seconds": 150,
+            "exit_on_handled": true,
+            "post_handle_stable_seconds": 5,
+            "post_handle_stable_timeout": 120,
+            "post_handle_stable_threshold": 3.0,
+            "post_handle_stable_interval": 2.0,
+            "window_title_contains": [
+                "IOS-APS"
+            ],
+            "handle_popup": {
+                "title_contains": [
+                    "Prompt",
+                    "Message",
+                    "Warning",
+                    "Error"
+                ],
+                "keys": [
+                    "enter"
+                ],
+                "check_interval_seconds": 1,
+                "after_seconds": 0.5
+            }
+        },
+        {
+            "name": "Klik export To Excel (Batch 2)",
+            "action": "click",
+            "x": 1129,
+            "y": 678,
+            "window_title_contains": [
+                "IOS-APS"
+            ]
+        },
+        {
+            "name": "Tunggu aplikasi Excel terbuka (Batch 2)",
+            "action": "wait",
+            "seconds": 5,
+            "window_title_contains": [
+                "WPS Office",
+                "WPS",
+                "Spreadsheets",
+                "Microsoft Excel 2010",
+                "Microsoft Excel",
+                "Excel",
+                "Worksheet",
+                "Book",
+                "JO"
+            ],
+            "window_timeout_seconds": 240,
+            "handle_popup": {
+                "title_contains": [
+                    "Prompt",
+                    "Message",
+                    "Warning",
+                    "Error",
+                    "Query"
+                ],
+                "keys": [
+                    "enter"
+                ],
+                "check_interval_seconds": 1,
+                "after_seconds": 0.5
+            }
+        },
+        {
+            "name": "Buka dialog Save As di Excel (Batch 2)",
+            "action": "key",
+            "key": "f12",
+            "window_title_contains": [
+                "WPS Office",
+                "WPS",
+                "Spreadsheets",
+                "Microsoft Excel 2010",
+                "Microsoft Excel",
+                "Excel",
+                "Worksheet",
+                "Book",
+                "JO"
+            ],
+            "window_timeout_seconds": 60,
+            "after_seconds": 1.5
+        },
+        {
+            "name": "Simpan file Excel Batch 2 ke folder downloads",
+            "action": "save_as",
+            "assume_open": true,
+            "keep_current_window": true,
+            "title_contains": [
+                "Save As",
+                "Simpan Sebagai",
+                "Save",
+                "Simpan",
+                "WPS Office",
+                "WPS",
+                "Spreadsheets",
+                "Microsoft Excel",
+                "Excel",
+                "Book",
+                "JO"
+            ],
+            "timeout_seconds": 30,
+            "directory": "downloads",
+            "filename": "JO_part2.xlsx",
+            "save_timeout_seconds": 180,
+            "stable_seconds": 2,
+            "close_after_save": true
+        },
+        {
+            "name": "Tunggu proses simpan Excel Batch 2 selesai",
+            "action": "wait",
+            "seconds": 2
+        },
+        {
+            "name": "Tutup Excel Batch 2",
+            "action": "close_excel",
+            "optional": true
+        },
+        {
+            "name": "Tunggu Excel Batch 2 tertutup",
+            "action": "wait",
+            "seconds": 2,
+            "optional": true
+        },
+        {
+            "name": "Tutup APS",
+            "action": "hotkey",
+            "keys": [
+                "alt",
+                "f4"
+            ],
+            "window_title_contains": [
+                "IOS-APS"
+            ],
+            "window_timeout_seconds": 15,
+            "optional": true
+        },
+        {
+            "name": "Konfirmasi popup keluar APS (Klik OK / Yes pada dialog Query)",
+            "action": "key",
+            "key": "enter",
+            "window_title_contains": [
+                "Query",
+                "Are you sure",
+                "Prompt",
+                "Exit",
+                "Confirm"
+            ],
+            "window_timeout_seconds": 8,
+            "after_seconds": 1,
+            "optional": true
+        },
+        {
+            "name": "Tunggu APS tertutup",
+            "action": "wait",
+            "seconds": 2,
+            "optional": true
+        },
+        {
+            "name": "Gabungkan JO_part1 dan JO_part2 menjadi JO.xlsx",
+            "action": "merge_excel_parts",
+            "part1": "JO_part1.xlsx",
+            "part2": "JO_part2.xlsx",
+            "target": "JO.xlsx",
+            "directory": "downloads",
+            "archive_parts": true
+        }
+    ],
+    "copy_downloads": {
+        "enabled": false,
+        "source_dir": "downloads",
+        "archive_dir": "archive",
+        "timeout_seconds": 120,
+        "patterns": [
+            "*.xlsx",
+            "*.csv",
+            "*.zip"
+        ]
+    }
 }

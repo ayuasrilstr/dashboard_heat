@@ -1,11 +1,9 @@
-﻿<?php
+<?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Dashboard_model extends CI_Model
 {
     private $reports = array(
-        array('key' => '32_inflow', 'label' => '32 Inflow', 'storage' => '32', 'direction' => '1', 'filename' => '32_inflow.xlsx'),
-        array('key' => '32_outflow', 'label' => '32 Outflow', 'storage' => '32', 'direction' => '2', 'filename' => '32_outflow.xlsx'),
         array('key' => '32a_inflow', 'label' => '32a Inflow', 'storage' => '32a', 'direction' => '1', 'filename' => '32a_inflow.xlsx'),
         array('key' => '32a_outflow', 'label' => '32a Outflow', 'storage' => '32a', 'direction' => '2', 'filename' => '32a_outflow.xlsx'),
     );
@@ -101,12 +99,54 @@ class Dashboard_model extends CI_Model
 
         return array_values(array_unique($paths));
     }
+    private function rpa_root_path()
+    {
+        $dashboard_config = $this->dashboard_config();
+        if (!empty($dashboard_config['dashboard_heat_rpa_dir']) && is_dir($dashboard_config['dashboard_heat_rpa_dir'])) {
+            return rtrim($dashboard_config['dashboard_heat_rpa_dir'], "\\/");
+        }
+
+        $env_path = getenv('DASHBOARD_HEAT_RPA_DIR');
+        if ($env_path && is_dir($env_path)) {
+            return rtrim($env_path, "\\/");
+        }
+
+        $gm_rpa = 'E:' . DIRECTORY_SEPARATOR . 'xampp' . DIRECTORY_SEPARATOR . 'htdocs' . DIRECTORY_SEPARATOR . 'dashboard_gm' . DIRECTORY_SEPARATOR . 'rpa';
+        if (is_dir($gm_rpa)) {
+            return $gm_rpa;
+        }
+
+        return $this->root_path() . DIRECTORY_SEPARATOR . 'rpa';
+    }
+
+    private function rpa_root_candidates()
+    {
+        $roots = array();
+
+        $dashboard_config = $this->dashboard_config();
+        if (!empty($dashboard_config['dashboard_heat_rpa_dir'])) {
+            $roots[] = rtrim($dashboard_config['dashboard_heat_rpa_dir'], "\\/");
+        }
+
+        $env_path = getenv('DASHBOARD_HEAT_RPA_DIR');
+        if ($env_path) {
+            $roots[] = rtrim($env_path, "\\/");
+        }
+
+        $roots[] = 'E:' . DIRECTORY_SEPARATOR . 'xampp' . DIRECTORY_SEPARATOR . 'htdocs' . DIRECTORY_SEPARATOR . 'dashboard_gm' . DIRECTORY_SEPARATOR . 'rpa';
+        $roots[] = $this->root_path() . DIRECTORY_SEPARATOR . 'rpa';
+
+        return array_values(array_filter(array_unique($roots), 'is_dir'));
+    }
+
     private function rpa_data_dirs()
     {
         $dirs = array();
-        foreach ($this->rpa_module_names() as $module) {
-            $dirs[] = $this->rpa_module_dir($module, 'downloads');
-            $dirs[] = $this->rpa_module_dir($module, 'archive');
+        foreach ($this->rpa_root_candidates() as $rpa_root) {
+            foreach ($this->rpa_module_names() as $module) {
+                $dirs[] = $rpa_root . DIRECTORY_SEPARATOR . $module . DIRECTORY_SEPARATOR . 'downloads';
+                $dirs[] = $rpa_root . DIRECTORY_SEPARATOR . $module . DIRECTORY_SEPARATOR . 'archive';
+            }
         }
 
         return array_values(array_filter(array_unique($dirs), 'is_dir'));
@@ -119,7 +159,7 @@ class Dashboard_model extends CI_Model
 
     private function rpa_module_dir($module, $subdir = NULL)
     {
-        $path = $this->root_path() . DIRECTORY_SEPARATOR . 'rpa' . DIRECTORY_SEPARATOR . $module;
+        $path = $this->rpa_root_path() . DIRECTORY_SEPARATOR . $module;
         if ($subdir !== NULL && $subdir !== '') {
             $path .= DIRECTORY_SEPARATOR . $subdir;
         }
@@ -208,13 +248,20 @@ class Dashboard_model extends CI_Model
         return 'engage_daily_history';
     }
 
-    private function heat_history_connection()
+    private function heat_history_connection($force_reconnect = FALSE)
     {
-        if (isset($this->heat_history_db_ready) && $this->heat_history_db_ready) {
-            return $this->heat_history_db;
+        if (!$force_reconnect && isset($this->heat_history_db_ready) && $this->heat_history_db_ready && $this->heat_history_db && !empty($this->heat_history_db->conn_id)) {
+            if (@mysqli_ping($this->heat_history_db->conn_id)) {
+                return $this->heat_history_db;
+            }
         }
 
-        $this->heat_history_db_ready = TRUE;
+        $this->heat_history_db_ready = FALSE;
+        if ($this->heat_history_db) {
+            @$this->heat_history_db->close();
+            $this->heat_history_db = NULL;
+        }
+
         $db = $this->load->database('dashboard_heat_history', TRUE);
         if (!$db || empty($db->conn_id)) {
             $this->heat_history_db = NULL;
@@ -222,6 +269,7 @@ class Dashboard_model extends CI_Model
         }
 
         $this->heat_history_db = $db;
+        $this->heat_history_db_ready = TRUE;
         $this->ensure_heat_history_table();
         return $this->heat_history_db;
     }
@@ -262,6 +310,13 @@ class Dashboard_model extends CI_Model
             return FALSE;
         }
 
+        $snapshot_json = '';
+        if (isset($row['snapshot_json'])) {
+            $snapshot_json = is_string($row['snapshot_json']) ? $row['snapshot_json'] : json_encode($row['snapshot_json'], JSON_UNESCAPED_UNICODE);
+        } else {
+            $snapshot_json = json_encode($row, JSON_UNESCAPED_UNICODE);
+        }
+
         $payload = array(
             'history_type' => (string) $history_type,
             'history_date' => $history_date,
@@ -273,12 +328,32 @@ class Dashboard_model extends CI_Model
             'capacity' => isset($row['capacity']) ? (int) $row['capacity'] : 0,
             'input_qty' => isset($row['input_qty']) ? (int) $row['input_qty'] : 0,
             'output_qty' => isset($row['output_qty']) ? (int) $row['output_qty'] : (isset($row['qty_output']) ? (int) $row['qty_output'] : 0),
-            'snapshot_json' => json_encode($row, JSON_UNESCAPED_UNICODE),
+            'snapshot_json' => $snapshot_json,
             'captured_at' => isset($row['captured_at']) ? $row['captured_at'] : NULL,
             'updated_at' => date('Y-m-d H:i:s'),
         );
 
-        return $db->replace($this->heat_history_table(), $payload);
+        try {
+            $res = $db->replace($this->heat_history_table(), $payload);
+            if ($res) {
+                return $res;
+            }
+        } catch (\Throwable $e) {
+            log_message('error', 'upsert_heat_history_row error: ' . $e->getMessage());
+        }
+
+        // Retry once with a fresh connection if connection dropped or failed
+        $db = $this->heat_history_connection(TRUE);
+        if (!$db || empty($db->conn_id)) {
+            return FALSE;
+        }
+
+        try {
+            return $db->replace($this->heat_history_table(), $payload);
+        } catch (\Throwable $e) {
+            log_message('error', 'upsert_heat_history_row retry error: ' . $e->getMessage());
+            return FALSE;
+        }
     }
 
     private function read_heat_history_rows($history_type, $delivery_count = NULL)
@@ -351,9 +426,131 @@ class Dashboard_model extends CI_Model
         return $items;
     }
 
+    private function has_engage_db_data()
+    {
+        $db = $this->heat_history_connection();
+        if (!$db || empty($db->conn_id)) {
+            return FALSE;
+        }
+
+        $query = $db->query("SELECT (SELECT COUNT(*) FROM `tb_engage_transactions`) + (SELECT COUNT(*) FROM `tb_engage_archieve`) AS total");
+        if ($query) {
+            $row = $query->row_array();
+            return isset($row['total']) && (int) $row['total'] > 0;
+        }
+
+        return FALSE;
+    }
+
+    private function latest_engage_db_time_iso()
+    {
+        $db = $this->heat_history_connection();
+        if (!$db || empty($db->conn_id)) {
+            return NULL;
+        }
+
+        $query = $db->query("SELECT MAX(`created_at`) AS `max_time` FROM (SELECT `created_at` FROM `tb_engage_transactions` UNION ALL SELECT `created_at` FROM `tb_engage_archieve`) AS t");
+        if ($query) {
+            $row = $query->row_array();
+            if (!empty($row['max_time'])) {
+                return date('c', strtotime($row['max_time']));
+            }
+        }
+
+        return date('c');
+    }
+
+    private function read_engage_report_from_db($storage, $direction = 'inflow')
+    {
+        $db = $this->heat_history_connection();
+        if (!$db || empty($db->conn_id)) {
+            return array('headers' => array(), 'rows' => array());
+        }
+
+        $headers = array(
+            '#', 'Date', 'Storage Nr', 'Location Nr', 'Item Nr', 'Item Name', 'Item Name 2',
+            'Serial Nr', 'Address Nr', 'Address Name', 'Storage 2', 'Location 2', 'Qty',
+            'Unit', 'Text', 'Cost Center', 'Prod. Nr',
+            'Udef 1', 'Udef 2', 'Udef 3', 'Udef 4', 'Udef 5',
+            'Udef 6', 'Udef 7', 'Udef 8', 'Udef 9', 'Udef 10', 'User Creator'
+        );
+
+        $qty_condition = ($direction === 'inflow') ? '`qty` > 0' : '`qty` < 0';
+        $storage_clean = $db->escape_str($storage);
+
+        $sql = "
+            SELECT 
+                `transaction_date`, `storage_nr`, '' AS `location_nr`, `item_nr`, `item_name`, `item_name_2`,
+                `serial_nr`, `address_nr`, `address_name`, `storage_2`, `location_2`, `qty`,
+                `unit`, `text`, `cost_center`, `prod_nr`,
+                `udef_1`, `udef_2`, `udef_3`, `udef_4`, `udef_5`,
+                `udef_6`, `udef_7`, `udef_8`, `udef_9`, `udef_10`, `user_creator`
+            FROM `tb_engage_archieve`
+            WHERE `storage_nr` = '{$storage_clean}' AND {$qty_condition}
+            UNION ALL
+            SELECT 
+                `transaction_date`, `storage_nr`, '' AS `location_nr`, `item_nr`, `item_name`, `item_name_2`,
+                `serial_nr`, `address_nr`, `address_name`, `storage_2`, `location_2`, `qty`,
+                `unit`, `text`, `cost_center`, `prod_nr`,
+                `udef_1`, `udef_2`, `udef_3`, `udef_4`, `udef_5`,
+                `udef_6`, `udef_7`, `udef_8`, `udef_9`, `udef_10`, `user_creator`
+            FROM `tb_engage_transactions`
+            WHERE `storage_nr` = '{$storage_clean}' AND {$qty_condition}
+        ";
+
+        $query = $db->query($sql);
+        if (!$query) {
+            return array('headers' => array(), 'rows' => array());
+        }
+
+        $rows = array();
+        $num = 1;
+        foreach ($query->result_array() as $r) {
+            $rows[] = array(
+                (string) $num++,
+                isset($r['transaction_date']) ? (string) $r['transaction_date'] : '',
+                isset($r['storage_nr']) ? (string) $r['storage_nr'] : '',
+                isset($r['location_nr']) ? (string) $r['location_nr'] : '',
+                isset($r['item_nr']) ? (string) $r['item_nr'] : '',
+                isset($r['item_name']) ? (string) $r['item_name'] : '',
+                isset($r['item_name_2']) ? (string) $r['item_name_2'] : '',
+                isset($r['serial_nr']) ? (string) $r['serial_nr'] : '',
+                isset($r['address_nr']) ? (string) $r['address_nr'] : '',
+                isset($r['address_name']) ? (string) $r['address_name'] : '',
+                isset($r['storage_2']) ? (string) $r['storage_2'] : '',
+                isset($r['location_2']) ? (string) $r['location_2'] : '',
+                isset($r['qty']) ? (string) $r['qty'] : '0',
+                isset($r['unit']) ? (string) $r['unit'] : '',
+                isset($r['text']) ? (string) $r['text'] : '',
+                isset($r['cost_center']) ? (string) $r['cost_center'] : '',
+                isset($r['prod_nr']) ? (string) $r['prod_nr'] : '',
+                isset($r['udef_1']) ? (string) $r['udef_1'] : '',
+                isset($r['udef_2']) ? (string) $r['udef_2'] : '',
+                isset($r['udef_3']) ? (string) $r['udef_3'] : '',
+                isset($r['udef_4']) ? (string) $r['udef_4'] : '',
+                isset($r['udef_5']) ? (string) $r['udef_5'] : '',
+                isset($r['udef_6']) ? (string) $r['udef_6'] : '',
+                isset($r['udef_7']) ? (string) $r['udef_7'] : '',
+                isset($r['udef_8']) ? (string) $r['udef_8'] : '',
+                isset($r['udef_9']) ? (string) $r['udef_9'] : '',
+                isset($r['udef_10']) ? (string) $r['udef_10'] : '',
+                isset($r['user_creator']) ? (string) $r['user_creator'] : '',
+            );
+        }
+
+        return array('headers' => $headers, 'rows' => $rows);
+    }
+
     private function log_path()
     {
-        return $this->root_path() . DIRECTORY_SEPARATOR . 'rpa' . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'scheduler.log';
+        foreach ($this->rpa_root_candidates() as $rpa_root) {
+            $path = $rpa_root . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'scheduler.log';
+            if (is_file($path)) {
+                return $path;
+            }
+        }
+
+        return $this->rpa_root_path() . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'scheduler.log';
     }
 
     private function heat_holidays_path()
@@ -433,6 +630,485 @@ class Dashboard_model extends CI_Model
         return array('ok' => TRUE, 'message' => 'Kalender kerja tersimpan.', 'calendar' => $payload);
     }
 
+    private function heat_style_smv_path()
+    {
+        return APPPATH . 'cache' . DIRECTORY_SEPARATOR . 'dashboard_heat_style_smv.json';
+    }
+
+    private function heat_style_smv_table()
+    {
+        return 'dashboard_heat_style_smv';
+    }
+
+    private function ensure_heat_style_smv_table()
+    {
+        $db = $this->heat_history_connection();
+        if (!$db || empty($db->conn_id)) {
+            return FALSE;
+        }
+
+        static $checked = FALSE;
+        if ($checked) {
+            return TRUE;
+        }
+
+        $table = $this->heat_style_smv_table();
+        $sql = "CREATE TABLE IF NOT EXISTS `{$table}` (
+            `style` varchar(255) NOT NULL,
+            `smv` decimal(10,4) DEFAULT NULL,
+            `process_count` int(11) NOT NULL DEFAULT 1,
+            `process_smvs` text DEFAULT NULL,
+            `show_in_dashboard` tinyint(1) NOT NULL DEFAULT 1,
+            `updated_at` datetime NOT NULL,
+            PRIMARY KEY (`style`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
+
+        $db->query($sql);
+
+        $fields = $db->list_fields($table);
+        if (is_array($fields)) {
+            if (!in_array('process_count', $fields, TRUE)) {
+                $db->query("ALTER TABLE `{$table}` ADD COLUMN `process_count` int(11) NOT NULL DEFAULT 1 AFTER `smv`");
+            }
+            if (!in_array('process_smvs', $fields, TRUE)) {
+                $db->query("ALTER TABLE `{$table}` ADD COLUMN `process_smvs` text DEFAULT NULL AFTER `process_count`");
+            }
+        }
+
+        $checked = TRUE;
+        return TRUE;
+    }
+
+    public function get_heat_saved_style_smv_settings()
+    {
+        $saved = array();
+        $db = $this->heat_history_connection();
+
+        if ($db && !empty($db->conn_id)) {
+            $this->ensure_heat_style_smv_table();
+            $query = $db->get($this->heat_style_smv_table());
+            if ($query && $query->num_rows() > 0) {
+                foreach ($query->result_array() as $row) {
+                    $style = isset($row['style']) ? trim((string) $row['style']) : '';
+                    if ($style === '') {
+                        continue;
+                    }
+
+                    $smv_val = isset($row['smv']) && is_numeric($row['smv']) ? (float) $row['smv'] : NULL;
+                    $process_cnt = isset($row['process_count']) && is_numeric($row['process_count']) && (int) $row['process_count'] > 0
+                        ? (int) $row['process_count']
+                        : 1;
+
+                    $process_smvs = array();
+                    if (!empty($row['process_smvs'])) {
+                        $decoded = is_string($row['process_smvs']) ? json_decode($row['process_smvs'], TRUE) : $row['process_smvs'];
+                        if (is_array($decoded)) {
+                            foreach ($decoded as $psmv) {
+                                if (is_numeric($psmv) && (float) $psmv > 0) {
+                                    $process_smvs[] = (float) $psmv;
+                                }
+                            }
+                        }
+                    }
+
+                    if (empty($process_smvs) && $smv_val !== NULL && $smv_val > 0) {
+                        $process_smvs = array($smv_val);
+                    }
+
+                    $saved[$style] = array(
+                        'style' => $style,
+                        'smv' => $smv_val,
+                        'process_count' => $process_cnt,
+                        'process_smvs' => $process_smvs,
+                        'show_in_dashboard' => !empty($row['show_in_dashboard']),
+                        'updated_at' => isset($row['updated_at']) ? $row['updated_at'] : date('c'),
+                    );
+                }
+            }
+        }
+
+        $path = $this->heat_style_smv_path();
+        if (is_file($path) && is_readable($path)) {
+            $json = json_decode(file_get_contents($path), TRUE);
+            if (is_array($json) && !empty($json)) {
+                if (empty($saved)) {
+                    $saved = $json;
+                    if ($db && !empty($db->conn_id)) {
+                        foreach ($saved as $style_name => $item_val) {
+                            $s_val = isset($item_val['smv']) && is_numeric($item_val['smv']) ? (float) $item_val['smv'] : NULL;
+                            $p_c = isset($item_val['process_count']) ? (int) $item_val['process_count'] : 1;
+                            $p_s = isset($item_val['process_smvs']) && is_array($item_val['process_smvs']) ? json_encode(array_values($item_val['process_smvs'])) : NULL;
+                            $db->replace($this->heat_style_smv_table(), array(
+                                'style' => $style_name,
+                                'smv' => $s_val,
+                                'process_count' => $p_c,
+                                'process_smvs' => $p_s,
+                                'show_in_dashboard' => 1,
+                                'updated_at' => date('Y-m-d H:i:s'),
+                            ));
+                        }
+                    }
+                } else {
+                    foreach ($json as $style_name => $item_val) {
+                        if (!isset($saved[$style_name])) {
+                            $saved[$style_name] = $item_val;
+                            if ($db && !empty($db->conn_id)) {
+                                $s_val = isset($item_val['smv']) && is_numeric($item_val['smv']) ? (float) $item_val['smv'] : NULL;
+                                $p_c = isset($item_val['process_count']) ? (int) $item_val['process_count'] : 1;
+                                $p_s = isset($item_val['process_smvs']) && is_array($item_val['process_smvs']) ? json_encode(array_values($item_val['process_smvs'])) : NULL;
+                                $db->replace($this->heat_style_smv_table(), array(
+                                    'style' => $style_name,
+                                    'smv' => $s_val,
+                                    'process_count' => $p_c,
+                                    'process_smvs' => $p_s,
+                                    'show_in_dashboard' => 1,
+                                    'updated_at' => date('Y-m-d H:i:s'),
+                                ));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return $saved;
+    }
+
+    private function heat_analytics_settings_path()
+    {
+        return APPPATH . 'cache' . DIRECTORY_SEPARATOR . 'dashboard_heat_analytics_settings.json';
+    }
+
+    public function get_heat_style_smv_catalog($delivery_count = 4, $list_orders = NULL, $top_priority_orders = NULL)
+    {
+        $saved = $this->get_heat_saved_style_smv_settings();
+
+        if ($list_orders === NULL && $top_priority_orders === NULL) {
+            $dashboard = $this->get_heat_dashboard_data($delivery_count);
+            $list_orders = !empty($dashboard['list_orders']) ? $dashboard['list_orders'] : array();
+            $top_priority_orders = !empty($dashboard['top_priority_orders']) ? $dashboard['top_priority_orders'] : array();
+        }
+
+        $target_month = date('Y-m');
+        if (is_string($delivery_count) && preg_match('/^(\d{4}-\d{2})/', $delivery_count, $m_match)) {
+            $target_month = $m_match[1];
+        }
+
+        $aps_running_styles = array();
+        $aps_style_pdk = array();
+
+        if (is_array($list_orders)) {
+            foreach ($list_orders as $row) {
+                $order_val = isset($row['order']) ? $row['order'] : '';
+                $style_val = isset($row['style']) ? $row['style'] : '';
+                if ($this->is_ofc_order($order_val) || $this->is_ofc_order($style_val) || !empty($row['is_ofc'])) {
+                    continue;
+                }
+                if (!empty($style_val)) {
+                    $del_raw = isset($row['delivery']) ? $row['delivery'] : '';
+                    $del_ts = !empty($row['_sort_delivery']) ? (int) $row['_sort_delivery'] : $this->parse_date_timestamp($del_raw);
+                    $del_month = ($del_ts > 0) ? date('Y-m', $del_ts) : '';
+
+                    // Style berjalan otomatis disaring dari order dengan delivery date di bulan berjalan
+                    if ($del_month === $target_month || ($del_month === '' && empty($target_month))) {
+                        $aps_running_styles[$style_val] = TRUE;
+                        $pdk_qty = isset($row['qty_pdk']) ? (int) $row['qty_pdk'] : (isset($row['pdk']) ? (int) $row['pdk'] : 0);
+                        $aps_style_pdk[$style_val] = (isset($aps_style_pdk[$style_val]) ? $aps_style_pdk[$style_val] : 0) + $pdk_qty;
+                    }
+                }
+            }
+        }
+
+        if (is_array($top_priority_orders)) {
+            foreach ($top_priority_orders as $row) {
+                $order_val = isset($row['order']) ? $row['order'] : '';
+                $style_val = isset($row['style']) ? $row['style'] : '';
+                if ($this->is_ofc_order($order_val) || $this->is_ofc_order($style_val) || !empty($row['is_ofc'])) {
+                    continue;
+                }
+                if (!empty($style_val)) {
+                    $del_raw = isset($row['delivery']) ? $row['delivery'] : '';
+                    $del_ts = !empty($row['_sort_delivery']) ? (int) $row['_sort_delivery'] : $this->parse_date_timestamp($del_raw);
+                    $del_month = ($del_ts > 0) ? date('Y-m', $del_ts) : '';
+
+                    if ($del_month === $target_month || ($del_month === '' && empty($target_month))) {
+                        $aps_running_styles[$style_val] = TRUE;
+                        if (!isset($aps_style_pdk[$style_val])) {
+                            $pdk_qty = isset($row['qty_pdk']) ? (int) $row['qty_pdk'] : (isset($row['pdk']) ? (int) $row['pdk'] : 0);
+                            $aps_style_pdk[$style_val] = $pdk_qty;
+                        }
+                    }
+                }
+            }
+        }
+
+        $styles = array();
+        foreach (array_keys($aps_running_styles) as $s) {
+            if (!$this->is_ofc_order($s)) {
+                $styles[$s] = TRUE;
+            }
+        }
+        foreach (array_keys($saved) as $s) {
+            if ($s !== '' && !$this->is_ofc_order($s)) {
+                $styles[$s] = TRUE;
+            }
+        }
+
+        $catalog = array();
+        $running_styles = array();
+        $process_map = array();
+        $style_keys = array_keys($styles);
+        sort($style_keys);
+
+        foreach ($style_keys as $style) {
+            if ($this->is_ofc_order($style)) {
+                continue;
+            }
+            $smv_val = isset($saved[$style]['smv']) && is_numeric($saved[$style]['smv']) ? (float) $saved[$style]['smv'] : NULL;
+            $process_val = isset($saved[$style]['process_count']) && is_numeric($saved[$style]['process_count'])
+                ? (int) $saved[$style]['process_count']
+                : (isset($saved[$style]['proses']) && is_numeric($saved[$style]['proses']) ? (int) $saved[$style]['proses'] : NULL);
+            $process_smvs = array();
+            if (isset($saved[$style]['process_smvs']) && is_array($saved[$style]['process_smvs'])) {
+                foreach ($saved[$style]['process_smvs'] as $psmv) {
+                    if (is_numeric($psmv) && (float) $psmv > 0) {
+                        $process_smvs[] = (float) $psmv;
+                    }
+                }
+            } elseif ($smv_val !== NULL && $smv_val > 0) {
+                $process_smvs = array($smv_val);
+            }
+            if ($process_val === NULL && count($process_smvs) > 0) {
+                $process_val = count($process_smvs);
+            }
+            $final_process_count = ($process_val !== NULL && $process_val > 0) ? (int) $process_val : 1;
+            $style_key_upper = strtoupper(trim((string) $style));
+            $process_map[$style_key_upper] = $final_process_count;
+
+            // Style yang sedang berjalan dihitung otomatis dari data order APS yang memiliki delivery date di bulan berjalan
+            $is_running = isset($aps_running_styles[$style]);
+            $style_pdk = isset($aps_style_pdk[$style]) ? (int) $aps_style_pdk[$style] : 0;
+
+            $item_data = array(
+                'style' => $style,
+                'smv' => $smv_val,
+                'qty_pdk' => $style_pdk,
+                'process_count' => $final_process_count,
+                'process_smvs' => $process_smvs,
+                'is_running' => $is_running,
+                'show_in_dashboard' => $is_running,
+                'has_smv' => $smv_val !== NULL && $smv_val > 0,
+            );
+            $catalog[] = $item_data;
+            if ($is_running) {
+                $running_styles[] = $item_data;
+            }
+        }
+
+        foreach ($saved as $s_name => $s_data) {
+            $s_upper = strtoupper(trim((string) $s_name));
+            if (!isset($process_map[$s_upper])) {
+                $p_cnt = isset($s_data['process_count']) && (int) $s_data['process_count'] > 0
+                    ? (int) $s_data['process_count']
+                    : (isset($s_data['process_smvs']) && count($s_data['process_smvs']) > 0 ? count($s_data['process_smvs']) : 1);
+                $process_map[$s_upper] = $p_cnt;
+            }
+        }
+
+        return array(
+            'styles' => $catalog,
+            'running_styles' => $running_styles,
+            'process_map' => $process_map,
+        );
+    }
+
+    public function save_heat_style_smv_settings($items)
+    {
+        if (!is_array($items)) {
+            return array('ok' => FALSE, 'message' => 'Data SMV tidak valid.');
+        }
+
+        $db = $this->heat_history_connection();
+        if (!$db || empty($db->conn_id)) {
+            return array('ok' => FALSE, 'message' => 'Koneksi database gagal. Data SMV dan proses tidak dapat disimpan ke database.');
+        }
+        $this->ensure_heat_style_smv_table();
+
+        $saved = $this->get_heat_saved_style_smv_settings();
+        $saved_styles_map = array();
+
+        foreach ($items as $item) {
+            $style = isset($item['style']) ? trim((string) $item['style']) : '';
+            if ($style === '' || $this->is_ofc_order($style)) {
+                continue;
+            }
+
+            $raw_process = isset($item['process_count']) ? trim((string) $item['process_count']) : (isset($item['proses']) ? trim((string) $item['proses']) : '');
+            $has_process = ($raw_process !== '' && is_numeric($raw_process));
+            if ($has_process && (int) $raw_process < 1) {
+                return array(
+                    'ok' => FALSE,
+                    'message' => "Style {$style}: Jumlah proses tidak boleh kurang dari 1 atau minus."
+                );
+            }
+            $process_num = $has_process ? max(1, (int) $raw_process) : NULL;
+
+            $process_smvs = array();
+            if (isset($item['process_smvs']) && is_array($item['process_smvs'])) {
+                foreach ($item['process_smvs'] as $psmv) {
+                    $trimmed = trim((string) $psmv);
+                    if ($trimmed !== '') {
+                        if (!is_numeric($trimmed) || (float) $trimmed <= 0) {
+                            return array(
+                                'ok' => FALSE,
+                                'message' => "Style {$style}: SMV per proses tidak boleh bernilai 0 atau minus."
+                            );
+                        }
+                        $process_smvs[] = (float) $trimmed;
+                    }
+                }
+            }
+
+            $raw_smv = isset($item['smv']) ? trim((string) $item['smv']) : '';
+            if (empty($process_smvs) && $raw_smv !== '') {
+                if (!is_numeric($raw_smv) || (float) $raw_smv <= 0) {
+                    return array(
+                        'ok' => FALSE,
+                        'message' => "Style {$style}: SMV per proses tidak boleh bernilai 0 atau minus."
+                    );
+                }
+                $process_smvs[] = (float) $raw_smv;
+            }
+
+            // Validation: if process_count is set (> 0) and any SMV was provided
+            if ($process_num !== NULL && $process_num > 0) {
+                if (!empty($process_smvs)) {
+                    if (count($process_smvs) < $process_num) {
+                        return array(
+                            'ok' => FALSE,
+                            'message' => "Style {$style}: Jumlah proses {$process_num}, maka harus memasukkan {$process_num} SMV."
+                        );
+                    }
+                }
+            }
+
+            $has_smv = !empty($process_smvs);
+            $smv_num = $has_smv ? (float) array_sum($process_smvs) : NULL;
+            $has_process_count = ($process_num !== NULL && $process_num > 0);
+
+            if ($has_smv || $has_process_count) {
+                $final_process_count = $process_num !== NULL ? $process_num : (count($process_smvs) ?: 1);
+                $saved[$style] = array(
+                    'style' => $style,
+                    'smv' => $smv_num,
+                    'process_count' => $final_process_count,
+                    'process_smvs' => $process_smvs,
+                    'updated_at' => date('c'),
+                );
+                $saved_styles_map[$style] = $smv_num !== NULL ? $smv_num : 0;
+
+                $db->replace($this->heat_style_smv_table(), array(
+                    'style' => $style,
+                    'smv' => $smv_num,
+                    'process_count' => $final_process_count,
+                    'process_smvs' => !empty($process_smvs) ? json_encode(array_values($process_smvs)) : NULL,
+                    'show_in_dashboard' => 1,
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ));
+            } elseif (isset($saved[$style])) {
+                unset($saved[$style]);
+                $db->where('style', $style)->delete($this->heat_style_smv_table());
+            }
+        }
+
+        $path = $this->heat_style_smv_path();
+        $dir = dirname($path);
+        if (is_dir($dir) && is_writable($dir)) {
+            @file_put_contents($path, json_encode($saved, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        }
+
+        return array(
+            'ok' => TRUE,
+            'message' => 'SMV dan proses tersimpan di database.',
+            'saved' => count($saved_styles_map),
+            'styles' => $saved_styles_map,
+        );
+    }
+
+    public function get_heat_analytics_settings()
+    {
+        $defaults = array(
+            'visible_cards' => array(),
+            'language' => 'id',
+            'direct_actual' => NULL,
+            'double_machine_active' => 2,
+            'default_capacity_mode' => 'mesin',
+        );
+
+        $path = $this->heat_analytics_settings_path();
+        if (!is_file($path) || !is_readable($path)) {
+            return $defaults;
+        }
+
+        $payload = json_decode(file_get_contents($path), TRUE);
+        if (!is_array($payload)) {
+            return $defaults;
+        }
+
+        return array(
+            'visible_cards' => isset($payload['visible_cards']) && is_array($payload['visible_cards']) ? $payload['visible_cards'] : array(),
+            'language' => isset($payload['language']) && in_array($payload['language'], array('id', 'en'), TRUE) ? $payload['language'] : 'id',
+            'direct_actual' => isset($payload['direct_actual']) && is_numeric($payload['direct_actual']) ? (float) $payload['direct_actual'] : NULL,
+            'double_machine_active' => isset($payload['double_machine_active']) && is_numeric($payload['double_machine_active']) ? max(0, min(2, (int) $payload['double_machine_active'])) : 2,
+            'default_capacity_mode' => isset($payload['default_capacity_mode']) && in_array($payload['default_capacity_mode'], array('mesin', 'minutes'), TRUE) ? $payload['default_capacity_mode'] : 'mesin',
+        );
+    }
+
+    public function save_heat_analytics_settings($settings)
+    {
+        if (!is_array($settings)) {
+            return array('ok' => FALSE, 'message' => 'Data analytics settings tidak valid.');
+        }
+
+        $path = $this->heat_analytics_settings_path();
+        $dir = dirname($path);
+        if (!is_dir($dir) || !is_writable($dir)) {
+            return array('ok' => FALSE, 'message' => 'Folder penyimpanan tidak bisa ditulis.');
+        }
+
+        $current = $this->get_heat_analytics_settings();
+        $visible_cards = isset($settings['visible_cards']) && is_array($settings['visible_cards']) ? $settings['visible_cards'] : $current['visible_cards'];
+        $language = isset($settings['language']) && in_array($settings['language'], array('id', 'en'), TRUE) ? $settings['language'] : $current['language'];
+        $direct_actual = array_key_exists('direct_actual', $settings)
+            ? (is_numeric($settings['direct_actual']) ? (float) $settings['direct_actual'] : NULL)
+            : $current['direct_actual'];
+        $double_machine_active = array_key_exists('double_machine_active', $settings)
+            ? (is_numeric($settings['double_machine_active']) ? max(0, min(2, (int) $settings['double_machine_active'])) : 2)
+            : (isset($current['double_machine_active']) ? (int) $current['double_machine_active'] : 2);
+        $default_capacity_mode = array_key_exists('default_capacity_mode', $settings) && in_array($settings['default_capacity_mode'], array('mesin', 'minutes'), TRUE)
+            ? $settings['default_capacity_mode']
+            : (isset($current['default_capacity_mode']) && in_array($current['default_capacity_mode'], array('mesin', 'minutes'), TRUE) ? $current['default_capacity_mode'] : 'mesin');
+
+        $payload = array(
+            'updated_at' => date('c'),
+            'visible_cards' => $visible_cards,
+            'language' => $language,
+            'direct_actual' => $direct_actual,
+            'double_machine_active' => $double_machine_active,
+            'default_capacity_mode' => $default_capacity_mode,
+        );
+
+        if (file_put_contents($path, json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) === FALSE) {
+            return array('ok' => FALSE, 'message' => 'Gagal menyimpan analytics settings.');
+        }
+
+        return array(
+            'ok' => TRUE,
+            'message' => 'Analytics settings tersimpan.',
+            'analytics_settings' => $payload,
+        );
+    }
+
     private function dashboard_calendar_signature()
     {
         return md5(json_encode($this->dashboard_calendar_days(), JSON_UNESCAPED_UNICODE));
@@ -467,12 +1143,16 @@ class Dashboard_model extends CI_Model
             return FALSE;
         }
 
+        $expected_export_prep = $this->export_prep_workdays($delivery_count);
+
         return isset($entry['calendar_signature'])
             && $entry['calendar_signature'] === $this->dashboard_calendar_signature()
             && isset($entry['delivery_count'])
             && (int) $entry['delivery_count'] === (int) $delivery_count
             && isset($entry['capacity_formula'])
             && $entry['capacity_formula'] === 'balance_qty_v2'
+            && isset($entry['export_prep_days'])
+            && (int) $entry['export_prep_days'] === $expected_export_prep
             && isset($entry['balance_qty'])
             && isset($entry['capacity']);
     }
@@ -578,7 +1258,7 @@ class Dashboard_model extends CI_Model
             'qty_pdk_vs_output' => isset($data['qty_pdk_vs_output']) && is_array($data['qty_pdk_vs_output']) ? $data['qty_pdk_vs_output'] : array(),
             'ready_to_load' => isset($data['ready_to_load']) && is_array($data['ready_to_load']) ? $data['ready_to_load'] : array(),
             'output_vs_capacity' => isset($data['output_vs_capacity']) && is_array($data['output_vs_capacity']) ? $data['output_vs_capacity'] : array(),
-            'material_to_load' => isset($data['material_to_load']) && is_array($data['material_to_load']) ? $data['material_to_load'] : array(),
+            'material_to_load' => isset($data['material_to_load']) && is_array($data['material_to_load']) ? array_slice($data['material_to_load'], 0, 100) : array(),
         );
 
         return $this->upsert_heat_history_row('summary', date('Y-m-d'), $delivery_count, array(
@@ -724,10 +1404,9 @@ class Dashboard_model extends CI_Model
         );
     }
 
-    public function get_heat_dashboard_data($delivery_count = 4)
+    public function get_heat_dashboard_data($date_from = NULL, $date_to = NULL)
     {
-        $delivery_count = $this->normalize_delivery_count($delivery_count);
-        $rpa_data = $this->get_heat_dashboard_data_from_rpa($delivery_count);
+        $rpa_data = $this->get_heat_dashboard_data_from_rpa($date_from, $date_to);
         if ($rpa_data && !empty($rpa_data['available'])) {
             return $rpa_data;
         }
@@ -740,11 +1419,16 @@ class Dashboard_model extends CI_Model
         );
     }
 
-    private function get_heat_dashboard_data_from_rpa($delivery_count = 4)
+    private function get_heat_dashboard_data_from_rpa($date_from = NULL, $date_to = NULL)
     {
-        $delivery_count = $this->normalize_delivery_count($delivery_count);
         $sources = $this->heat_rpa_sources();
-        $required = array('aps', 'engage_32_inflow', 'engage_32_outflow', 'engage_32a_inflow', 'engage_32a_outflow');
+        $has_engage_db = $this->has_engage_db_data();
+
+        $required = array('aps');
+        if (!$has_engage_db) {
+            $required = array_merge($required, array('engage_32a_inflow', 'engage_32a_outflow'));
+        }
+
         foreach ($required as $key) {
             if (empty($sources[$key]) || !is_file($sources[$key])) {
                 return array('available' => FALSE, 'message' => 'Data RPA belum lengkap untuk dashboard Heat Transfer.');
@@ -752,17 +1436,15 @@ class Dashboard_model extends CI_Model
         }
 
         $aps = $this->read_html_report($sources['aps']);
-        $inflow_32 = $this->read_combined_engage_report($sources['engage_32_inflow'], '32_inflow');
-        $outflow_32 = $this->read_combined_engage_report($sources['engage_32_outflow'], '32_outflow');
-        $inflow_32a = $this->read_combined_engage_report($sources['engage_32a_inflow'], '32a_inflow');
-        $outflow_32a = $this->read_combined_engage_report($sources['engage_32a_outflow'], '32a_outflow');
+        $inflow_32a = $this->read_combined_engage_report(isset($sources['engage_32a_inflow']) ? $sources['engage_32a_inflow'] : NULL, '32a_inflow');
+        $outflow_32a = $this->read_combined_engage_report(isset($sources['engage_32a_outflow']) ? $sources['engage_32a_outflow'] : NULL, '32a_outflow');
         $accessories = !empty($sources['accessories']) ? $this->read_html_report($sources['accessories']) : array('headers' => array(), 'rows' => array());
 
-        if (!$aps['headers'] || !$inflow_32['headers'] || !$outflow_32['headers'] || !$inflow_32a['headers'] || !$outflow_32a['headers']) {
+        if (!$aps['headers'] || !$inflow_32a['headers'] || !$outflow_32a['headers']) {
             return array('available' => FALSE, 'message' => 'Header data RPA APS atau Engage belum bisa dibaca.');
         }
 
-        $source_data = $this->build_heat_data_from_rpa_sources($aps, $inflow_32, $outflow_32, $inflow_32a, $outflow_32a, $accessories, $delivery_count);
+        $source_data = $this->build_heat_data_from_rpa_sources($aps, $inflow_32a, $outflow_32a, $accessories, $date_from, $date_to);
         if (!$source_data['qty_pdk_vs_output'] && !$source_data['ready_to_load']) {
             return array('available' => FALSE, 'message' => 'Data RPA terbaca, tetapi belum ada order Heat Transfer yang bisa ditampilkan.');
         }
@@ -776,9 +1458,12 @@ class Dashboard_model extends CI_Model
         $ready_to_load = $source_data['ready_to_load'];
         $selected_ready_to_load = isset($source_data['selected_ready_to_load']) ? $source_data['selected_ready_to_load'] : $ready_to_load;
         $output_vs_capacity = $source_data['output_vs_capacity'];
+        $daily_output_vs_capacity = isset($source_data['daily_output_vs_capacity']) ? $source_data['daily_output_vs_capacity'] : $output_vs_capacity;
         $list_orders = isset($source_data['list_orders']) && is_array($source_data['list_orders']) ? $source_data['list_orders'] : array();
         $material_to_load = isset($source_data['material_to_load']) ? $source_data['material_to_load'] : $source_data['top_priority_orders'];
         $top_priority_orders = $source_data['top_priority_orders'];
+        $balance_qty_with_ofc = isset($source_data['balance_qty_with_ofc']) ? $source_data['balance_qty_with_ofc'] : $balance_qty;
+
         $management_analytics = $this->build_management_analytics(
             $total_pdk,
             $total_output,
@@ -786,11 +1471,11 @@ class Dashboard_model extends CI_Model
             $prod_days_left,
             $selected_qty_pdk_vs_output,
             $selected_ready_to_load,
-            $output_vs_capacity,
+            $daily_output_vs_capacity,
             $top_priority_orders
         );
 
-        $this->save_heat_summary_snapshot($delivery_count, array(
+        $this->save_heat_summary_snapshot(1, array(
             'total_pdk' => $total_pdk,
             'total_output' => $total_output,
             'balance_qty' => $balance_qty,
@@ -800,31 +1485,47 @@ class Dashboard_model extends CI_Model
             'ready_to_load' => $ready_to_load,
             'selected_ready_to_load' => $selected_ready_to_load,
             'output_vs_capacity' => $output_vs_capacity,
+            'daily_output_vs_capacity' => $daily_output_vs_capacity,
             'list_orders' => $list_orders,
             'material_to_load' => $material_to_load,
             'top_priority_orders' => $top_priority_orders,
             'management_analytics' => $management_analytics,
         ));
 
+        $actual_from = isset($source_data['selected_date_from']) ? $source_data['selected_date_from'] : (is_string($date_from) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $date_from) ? $date_from : date('Y-m-d'));
+        $actual_to = isset($source_data['selected_date_to']) ? $source_data['selected_date_to'] : (is_string($date_to) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $date_to) ? $date_to : $actual_from);
+
         return array(
             'available' => TRUE,
             'source' => 'RPA: APS + Engage + Accessories',
-            'delivery_count' => $delivery_count,
+            'selected_date' => $actual_from,
+            'selected_date_from' => $actual_from,
+            'selected_date_to' => $actual_to,
+            'selected_period' => isset($source_data['selected_period']) ? $source_data['selected_period'] : '',
+            'period_type' => isset($source_data['period_type']) ? $source_data['period_type'] : '',
+            'period_range' => isset($source_data['period_range']) ? $source_data['period_range'] : null,
+            'period_display_range' => isset($source_data['period_display_range']) ? $source_data['period_display_range'] : '',
+            'all_periods' => isset($source_data['all_periods']) ? $source_data['all_periods'] : array(),
             'source_updated_at' => $this->latest_mtime_iso($sources),
             'sources' => $this->source_status_rows($sources),
             'kpis' => array(
                 'total_output' => $total_output,
                 'balance_qty' => $balance_qty,
+                'balance_qty_with_ofc' => $balance_qty_with_ofc,
                 'prod_days_left' => $prod_days_left,
             ),
             'holiday_settings' => $this->get_heat_holiday_settings(),
-            'delivery_workdays' => $this->build_delivery_workdays($qty_pdk_vs_output, $ready_to_load),
-            'qty_pdk_vs_output' => $qty_pdk_vs_output,
-            'ready_to_load' => $ready_to_load,
+            'delivery_workdays' => $this->build_delivery_workdays($selected_qty_pdk_vs_output, $selected_ready_to_load),
+            'qty_pdk_vs_output' => $selected_qty_pdk_vs_output,
+            'ready_to_load' => $selected_ready_to_load,
             'output_vs_capacity' => $output_vs_capacity,
+            'daily_output_vs_capacity' => $daily_output_vs_capacity,
             'list_orders' => $list_orders,
+            'material_to_load' => $material_to_load,
             'top_priority_orders' => $top_priority_orders,
             'management_analytics' => $management_analytics,
+            'analytics_settings' => $this->get_heat_analytics_settings(),
+            'style_smv_catalog' => $this->get_heat_style_smv_catalog($actual_from, $list_orders, $top_priority_orders),
         );
     }
 
@@ -927,8 +1628,7 @@ class Dashboard_model extends CI_Model
 
     public function run_download_once()
     {
-        $root = $this->root_path();
-        $rpa_root = $root . DIRECTORY_SEPARATOR . 'rpa';
+        $rpa_root = $this->rpa_root_path();
         $command = 'cd /d ' . escapeshellarg($rpa_root) . ' && start /B python scheduler.py --once';
         pclose(popen('cmd /c ' . $command, 'r'));
 
@@ -1407,34 +2107,75 @@ class Dashboard_model extends CI_Model
 
     private function heat_rpa_sources()
     {
-        $aps_dirs = array_filter(array_unique(array(
-            $this->rpa_module_dir('aps-rpa', 'downloads'),
-            $this->rpa_module_dir('aps-rpa', 'archive'),
-        )), 'is_dir');
-        $accessories_dirs = array_filter(array_unique(array(
-            $this->rpa_module_dir('accessories-rpa', 'downloads'),
-            $this->rpa_module_dir('accessories-rpa', 'archive'),
-        )), 'is_dir');
-        $engage_dir = $this->rpa_module_dir('engage-rpa', 'downloads');
-        $engage_archive = $this->rpa_module_dir('engage-rpa', 'archive');
+        $aps_file = NULL;
+        $accessories_file = NULL;
+
+        foreach ($this->rpa_root_candidates() as $rpa_root) {
+            if ($aps_file === NULL) {
+                $dirs = array_values(array_filter(array(
+                    $rpa_root . DIRECTORY_SEPARATOR . 'aps-rpa' . DIRECTORY_SEPARATOR . 'downloads',
+                    $rpa_root . DIRECTORY_SEPARATOR . 'aps-rpa' . DIRECTORY_SEPARATOR . 'archive',
+                ), 'is_dir'));
+
+                if (!empty($dirs)) {
+                    $files = $this->matching_files_in_trees($dirs, array('JO.xlsx', 'JO.xls'));
+                    if (empty($files)) {
+                        $files = $this->matching_files_in_trees($dirs, array('JO_backup_*.xlsx', 'JO_backup_*.xls'));
+                    }
+                    if (empty($files)) {
+                        $files = $this->matching_files_in_trees($dirs, array('JO_*.xlsx', 'JO_*.xls'));
+                    }
+                    if (!empty($files)) {
+                        $aps_file = $files[0];
+                    }
+                }
+            }
+
+            if ($accessories_file === NULL) {
+                $dirs = array_values(array_filter(array(
+                    $rpa_root . DIRECTORY_SEPARATOR . 'accessories-rpa' . DIRECTORY_SEPARATOR . 'downloads',
+                    $rpa_root . DIRECTORY_SEPARATOR . 'accessories-rpa' . DIRECTORY_SEPARATOR . 'archive',
+                ), 'is_dir'));
+
+                if (!empty($dirs)) {
+                    $files = $this->matching_files_in_trees($dirs, array(
+                        'CONTROLIST.xlsx',
+                        'CONTROLIST.xls',
+                        'CONTROLIST_*.xlsx',
+                        'CONTROLIST_*.xls',
+                    ));
+                    if (!empty($files)) {
+                        $accessories_file = $files[0];
+                    }
+                }
+            }
+
+            if ($aps_file !== NULL && $accessories_file !== NULL) {
+                break;
+            }
+        }
+
+        $inflow = NULL;
+        $outflow = NULL;
+        foreach ($this->rpa_root_candidates() as $rpa_root) {
+            $e_dir = $rpa_root . DIRECTORY_SEPARATOR . 'engage-rpa' . DIRECTORY_SEPARATOR . 'downloads';
+            $e_arc = $rpa_root . DIRECTORY_SEPARATOR . 'engage-rpa' . DIRECTORY_SEPARATOR . 'archive';
+            if ($inflow === NULL) {
+                $inflow = $this->resolve_engage_source($e_dir, $e_arc, '32a_inflow');
+            }
+            if ($outflow === NULL) {
+                $outflow = $this->resolve_engage_source($e_dir, $e_arc, '32a_outflow');
+            }
+            if ($inflow && $outflow) {
+                break;
+            }
+        }
 
         return array(
-            'aps' => $this->latest_matching_file_in_trees($aps_dirs, array(
-                'JO.xlsx',
-                'JO.xls',
-                'JO_*.xlsx',
-                'JO_*.xls',
-            )),
-            'accessories' => $this->latest_matching_file_in_trees($accessories_dirs, array(
-                'CONTROLIST.xlsx',
-                'CONTROLIST.xls',
-                'CONTROLIST_*.xlsx',
-                'CONTROLIST_*.xls',
-            )),
-            'engage_32_inflow' => $this->resolve_engage_source($engage_dir, $engage_archive, '32_inflow'),
-            'engage_32_outflow' => $this->resolve_engage_source($engage_dir, $engage_archive, '32_outflow'),
-            'engage_32a_inflow' => $this->resolve_engage_source($engage_dir, $engage_archive, '32a_inflow'),
-            'engage_32a_outflow' => $this->resolve_engage_source($engage_dir, $engage_archive, '32a_outflow'),
+            'aps' => $aps_file,
+            'accessories' => $accessories_file,
+            'engage_32a_inflow' => $inflow,
+            'engage_32a_outflow' => $outflow,
         );
     }
     private function latest_matching_file($pattern)
@@ -1477,18 +2218,34 @@ class Dashboard_model extends CI_Model
 
     private function resolve_engage_source($engage_dir, $engage_archive, $report_key)
     {
-        $dirs = array_filter(array_unique(array(
-            $engage_dir,
-            $engage_archive,
-            $this->rpa_module_dir('engage-rpa', 'downloads'),
-            $this->rpa_module_dir('engage-rpa', 'archive'),
-        )), 'is_dir');
+        $dirs = array();
+        if (is_array($engage_dir)) {
+            $dirs = array_merge($dirs, $engage_dir);
+        } elseif (!empty($engage_dir)) {
+            $dirs[] = $engage_dir;
+        }
+
+        if (is_array($engage_archive)) {
+            $dirs = array_merge($dirs, $engage_archive);
+        } elseif (!empty($engage_archive)) {
+            $dirs[] = $engage_archive;
+        }
+
+        foreach ($this->rpa_root_candidates() as $rpa_root) {
+            $dirs[] = $rpa_root . DIRECTORY_SEPARATOR . 'engage-rpa' . DIRECTORY_SEPARATOR . 'downloads';
+            $dirs[] = $rpa_root . DIRECTORY_SEPARATOR . 'engage-rpa' . DIRECTORY_SEPARATOR . 'archive';
+        }
+
+        $dirs = array_values(array_filter(array_unique($dirs), 'is_dir'));
+        $storage_code = (strpos($report_key, '32a') !== FALSE) ? '32a' : '32';
 
         return $this->latest_matching_file_in_trees($dirs, array(
             '*' . $report_key . '.xlsx',
             '*' . $report_key . '.xls',
             '*' . $report_key . '*.xlsx',
             '*' . $report_key . '*.xls',
+            $storage_code . '_engage.xlsx',
+            '*' . $storage_code . '_engage*.xlsx',
         ));
     }
 
@@ -1545,18 +2302,34 @@ class Dashboard_model extends CI_Model
             }
         }
 
+        if ($this->has_engage_db_data()) {
+            $db_iso = $this->latest_engage_db_time_iso();
+            if ($db_iso) {
+                $mtime = max($mtime, strtotime($db_iso));
+            }
+        }
+
         return $mtime ? date('c', $mtime) : date('c');
     }
 
     private function source_status_rows($sources)
     {
         $rows = array();
+        $has_db = $this->has_engage_db_data();
+        $db_time = $has_db ? $this->latest_engage_db_time_iso() : NULL;
+
         foreach ($sources as $key => $path) {
+            $is_engage = (strpos($key, 'engage_') === 0);
+            $file_exists = ($path && is_file($path));
+            $exists = $file_exists || ($is_engage && $has_db);
+            $updated_at = $file_exists ? date('c', filemtime($path)) : ($is_engage && $has_db ? $db_time : NULL);
+            $display_path = $path ? $path : ($is_engage && $has_db ? 'MySQL Database (tb_engage_transactions / tb_engage_archieve)' : NULL);
+
             $rows[] = array(
                 'key' => $key,
-                'path' => $path,
-                'exists' => $path && is_file($path),
-                'updated_at' => $path && is_file($path) ? date('c', filemtime($path)) : NULL,
+                'path' => $display_path,
+                'exists' => $exists,
+                'updated_at' => $updated_at,
             );
         }
         return $rows;
@@ -1564,7 +2337,7 @@ class Dashboard_model extends CI_Model
 
     private function read_combined_engage_outflow_report($current_path)
     {
-        return $this->read_all_engage_reports('32a_outflow');
+        return $this->read_combined_engage_report($current_path, '32a_outflow');
     }
 
     private function read_all_engage_reports($report_key)
@@ -1573,11 +2346,18 @@ class Dashboard_model extends CI_Model
             $this->rpa_module_dir('engage-rpa', 'downloads'),
             $this->rpa_module_dir('engage-rpa', 'archive'),
         )), 'is_dir');
+
+        $is_32a = (strpos($report_key, '32a') !== FALSE);
+        $is_outflow = (strpos($report_key, 'outflow') !== FALSE);
+        $storage_code = $is_32a ? '32a' : '32';
+
         $files = $this->matching_files_in_trees($dirs, array(
             '*' . $report_key . '.xlsx',
             '*' . $report_key . '.xls',
             '*' . $report_key . '*.xlsx',
             '*' . $report_key . '*.xls',
+            $storage_code . '_engage.xlsx',
+            '*' . $storage_code . '_engage*.xlsx',
         ));
 
         $rows = array();
@@ -1590,7 +2370,26 @@ class Dashboard_model extends CI_Model
             if (!$headers) {
                 $headers = $report['headers'];
             }
-            $rows = array_merge($rows, $report['rows']);
+
+            $index = $this->header_index($report['headers']);
+            $is_combined_file = (stripos(basename($path), '_engage') !== FALSE);
+
+            foreach ($report['rows'] as $r) {
+                if ($is_combined_file) {
+                    $row_qty = $this->parse_number($this->cell($r, $index, 'Qty'));
+                    $row_storage = strtolower(trim((string) $this->cell($r, $index, 'Storage Nr')));
+                    if ($row_storage !== '' && $row_storage !== strtolower($storage_code)) {
+                        continue;
+                    }
+                    if ($is_outflow && $row_qty >= 0) {
+                        continue;
+                    }
+                    if (!$is_outflow && $row_qty <= 0) {
+                        continue;
+                    }
+                }
+                $rows[] = $r;
+            }
         }
 
         return array('headers' => $headers, 'rows' => $rows);
@@ -1598,28 +2397,110 @@ class Dashboard_model extends CI_Model
 
     private function read_combined_engage_report($current_path, $report_key)
     {
+        $storage = (strpos($report_key, '32a') !== FALSE) ? '32a' : '32';
+        $direction = (strpos($report_key, 'outflow') !== FALSE) ? 'outflow' : 'inflow';
+
+        // 1. Prioritaskan pembacaan dari database MySQL (tb_engage_transactions & tb_engage_archieve)
+        $db_report = $this->read_engage_report_from_db($storage, $direction);
+        if (!empty($db_report['rows'])) {
+            return $db_report;
+        }
+
+        // 2. Fallback: baca dari file Excel (mendukung 32_engage.xlsx / 32a_engage.xlsx atau report legacy)
         return $this->read_all_engage_reports($report_key);
     }
 
 
     private function engage_rpa_history_roots()
     {
-        $root = $this->root_path();
-        $roots = array(
-            $root . DIRECTORY_SEPARATOR . 'rpa' . DIRECTORY_SEPARATOR . 'engage-rpa',
-        );
+        $roots = array();
+        foreach ($this->rpa_root_candidates() as $rpa_root) {
+            $roots[] = $rpa_root . DIRECTORY_SEPARATOR . 'engage-rpa';
+        }
 
         return array_values(array_unique(array_filter($roots, 'is_dir')));
     }
 
-    private function build_heat_data_from_rpa_sources($aps, $inflow_32, $outflow_32, $inflow_32a, $outflow_32a, $accessories, $delivery_count = 4)
+    private function build_heat_data_from_rpa_sources($aps, $inflow_32a, $outflow_32a, $accessories, $date_from = NULL, $date_to = NULL)
     {
-        $delivery_count = $this->normalize_delivery_count($delivery_count);
+        $from_str = (is_string($date_from) && preg_match('/^\d{4}-\d{2}-\d{2}$/', trim($date_from))) ? trim($date_from) : '';
+        $to_str = (is_string($date_to) && preg_match('/^\d{4}-\d{2}-\d{2}$/', trim($date_to))) ? trim($date_to) : '';
+
+        if ($from_str === '' && $to_str === '') {
+            $day_num = (int) date('j');
+            if ($day_num <= 15) {
+                $from_str = date('Y-m-01');
+                $to_str = date('Y-m-15');
+            } else {
+                $from_str = date('Y-m-16');
+                $to_str = date('Y-m-t');
+            }
+        } elseif ($from_str === '') {
+            $from_str = $to_str;
+        } elseif ($to_str === '') {
+            $to_str = $from_str;
+        }
+
+        if ($from_str > $to_str) {
+            $tmp = $from_str;
+            $from_str = $to_str;
+            $to_str = $tmp;
+        }
+
         $aps_index = $this->header_index($aps['headers']);
         $orders = array();
         $periods = array();
         $pdk_by_period = array();
         $output_by_period = array();
+        $pdk_by_period_with_ofc = array();
+        $output_by_period_with_ofc = array();
+
+        // Master lookup order dari JO (mencakup semua baris JO untuk mendapatkan tanggal delivery asli)
+        $jo_order_master = array();
+        foreach ($aps['rows'] as $row) {
+            $jo = $this->cell_any($row, $aps_index, array('JO', 'Order No.', 'Order'));
+            $cust_order = $this->cell_any($row, $aps_index, array('Cust_Order_No', 'Cust Order No', 'Cust Order No.', 'Cust_Order'));
+            $order = $this->normalize_order_number($jo);
+            if ($order === '') {
+                $order = $this->normalize_order_number($cust_order);
+            }
+            if ($order === '') {
+                continue;
+            }
+
+            $delivery = $this->cell_any($row, $aps_index, array('Delivery Date', 'Delivery date', 'Delivery', 'Del Date', 'Del. Date', 'Delivery Date.'));
+            $style = $this->cell_any($row, $aps_index, array('Factory Style', 'Cust. Style', 'Style'));
+            $item = $this->cell_any($row, $aps_index, array('Item Nr', 'Item', 'Item No', 'Item No.'));
+            $period = $this->period_label_from_date_value($delivery);
+            $route = strtoupper($this->cell_any($row, $aps_index, array('Process Route', 'Process Route Name')));
+
+            if (!isset($jo_order_master[$order])) {
+                $jo_order_master[$order] = array(
+                    'order' => $order,
+                    'style' => $style,
+                    'delivery' => $delivery,
+                    'item' => $item,
+                    'period' => $period,
+                    'process' => $route,
+                    'route' => $route,
+                );
+            } else {
+                if ($jo_order_master[$order]['delivery'] === '' && $delivery !== '') {
+                    $jo_order_master[$order]['delivery'] = $delivery;
+                    $jo_order_master[$order]['period'] = $period;
+                }
+                if ($jo_order_master[$order]['style'] === '' && $style !== '') {
+                    $jo_order_master[$order]['style'] = $style;
+                }
+                if ($jo_order_master[$order]['item'] === '' && $item !== '') {
+                    $jo_order_master[$order]['item'] = $item;
+                }
+                if (empty($jo_order_master[$order]['process']) && $route !== '') {
+                    $jo_order_master[$order]['process'] = $route;
+                    $jo_order_master[$order]['route'] = $route;
+                }
+            }
+        }
 
         foreach ($aps['rows'] as $row) {
             $route = strtoupper($this->cell_any($row, $aps_index, array('Process Route', 'Process Route Name')));
@@ -1631,20 +2512,26 @@ class Dashboard_model extends CI_Model
             }
 
             $jo = $this->cell_any($row, $aps_index, array('JO', 'Order No.'));
+            $cust_order = $this->cell_any($row, $aps_index, array('Cust_Order_No', 'Cust Order No', 'Cust Order No.'));
             $order = $this->normalize_order_number($jo);
+            if ($order === '') {
+                $order = $this->normalize_order_number($cust_order);
+            }
             if ($order === '') {
                 continue;
             }
 
-            $qty = $heat_plan > 0 ? $heat_plan : $this->parse_number($this->cell($row, $aps_index, 'Plan Qty'));
+            $is_ofc = $this->is_ofc_order($jo) || $this->is_ofc_order($cust_order) || $this->is_ofc_order($order);
+
+            $qty = $this->parse_number($this->cell_any($row, $aps_index, array('Plan Qty', 'Plan qty', 'Plan Qty.')));
             if ($qty <= 0) {
-                $qty = $this->parse_number($this->cell($row, $aps_index, 'Qty'));
+                $qty = $heat_plan > 0 ? $heat_plan : $this->parse_number($this->cell($row, $aps_index, 'Qty'));
             }
             if ($qty <= 0) {
                 continue;
             }
 
-            $delivery = $this->cell($row, $aps_index, 'Delivery Date');
+            $delivery = $this->cell_any($row, $aps_index, array('Delivery Date', 'Delivery date', 'Delivery', 'Del Date', 'Del. Date', 'Delivery Date.'));
             $period = $this->period_label_from_date_value($delivery);
             if ($period === '') {
                 continue;
@@ -1657,71 +2544,88 @@ class Dashboard_model extends CI_Model
             }
 
             $this->ensure_period_bucket($periods, $period);
-            $pdk_by_period[$period] = isset($pdk_by_period[$period]) ? $pdk_by_period[$period] + $qty : $qty;
-            $output_by_period[$period] = isset($output_by_period[$period]) ? $output_by_period[$period] + $finished : $finished;
 
-            if (!isset($orders[$order])) {
-                $orders[$order] = array(
-                    'order' => $order,
-                    'style' => $style,
-                    'delivery' => $delivery,
-                    'period' => $period,
-                    'qty_pdk' => 0,
-                    'qty_out_aps' => 0,
-                );
+            // Akumulasi termasuk OFC untuk grafik Kapasitas vs Demand
+            $pdk_by_period_with_ofc[$period] = isset($pdk_by_period_with_ofc[$period]) ? $pdk_by_period_with_ofc[$period] + $qty : $qty;
+            $output_by_period_with_ofc[$period] = isset($output_by_period_with_ofc[$period]) ? $output_by_period_with_ofc[$period] + $finished : $finished;
+
+            // Akumulasi tanpa OFC untuk Target vs Aktual dan list orders
+            if (!$is_ofc) {
+                $pdk_by_period[$period] = isset($pdk_by_period[$period]) ? $pdk_by_period[$period] + $qty : $qty;
+                $output_by_period[$period] = isset($output_by_period[$period]) ? $output_by_period[$period] + $finished : $finished;
+
+                if (!isset($orders[$order])) {
+                    $orders[$order] = array(
+                        'order' => $order,
+                        'style' => $style,
+                        'delivery' => $delivery,
+                        'period' => $period,
+                        'process' => $route,
+                        'route' => $route,
+                        'qty_pdk' => 0,
+                        'qty_out_aps' => 0,
+                    );
+                } else {
+                    if (empty($orders[$order]['process']) && $route !== '') {
+                        $orders[$order]['process'] = $route;
+                        $orders[$order]['route'] = $route;
+                    }
+                }
+                $orders[$order]['qty_pdk'] += $qty;
+                $orders[$order]['qty_out_aps'] += $finished;
             }
-            $orders[$order]['qty_pdk'] += $qty;
-            $orders[$order]['qty_out_aps'] += $finished;
         }
 
-        $in_summary_32 = $this->summarize_engage_rows_by_order($inflow_32, $this->engage_filter_rules_32());
-        $in_summary_32a = $this->summarize_engage_rows_by_order($inflow_32a, $this->engage_filter_rules_32a());
-        $in_summary = $this->merge_engage_summaries(array(
-            $in_summary_32,
-            $in_summary_32a,
-        ));
-        $out_summary_32 = $this->summarize_engage_rows_by_order($outflow_32, $this->engage_filter_rules_32());
-        $out_summary_32a = $this->summarize_engage_rows_by_order($outflow_32a, $this->engage_filter_rules_32a());
-        $out_summary = $this->merge_engage_summaries(array(
-            $out_summary_32,
-            $out_summary_32a,
-        ));
+        $in_summary = $this->summarize_engage_rows_by_order($inflow_32a, $this->engage_filter_rules_32a());
+        $out_summary = $this->summarize_engage_rows_by_order($outflow_32a, $this->engage_filter_rules_32a());
         $accessories_ready = $this->summarize_accessories_completed_orders($accessories);
 
         $ready_by_period = array();
+        $ready_completed_by_period = array();
+        $ready_uncompleted_by_period = array();
         $ready_by_order = array();
         foreach ($in_summary['orders'] as $order => $in) {
+            if ($this->is_ofc_order($order)) {
+                continue;
+            }
             $out_qty = isset($out_summary['orders'][$order]) ? $out_summary['orders'][$order]['qty'] : 0;
             $ready_qty = $in['qty'] - $out_qty;
             if ($ready_qty <= 0) {
                 continue;
             }
 
-            $period = isset($orders[$order]) ? $orders[$order]['period'] : $this->period_label_from_date_value($in['date']);
+            $jo_info = isset($orders[$order]) ? $orders[$order] : (isset($jo_order_master[$order]) ? $jo_order_master[$order] : null);
+            // Jika order tidak terdaftar di JO atau tidak memiliki tanggal delivery di JO, tidak usah ditampilkan
+            if (!$jo_info || empty($jo_info['delivery'])) {
+                continue;
+            }
+
+            $delivery_jo = $jo_info['delivery'];
+            $period = !empty($jo_info['period']) ? $jo_info['period'] : $this->period_label_from_date_value($delivery_jo);
             if ($period === '') {
                 continue;
             }
 
-            $sources = array();
-            if (isset($in_summary_32['orders'][$order])) {
-                $sources[] = '32';
-            }
-            if (isset($in_summary_32a['orders'][$order])) {
-                $sources[] = '32a';
-            }
-            $source_label = $sources ? implode(' + ', array_values(array_unique($sources))) : '32/32a';
+            $source_label = '32a';
+            $is_acc_completed = !empty($accessories_ready[$order]);
 
             $this->ensure_period_bucket($periods, $period);
             $ready_by_period[$period] = isset($ready_by_period[$period]) ? $ready_by_period[$period] + $ready_qty : $ready_qty;
+            if ($is_acc_completed) {
+                $ready_completed_by_period[$period] = isset($ready_completed_by_period[$period]) ? $ready_completed_by_period[$period] + $ready_qty : $ready_qty;
+            } else {
+                $ready_uncompleted_by_period[$period] = isset($ready_uncompleted_by_period[$period]) ? $ready_uncompleted_by_period[$period] + $ready_qty : $ready_qty;
+            }
+
             $ready_by_order[$order] = array(
                 'order' => $order,
-                'style' => isset($orders[$order]) && $orders[$order]['style'] !== '' ? $orders[$order]['style'] : $in['style'],
-                'delivery' => isset($orders[$order]) ? $orders[$order]['delivery'] : $in['date'],
-                'item' => isset($orders[$order]) && isset($orders[$order]['item']) && $orders[$order]['item'] !== '' ? $orders[$order]['item'] : $in['item'],
+                'style' => (!empty($jo_info['style'])) ? $jo_info['style'] : $in['style'],
+                'delivery' => $delivery_jo,
+                'item' => (!empty($jo_info['item'])) ? $jo_info['item'] : $in['item'],
                 'period' => $period,
                 'qty' => $ready_qty,
                 'source' => $source_label,
-                'accessories_completed' => isset($accessories_ready[$order]) ? $accessories_ready[$order] : 0,
+                'accessories_completed' => $is_acc_completed ? 1 : 0,
             );
         }
 
@@ -1729,32 +2633,110 @@ class Dashboard_model extends CI_Model
         usort($period_labels, array($this, 'compare_period_labels'));
 
         $all_qty_rows = array();
+        $all_qty_rows_with_ofc = array();
         foreach ($period_labels as $period) {
             $pdk = isset($pdk_by_period[$period]) ? $pdk_by_period[$period] : 0;
             $output = isset($output_by_period[$period]) ? $output_by_period[$period] : 0;
-            if ($pdk <= 0 && $output <= 0) {
-                continue;
+            $pdk_ofc = isset($pdk_by_period_with_ofc[$period]) ? $pdk_by_period_with_ofc[$period] : 0;
+            $output_ofc = isset($output_by_period_with_ofc[$period]) ? $output_by_period_with_ofc[$period] : 0;
+
+            if ($pdk > 0 || $output > 0) {
+                $all_qty_rows[] = array('label' => $period, 'pdk' => $pdk, 'output' => $output);
             }
-            $all_qty_rows[] = array('label' => $period, 'pdk' => $pdk, 'output' => $output);
+            if ($pdk_ofc > 0 || $output_ofc > 0) {
+                $all_qty_rows_with_ofc[] = array('label' => $period, 'pdk' => $pdk_ofc, 'output' => $output_ofc);
+            }
         }
 
-        $current_index = $this->current_delivery_index($all_qty_rows, $ready_by_period);
-        $selected_qty_pdk_vs_output = array_slice($all_qty_rows, $current_index, $delivery_count);
-        $qty_pdk_vs_output = array_slice($all_qty_rows, $current_index, 4);
-        $balance_breakdown = $qty_pdk_vs_output;
+        // Filter periode yang beririsan dengan rentang tanggal [$from_str, $to_str]
+        $matching_indices = array();
+        foreach ($all_qty_rows as $idx => $row) {
+            $range = $this->period_date_range($row['label']);
+            if ($range && max($range['start'], $from_str) <= min($range['end'], $to_str)) {
+                $matching_indices[] = $idx;
+            }
+        }
+
+        if (!empty($matching_indices)) {
+            $selected_qty_pdk_vs_output = array();
+            $selected_qty_pdk_vs_output_with_ofc = array();
+            foreach ($matching_indices as $idx) {
+                $selected_qty_pdk_vs_output[] = $all_qty_rows[$idx];
+                $selected_qty_pdk_vs_output_with_ofc[] = isset($all_qty_rows_with_ofc[$idx])
+                    ? $all_qty_rows_with_ofc[$idx]
+                    : $all_qty_rows[$idx];
+            }
+
+            if (count($selected_qty_pdk_vs_output) === 1) {
+                $target_period = $selected_qty_pdk_vs_output[0]['label'];
+                $period_type = (stripos($target_period, 'MID') !== FALSE) ? 'MID' : 'END';
+                $period_range = $this->period_date_range($target_period);
+                $period_display_range = $period_range
+                    ? date('d M Y', strtotime($period_range['start'])) . ' - ' . date('d M Y', strtotime($period_range['end']))
+                    : '';
+            } else {
+                $first_label = $selected_qty_pdk_vs_output[0]['label'];
+                $last_label = end($selected_qty_pdk_vs_output)['label'];
+                $target_period = $first_label . ' - ' . $last_label;
+                $period_type = 'RANGE';
+                $first_range = $this->period_date_range($first_label);
+                $last_range = $this->period_date_range($last_label);
+                $period_range = array(
+                    'start' => $first_range ? $first_range['start'] : $from_str,
+                    'end' => $last_range ? $last_range['end'] : $to_str,
+                );
+                $period_display_range = date('d M Y', strtotime($period_range['start'])) . ' - ' . date('d M Y', strtotime($period_range['end']));
+            }
+        } else {
+            $from_label = $this->period_label_from_date_value($from_str);
+            $to_label = $this->period_label_from_date_value($to_str);
+            if ($from_label === $to_label || $to_label === '') {
+                $target_period = $from_label ?: 'MID ' . date('M');
+                $period_type = (stripos($target_period, 'MID') !== FALSE) ? 'MID' : 'END';
+                $selected_qty_pdk_vs_output = array(array('label' => $target_period, 'pdk' => 0, 'output' => 0));
+            } else {
+                $target_period = $from_label . ' - ' . $to_label;
+                $period_type = 'RANGE';
+                $selected_qty_pdk_vs_output = array(
+                    array('label' => $from_label, 'pdk' => 0, 'output' => 0),
+                    array('label' => $to_label, 'pdk' => 0, 'output' => 0),
+                );
+            }
+            $selected_qty_pdk_vs_output_with_ofc = $selected_qty_pdk_vs_output;
+            $period_range = array('start' => $from_str, 'end' => $to_str);
+            $period_display_range = date('d M Y', strtotime($from_str)) . ' - ' . date('d M Y', strtotime($to_str));
+        }
+
+        $qty_pdk_vs_output = $selected_qty_pdk_vs_output;
+        $qty_pdk_vs_output_with_ofc = $selected_qty_pdk_vs_output_with_ofc;
+        $balance_breakdown = $selected_qty_pdk_vs_output;
 
         $ready_to_load = array();
         foreach ($qty_pdk_vs_output as $row) {
             $period = $row['label'];
-            $ready = isset($ready_by_period[$period]) ? $ready_by_period[$period] : 0;
-            $ready_to_load[] = array('label' => $period, 'ready' => $ready);
+            $ready = isset($ready_by_period[$period]) ? (int) $ready_by_period[$period] : 0;
+            $completed = isset($ready_completed_by_period[$period]) ? (int) $ready_completed_by_period[$period] : 0;
+            $uncompleted = isset($ready_uncompleted_by_period[$period]) ? (int) $ready_uncompleted_by_period[$period] : max(0, $ready - $completed);
+            $ready_to_load[] = array(
+                'label' => $period,
+                'ready' => $ready,
+                'completed' => $completed,
+                'uncompleted' => $uncompleted,
+            );
         }
 
         $selected_ready_to_load = array();
         foreach ($selected_qty_pdk_vs_output as $row) {
             $period = $row['label'];
-            $ready = isset($ready_by_period[$period]) ? $ready_by_period[$period] : 0;
-            $selected_ready_to_load[] = array('label' => $period, 'ready' => $ready);
+            $ready = isset($ready_by_period[$period]) ? (int) $ready_by_period[$period] : 0;
+            $completed = isset($ready_completed_by_period[$period]) ? (int) $ready_completed_by_period[$period] : 0;
+            $uncompleted = isset($ready_uncompleted_by_period[$period]) ? (int) $ready_uncompleted_by_period[$period] : max(0, $ready - $completed);
+            $selected_ready_to_load[] = array(
+                'label' => $period,
+                'ready' => $ready,
+                'completed' => $completed,
+                'uncompleted' => $uncompleted,
+            );
         }
 
         $total_pdk = array_sum(array_column($selected_qty_pdk_vs_output, 'pdk'));
@@ -1762,33 +2744,72 @@ class Dashboard_model extends CI_Model
         $balance_qty = max(0, $total_pdk - $total_output);
         $prod_days_left = $this->source_prod_days_left($selected_qty_pdk_vs_output);
         $selected_order_whitelist = $this->selected_delivery_order_whitelist($orders, $selected_qty_pdk_vs_output);
-        $out_summary_scoped = $this->merge_engage_summaries(array(
-            $this->summarize_engage_rows_by_order($outflow_32, $this->engage_filter_rules_32(), $selected_order_whitelist),
-            $this->summarize_engage_rows_by_order($outflow_32a, $this->engage_filter_rules_32a(), $selected_order_whitelist),
-        ));
-        $list_orders = $this->build_list_orders_from_rpa($ready_by_order, $orders, $out_summary['orders'], $selected_qty_pdk_vs_output, $in_summary_32a['orders']);
-        // Grafik: output/input dari Engage. Kapasitas dari riwayat harian (snapshot) untuk hari lampau.
-        $output_vs_capacity = $this->build_output_vs_capacity_from_engage_daily(
+        $out_summary_scoped = $this->summarize_engage_rows_by_order($outflow_32a, $this->engage_filter_rules_32a(), $selected_order_whitelist);
+        $list_orders = $this->build_list_orders_from_rpa($ready_by_order, $orders, $out_summary['orders'], $selected_qty_pdk_vs_output, $in_summary['orders']);
+        // Grafik: output/input dari Engage. Kapasitas & Demand dari data agregat termasuk OFC.
+        $daily_output_vs_capacity = $this->build_output_vs_capacity_from_engage_daily(
             $out_summary['daily'],
-            $selected_qty_pdk_vs_output,
+            $selected_qty_pdk_vs_output_with_ofc,
             $in_summary['daily'],
             $out_summary_scoped['daily'],
-            $qty_pdk_vs_output
+            $qty_pdk_vs_output_with_ofc,
+            $list_orders
         );
+
+        $today = date('Y-m-d');
+        $latest_in_day = !empty($in_summary['daily']) ? max(array_keys($in_summary['daily'])) : $today;
+        $latest_out_day = !empty($out_summary['daily']) ? max(array_keys($out_summary['daily'])) : $today;
+        $active_chart_day = max($today, $latest_out_day, $latest_in_day);
+
+        $hourly_chart = $this->build_today_hourly_output_vs_capacity(
+            $active_chart_day,
+            isset($in_summary['hourly']) ? $in_summary['hourly'] : array(),
+            isset($out_summary['hourly']) ? $out_summary['hourly'] : array(),
+            $daily_output_vs_capacity
+        );
+
+        // Fallback to daily chart when today's hourly data has no actual in/out values
+        // (e.g., RPA sync stores all timestamps as midnight so hourly bucketing produces zeros)
+        $hourly_has_data = FALSE;
+        if (is_array($hourly_chart)) {
+            foreach ($hourly_chart as $hr) {
+                if ((isset($hr['input']) && (float)$hr['input'] > 0) ||
+                    (isset($hr['output']) && (float)$hr['output'] > 0)) {
+                    $hourly_has_data = TRUE;
+                    break;
+                }
+            }
+        }
+        $output_vs_capacity = $hourly_has_data ? $hourly_chart : $daily_output_vs_capacity;
+
+        $total_pdk_with_ofc = array_sum(array_column($selected_qty_pdk_vs_output_with_ofc, 'pdk'));
+        $total_output_with_ofc = array_sum(array_column($selected_qty_pdk_vs_output_with_ofc, 'output'));
+        $balance_qty_with_ofc = max(0, $total_pdk_with_ofc - $total_output_with_ofc);
 
         return array(
             'total_pdk' => $total_pdk,
             'total_output' => $total_output,
             'balance_qty' => $balance_qty,
+            'balance_qty_with_ofc' => $balance_qty_with_ofc,
             'prod_days_left' => $prod_days_left,
-            'qty_pdk_vs_output' => $qty_pdk_vs_output,
+            'qty_pdk_vs_output' => $selected_qty_pdk_vs_output,
             'selected_qty_pdk_vs_output' => $selected_qty_pdk_vs_output,
-            'balance_breakdown' => $balance_breakdown,
-            'ready_to_load' => $ready_to_load,
+            'balance_breakdown' => $selected_qty_pdk_vs_output,
+            'ready_to_load' => $selected_ready_to_load,
             'selected_ready_to_load' => $selected_ready_to_load,
             'output_vs_capacity' => $output_vs_capacity,
+            'daily_output_vs_capacity' => $daily_output_vs_capacity,
             'list_orders' => $list_orders,
-            'top_priority_orders' => $this->build_priority_orders_from_rpa($ready_by_order, $orders, $out_summary['orders']),
+            'material_to_load' => $list_orders,
+            'top_priority_orders' => $this->build_priority_orders_from_rpa($ready_by_order, $orders, $out_summary['orders'], $jo_order_master),
+            'selected_date' => $from_str,
+            'selected_date_from' => $from_str,
+            'selected_date_to' => $to_str,
+            'selected_period' => $target_period,
+            'period_type' => $period_type,
+            'period_range' => $period_range,
+            'period_display_range' => $period_display_range,
+            'all_periods' => $all_qty_rows,
         );
     }
 
@@ -1797,10 +2818,20 @@ class Dashboard_model extends CI_Model
         return strpos($route, 'HT') !== FALSE;
     }
 
+    private function is_ofc_order($value)
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return FALSE;
+        }
+
+        return stripos($value, 'OFC') !== FALSE;
+    }
+
     private function normalize_delivery_count($delivery_count)
     {
         $delivery_count = (int) $delivery_count;
-        return in_array($delivery_count, array(1, 2, 4), TRUE) ? $delivery_count : 4;
+        return in_array($delivery_count, array(1, 2, 4, 6), TRUE) ? $delivery_count : 4;
     }
 
     private function normalize_order_number($value)
@@ -1830,23 +2861,50 @@ class Dashboard_model extends CI_Model
             return 0;
         }
         if (is_numeric($value)) {
-            return ((float) $value - 25569) * 86400;
+            $serial = (float) $value;
+            $raw_ts = ($serial - 25569) * 86400;
+            $m = (int) gmdate('n', (int) $raw_ts);
+            $d = (int) gmdate('j', (int) $raw_ts);
+            $y = (int) gmdate('Y', (int) $raw_ts);
+            if ($d <= 12) {
+                // Di Excel display M/D/Y (e.g. 8/9/2026), komponen pertama $m adalah Hari (8) dan $d adalah Bulan (9 = September)
+                $swapped_ts = strtotime(sprintf('%04d-%02d-%02d', $y, $d, $m));
+                if ($swapped_ts !== false) {
+                    return $swapped_ts;
+                }
+            }
+            return $raw_ts;
         }
-        if (preg_match('/^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})(?:\\s+\\d{1,2}:\\d{2}(?::\\d{2})?)?$/' , $value, $match)) {
-            return strtotime($match[3] . '-' . $match[2] . '-' . $match[1]);
+        // Format DD/MM/YYYY atau DD/MM/YY
+        if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/', $value, $match)) {
+            $year = strlen($match[3]) === 2 ? '20' . $match[3] : $match[3];
+            $time_part = isset($match[4]) ? (' ' . sprintf('%02d:%02d:%02d', (int) $match[4], (int) $match[5], isset($match[6]) ? (int) $match[6] : 0)) : '';
+            return strtotime($year . '-' . sprintf('%02d', (int) $match[2]) . '-' . sprintf('%02d', (int) $match[1]) . $time_part);
         }
-        if (preg_match('/^(\\d{1,2})-(\\d{1,2})-(\\d{4})(?:\\s+\\d{1,2}:\\d{2}(?::\\d{2})?)?$/' , $value, $match)) {
-            return strtotime($match[3] . '-' . $match[2] . '-' . $match[1]);
+        // Format DD-MM-YYYY atau DD-MM-YY
+        if (preg_match('/^(\d{1,2})-(\d{1,2})-(\d{2,4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/', $value, $match)) {
+            $year = strlen($match[3]) === 2 ? '20' . $match[3] : $match[3];
+            $time_part = isset($match[4]) ? (' ' . sprintf('%02d:%02d:%02d', (int) $match[4], (int) $match[5], isset($match[6]) ? (int) $match[6] : 0)) : '';
+            return strtotime($year . '-' . sprintf('%02d', (int) $match[2]) . '-' . sprintf('%02d', (int) $match[1]) . $time_part);
         }
-        if (preg_match('/^(\\d{4})-(\\d{1,2})-(\\d{1,2})(?:\\s+\\d{1,2}:\\d{2}(?::\\d{2})?)?/', $value, $match)) {
-            return strtotime($match[1] . '-' . $match[2] . '-' . $match[3]);
+        // Format DD.MM.YYYY atau DD.MM.YY
+        if (preg_match('/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/', $value, $match)) {
+            $year = strlen($match[3]) === 2 ? '20' . $match[3] : $match[3];
+            $time_part = isset($match[4]) ? (' ' . sprintf('%02d:%02d:%02d', (int) $match[4], (int) $match[5], isset($match[6]) ? (int) $match[6] : 0)) : '';
+            return strtotime($year . '-' . sprintf('%02d', (int) $match[2]) . '-' . sprintf('%02d', (int) $match[1]) . $time_part);
+        }
+        // Format YYYY-MM-DD atau YYYY/MM/DD
+        if (preg_match('/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/', $value, $match)) {
+            $time_part = isset($match[4]) ? (' ' . sprintf('%02d:%02d:%02d', (int) $match[4], (int) $match[5], isset($match[6]) ? (int) $match[6] : 0)) : '';
+            return strtotime($match[1] . '-' . sprintf('%02d', (int) $match[2]) . '-' . sprintf('%02d', (int) $match[3]) . $time_part);
         }
         return strtotime($value) ?: 0;
     }
 
+
     private function merge_engage_summaries($summaries)
     {
-        $merged = array('orders' => array(), 'daily' => array());
+        $merged = array('orders' => array(), 'daily' => array(), 'hourly' => array());
 
         foreach ($summaries as $summary) {
             foreach ($summary['orders'] as $order => $data) {
@@ -1869,6 +2927,17 @@ class Dashboard_model extends CI_Model
 
             foreach ($summary['daily'] as $day => $qty) {
                 $merged['daily'][$day] = isset($merged['daily'][$day]) ? $merged['daily'][$day] + $qty : $qty;
+            }
+
+            if (isset($summary['hourly']) && is_array($summary['hourly'])) {
+                foreach ($summary['hourly'] as $day => $hours) {
+                    if (!isset($merged['hourly'][$day])) {
+                        $merged['hourly'][$day] = array();
+                    }
+                    foreach ($hours as $hr => $qty) {
+                        $merged['hourly'][$day][$hr] = isset($merged['hourly'][$day][$hr]) ? $merged['hourly'][$day][$hr] + $qty : $qty;
+                    }
+                }
             }
         }
 
@@ -1909,7 +2978,9 @@ class Dashboard_model extends CI_Model
         $index = $this->header_index($report['headers']);
         $orders = array();
         $daily = array();
+        $hourly = array();
         $daily_materials = array();
+        $hourly_materials = array();
         $seen = array();
         $calendar_days = $this->dashboard_calendar_days();
 
@@ -1927,8 +2998,11 @@ class Dashboard_model extends CI_Model
             if ($order === '') {
                 $order = $this->normalize_order_number($this->cell($row, $index, 'Udef 8'));
             }
+            if ($order === '' || $this->is_ofc_order($order)) {
+                continue;
+            }
             $qty = abs($this->parse_number($this->cell($row, $index, 'Qty')));
-            if ($order === '' || $qty <= 0) {
+            if ($qty <= 0) {
                 continue;
             }
             if ($order_whitelist !== NULL && !isset($order_whitelist[$order])) {
@@ -1958,6 +3032,7 @@ class Dashboard_model extends CI_Model
 
             if ($timestamp) {
                 $day = date('Y-m-d', $timestamp);
+                $hour = date('H:00', $timestamp);
                 $is_holiday = in_array($day, $calendar_days['holidays'], TRUE);
                 $is_sunday = (int) date('w', $timestamp) === 0;
                 $is_scheduled_sunday = in_array($day, $calendar_days['work_days'], TRUE) || in_array($day, $calendar_days['half_days'], TRUE);
@@ -1966,6 +3041,13 @@ class Dashboard_model extends CI_Model
                     $daily_materials[$daily_key] = array(
                         'day' => $day,
                         'qty' => max(isset($daily_materials[$daily_key]['qty']) ? $daily_materials[$daily_key]['qty'] : 0, $qty),
+                    );
+
+                    $hourly_key = $day . "\n" . $hour . "\n" . $material_key;
+                    $hourly_materials[$hourly_key] = array(
+                        'day' => $day,
+                        'hour' => $hour,
+                        'qty' => max(isset($hourly_materials[$hourly_key]['qty']) ? $hourly_materials[$hourly_key]['qty'] : 0, $qty),
                     );
                 }
             }
@@ -1981,7 +3063,16 @@ class Dashboard_model extends CI_Model
             $daily[$day] = isset($daily[$day]) ? $daily[$day] + $item['qty'] : $item['qty'];
         }
 
-        return array('orders' => $orders, 'daily' => $daily);
+        foreach ($hourly_materials as $item) {
+            $day = $item['day'];
+            $hour = $item['hour'];
+            if (!isset($hourly[$day])) {
+                $hourly[$day] = array();
+            }
+            $hourly[$day][$hour] = isset($hourly[$day][$hour]) ? $hourly[$day][$hour] + $item['qty'] : $item['qty'];
+        }
+
+        return array('orders' => $orders, 'daily' => $daily, 'hourly' => $hourly);
     }
 
     private function engage_row_matches_filter_rules($row, $index, $rules)
@@ -2041,7 +3132,7 @@ class Dashboard_model extends CI_Model
         foreach ($report['rows'] as $row) {
             $order = $this->normalize_order_number($this->cell($row, $index, 'Order'));
             $status = strtoupper($this->cell($row, $index, 'Status Pesanan'));
-            if ($order === '' || strpos($status, 'COMPLETED') === FALSE) {
+            if ($order === '' || $this->is_ofc_order($order) || strpos($status, 'COMPLETED') === FALSE) {
                 continue;
             }
             $orders[$order] = isset($orders[$order]) ? $orders[$order] + 1 : 1;
@@ -2049,20 +3140,17 @@ class Dashboard_model extends CI_Model
         return $orders;
     }
 
-    private function build_output_vs_capacity_from_engage_daily($engage_daily_output, $qty_rows, $engage_daily_input = array(), $engage_daily_for_balance = array(), $historical_qty_rows = NULL)
+    private function build_output_vs_capacity_from_engage_daily($engage_daily_output, $qty_rows, $engage_daily_input = array(), $engage_daily_for_balance = array(), $historical_qty_rows = NULL, $list_orders = NULL)
     {
-        ksort($engage_daily_output);
-        $latest_output_day = $engage_daily_output ? max(array_keys($engage_daily_output)) : date('Y-m-d');
-        $latest_day = max($latest_output_day, date('Y-m-d'));
-        $calendar_days = $this->dashboard_calendar_days();
-        $days = array();
-        $cursor = strtotime($latest_day);
-        while (count($days) < 6 && $cursor) {
-            $day = date('Y-m-d', $cursor);
-            if ($this->calendar_workday_value($day, $calendar_days) > 0) {
-                array_unshift($days, $day);
+        // 1. Gabungkan ringkasan harian dari tabel engage_daily_history agar data hari-hari sebelumnya (termasuk bulan lalu) tidak 0
+        $engage_history = $this->read_engage_daily_history_rows();
+        foreach ($engage_history as $hist_day => $hist) {
+            if (!isset($engage_daily_output[$hist_day]) || (float) $engage_daily_output[$hist_day] <= 0) {
+                $engage_daily_output[$hist_day] = $hist['output_qty'];
             }
-            $cursor = strtotime('-1 day', $cursor);
+            if (!isset($engage_daily_input[$hist_day]) || (float) $engage_daily_input[$hist_day] <= 0) {
+                $engage_daily_input[$hist_day] = $hist['input_qty'];
+            }
         }
 
         $selected_qty_rows = is_array($qty_rows) ? $qty_rows : array();
@@ -2071,9 +3159,112 @@ class Dashboard_model extends CI_Model
         $selected_capacity_history = $this->read_heat_capacity_history($selected_delivery_count);
         $historical_capacity_history = $this->read_heat_capacity_history($selected_delivery_count);
         $selected_capacity_history_changed = FALSE;
+
+        ksort($engage_daily_output);
+        $latest_output_day = $engage_daily_output ? max(array_keys($engage_daily_output)) : date('Y-m-d');
+        $latest_day = max($latest_output_day, date('Y-m-d'));
+        $calendar_days = $this->dashboard_calendar_days();
+        $holidays = isset($calendar_days['holidays']) && is_array($calendar_days['holidays']) ? $calendar_days['holidays'] : array();
+        $half_days = isset($calendar_days['half_days']) && is_array($calendar_days['half_days']) ? $calendar_days['half_days'] : array();
+        $quarter_days = isset($calendar_days['quarter_days']) && is_array($calendar_days['quarter_days']) ? $calendar_days['quarter_days'] : array();
+        $work_days = isset($calendar_days['work_days']) && is_array($calendar_days['work_days']) ? $calendar_days['work_days'] : array();
+
+        // 2. Kumpulkan tanggal kerja grafik: tepat 7 hari kerja ke belakang dari sekarang.
+        // Berjalan menembus batas bulan sehingga jika beda bulan, data bulan sebelumnya tidak hilang/terpotong.
+        $target_workdays_count = 7;
+        $days = array();
+        $cursor = strtotime($latest_day);
+
+        while ($cursor && count($days) < $target_workdays_count) {
+            $day = date('Y-m-d', $cursor);
+
+            $is_holiday = in_array($day, $holidays, TRUE);
+            $dow = (int) date('w', $cursor);
+            $is_workday = FALSE;
+
+            if (!$is_holiday) {
+                if ($dow === 0) {
+                    $is_workday = in_array($day, $work_days, TRUE);
+                } elseif ($dow === 6) {
+                    $is_workday = in_array($day, $work_days, TRUE)
+                        || in_array($day, $half_days, TRUE)
+                        || in_array($day, $quarter_days, TRUE)
+                        || isset($selected_capacity_history[$day])
+                        || isset($historical_capacity_history[$day]);
+                } else {
+                    $is_workday = TRUE;
+                }
+            }
+
+            if ($is_workday) {
+                array_unshift($days, $day);
+            }
+            $cursor = strtotime('-1 day', $cursor);
+        }
+
         $items = array();
         $selected_balance_reference_daily = $engage_daily_for_balance ? $engage_daily_for_balance : $engage_daily_output;
         $today = date('Y-m-d');
+        $heat_settings = $this->get_heat_analytics_settings();
+        $backend_direct_actual = isset($heat_settings['direct_actual']) && is_numeric($heat_settings['direct_actual']) ? (float) $heat_settings['direct_actual'] : 0;
+
+        // Baca cache SMV style langsung
+        $smv_path = $this->heat_style_smv_path();
+        $saved_smv = array();
+        if (is_file($smv_path) && is_readable($smv_path)) {
+            $json_smv = json_decode(file_get_contents($smv_path), TRUE);
+            if (is_array($json_smv)) {
+                $saved_smv = $json_smv;
+            }
+        }
+
+        // Petakan Qty PDK per style dari $list_orders hanya untuk style yang berjalan di bulan ini
+        $style_pdk_map = array();
+        $running_styles_this_month = array();
+        $target_month = date('Y-m');
+        if (is_array($list_orders)) {
+            foreach ($list_orders as $o_row) {
+                $s_name = isset($o_row['style']) ? $o_row['style'] : '';
+                if (empty($s_name) || $this->is_ofc_order($s_name)) {
+                    continue;
+                }
+                $del_raw = isset($o_row['delivery']) ? $o_row['delivery'] : '';
+                $del_ts = !empty($o_row['_sort_delivery']) ? (int) $o_row['_sort_delivery'] : $this->parse_date_timestamp($del_raw);
+                $del_month = ($del_ts > 0) ? date('Y-m', $del_ts) : '';
+
+                if ($del_month === $target_month || ($del_month === '' && empty($target_month))) {
+                    $running_styles_this_month[$s_name] = TRUE;
+                    $p_qty = isset($o_row['qty_pdk']) ? (int) $o_row['qty_pdk'] : (isset($o_row['pdk']) ? (int) $o_row['pdk'] : 0);
+                    $style_pdk_map[$s_name] = (isset($style_pdk_map[$s_name]) ? $style_pdk_map[$s_name] : 0) + $p_qty;
+                }
+            }
+        }
+
+        $backend_weighted_sum = 0;
+        $backend_total_pdk = 0;
+        $backend_smv_list = array();
+
+        foreach ($saved_smv as $s_name => $s_item) {
+            if ($this->is_ofc_order($s_name)) continue;
+            // Hanya style yang berjalan di bulan ini yang dihitung kalkulasi SMV-nya
+            if (empty($running_styles_this_month[$s_name])) continue;
+
+            $s_smv = isset($s_item['smv']) && is_numeric($s_item['smv']) ? (float) $s_item['smv'] : 0;
+            if ($s_smv > 0) {
+                $backend_smv_list[] = $s_smv;
+                $s_pdk = isset($style_pdk_map[$s_name]) ? (int) $style_pdk_map[$s_name] : 0;
+                if ($s_pdk > 0) {
+                    $backend_weighted_sum += ($s_smv * $s_pdk);
+                    $backend_total_pdk += $s_pdk;
+                }
+            }
+        }
+
+        if ($backend_total_pdk > 0 && $backend_weighted_sum > 0) {
+            $backend_avg_smv = $backend_weighted_sum / $backend_total_pdk;
+        } else {
+            $backend_avg_smv = 0;
+        }
 
         foreach ($days as $day) {
             if ($day === $today) {
@@ -2100,17 +3291,73 @@ class Dashboard_model extends CI_Model
                 }
             }
 
+            $sisa_hari_kerja = isset($snapshot['sisa_hari_kerja']) ? (float) $snapshot['sisa_hari_kerja'] : 0;
+            $daily_demand = $sisa_hari_kerja > 0 ? round($snapshot['balance_qty'] / $sisa_hari_kerja) : (float) $snapshot['capacity'];
             $output = isset($engage_daily_output[$day]) ? $engage_daily_output[$day] : 0;
+
+            $dow = (int) date('w', strtotime($day));
+            $is_holiday = in_array($day, $holidays, TRUE);
+
+            // Cek status hari Sabtu pada minggu tanggal target
+            $day_time = strtotime($day);
+            $offset_to_sat = ($dow === 0) ? -1 : (6 - $dow);
+            $sat_date = date('Y-m-d', strtotime("+$offset_to_sat days", $day_time));
+
+            $is_sat_workday = in_array($sat_date, $work_days, TRUE) 
+                || in_array($sat_date, $half_days, TRUE) 
+                || in_array($sat_date, $quarter_days, TRUE);
+            if (in_array($sat_date, $holidays, TRUE)) {
+                $is_sat_workday = FALSE;
+            }
+            $base_hours = $is_sat_workday ? 7 : 8;
+
+            $day_working_hours = 0;
+            if (!$is_holiday) {
+                if ($dow === 0) {
+                    if (in_array($day, $work_days, TRUE)) {
+                        $day_working_hours = $base_hours;
+                    } elseif (in_array($day, $half_days, TRUE)) {
+                        $day_working_hours = $base_hours * 0.5;
+                    } elseif (in_array($day, $quarter_days, TRUE)) {
+                        $day_working_hours = $base_hours * 0.25;
+                    } else {
+                        $day_working_hours = 0;
+                    }
+                } elseif ($dow === 6) {
+                    if (in_array($day, $work_days, TRUE)) {
+                        $day_working_hours = 5;
+                    } elseif (in_array($day, $half_days, TRUE)) {
+                        $day_working_hours = 2.5;
+                    } elseif (in_array($day, $quarter_days, TRUE)) {
+                        $day_working_hours = 1.25;
+                    } else {
+                        $day_working_hours = $is_sat_workday ? 5 : 0;
+                    }
+                } else {
+                    $day_working_hours = $base_hours;
+                    if (in_array($day, $half_days, TRUE)) {
+                        $day_working_hours = $base_hours * 0.5;
+                    } elseif (in_array($day, $quarter_days, TRUE)) {
+                        $day_working_hours = $base_hours * 0.25;
+                    }
+                }
+            }
+            $target_per_person = ($backend_avg_smv > 0 && $day_working_hours > 0) ? ((1 * 60 / $backend_avg_smv) * $day_working_hours) * 0.70 : 0;
+            $daily_capacity = round($target_per_person * $backend_direct_actual);
+
             $items[] = array(
                 'label' => date('d M Y', strtotime($day)),
                 'output' => $output,
                 'input' => isset($engage_daily_input[$day]) ? $engage_daily_input[$day] : 0,
-                'capacity' => $snapshot['capacity'],
+                'capacity' => $daily_capacity > 0 ? $daily_capacity : $snapshot['capacity'],
+                'daily_capacity' => $daily_capacity,
                 'capacity_captured_at' => isset($snapshot['captured_at']) ? $snapshot['captured_at'] : NULL,
                 'capacity_breakdown' => isset($snapshot['breakdown']) ? $snapshot['breakdown'] : array(),
                 'balance_qty' => $snapshot['balance_qty'],
                 'capacity_balance_day' => $snapshot['capacity_balance_day'],
                 'total_demand' => $snapshot['balance_qty'],
+                'demand' => $daily_demand,
+                'daily_demand' => $daily_demand,
                 'remaining_days' => $snapshot['remaining_days'],
                 'sisa_hari_kerja' => $snapshot['sisa_hari_kerja'],
                 'hari_kerja' => $snapshot['sisa_hari_kerja'],
@@ -2119,6 +3366,115 @@ class Dashboard_model extends CI_Model
 
         if ($selected_capacity_history_changed) {
             $this->write_heat_capacity_history($selected_capacity_history);
+        }
+
+        return $items;
+    }
+
+    private function build_today_hourly_output_vs_capacity($day, $in_hourly, $out_hourly, $daily_output_vs_capacity)
+    {
+        $today_daily_entry = NULL;
+        if (is_array($daily_output_vs_capacity)) {
+            foreach ($daily_output_vs_capacity as $row) {
+                if (isset($row['capacity_balance_day']) && $row['capacity_balance_day'] === $day) {
+                    $today_daily_entry = $row;
+                    break;
+                }
+            }
+            if (!$today_daily_entry && !empty($daily_output_vs_capacity)) {
+                $today_daily_entry = end($daily_output_vs_capacity);
+            }
+        }
+
+        $daily_capacity = isset($today_daily_entry['daily_capacity']) && (float) $today_daily_entry['daily_capacity'] > 0
+            ? (float) $today_daily_entry['daily_capacity']
+            : (isset($today_daily_entry['capacity']) ? (float) $today_daily_entry['capacity'] : 9390);
+
+        $calendar_days = $this->dashboard_calendar_days();
+        $holidays = isset($calendar_days['holidays']) && is_array($calendar_days['holidays']) ? $calendar_days['holidays'] : array();
+        $half_days = isset($calendar_days['half_days']) && is_array($calendar_days['half_days']) ? $calendar_days['half_days'] : array();
+        $quarter_days = isset($calendar_days['quarter_days']) && is_array($calendar_days['quarter_days']) ? $calendar_days['quarter_days'] : array();
+        $work_days = isset($calendar_days['work_days']) && is_array($calendar_days['work_days']) ? $calendar_days['work_days'] : array();
+
+        $dow = (int) date('w', strtotime($day));
+        $is_holiday = in_array($day, $holidays, TRUE);
+
+        $day_time = strtotime($day);
+        $offset_to_sat = ($dow === 0) ? -1 : (6 - $dow);
+        $sat_date = date('Y-m-d', strtotime("+$offset_to_sat days", $day_time));
+
+        $is_sat_workday = in_array($sat_date, $work_days, TRUE) 
+            || in_array($sat_date, $half_days, TRUE) 
+            || in_array($sat_date, $quarter_days, TRUE);
+        if (in_array($sat_date, $holidays, TRUE)) {
+            $is_sat_workday = FALSE;
+        }
+        $base_hours = $is_sat_workday ? 7 : 8;
+
+        $day_working_hours = $base_hours;
+        if (!$is_holiday) {
+            if ($dow === 0) {
+                if (in_array($day, $work_days, TRUE)) {
+                    $day_working_hours = $base_hours;
+                } elseif (in_array($day, $half_days, TRUE)) {
+                    $day_working_hours = $base_hours * 0.5;
+                } elseif (in_array($day, $quarter_days, TRUE)) {
+                    $day_working_hours = $base_hours * 0.25;
+                } else {
+                    $day_working_hours = 0;
+                }
+            } elseif ($dow === 6) {
+                if (in_array($day, $work_days, TRUE)) {
+                    $day_working_hours = 5;
+                } elseif (in_array($day, $half_days, TRUE)) {
+                    $day_working_hours = 2.5;
+                } elseif (in_array($day, $quarter_days, TRUE)) {
+                    $day_working_hours = 1.25;
+                } else {
+                    $day_working_hours = $is_sat_workday ? 5 : 0;
+                }
+            } else {
+                $day_working_hours = $base_hours;
+                if (in_array($day, $half_days, TRUE)) {
+                    $day_working_hours = $base_hours * 0.5;
+                } elseif (in_array($day, $quarter_days, TRUE)) {
+                    $day_working_hours = $base_hours * 0.25;
+                }
+            }
+        } else {
+            $day_working_hours = 0;
+        }
+
+        if ($day_working_hours <= 0) {
+            $day_working_hours = $base_hours;
+        }
+
+        $hourly_capacity = round($daily_capacity / $day_working_hours);
+
+        $standard_hours = array(
+            '07:00', '08:00', '09:00', '10:00', '11:00',
+            '12:00', '13:00', '14:00', '15:00', '16:00'
+        );
+
+        $day_in = isset($in_hourly[$day]) && is_array($in_hourly[$day]) ? $in_hourly[$day] : array();
+        $day_out = isset($out_hourly[$day]) && is_array($out_hourly[$day]) ? $out_hourly[$day] : array();
+
+        $items = array();
+        foreach ($standard_hours as $hour) {
+            $inp = isset($day_in[$hour]) ? (float) $day_in[$hour] : 0;
+            $outp = isset($day_out[$hour]) ? (float) $day_out[$hour] : 0;
+
+            $items[] = array(
+                'label' => $hour,
+                'input' => $inp,
+                'output' => $outp,
+                'capacity' => $hourly_capacity,
+                'daily_capacity' => $hourly_capacity,
+                'hourly_capacity' => $hourly_capacity,
+                'is_hourly' => TRUE,
+                'date' => $day,
+                'capacity_balance_day' => $day,
+            );
         }
 
         return $items;
@@ -2145,58 +3501,63 @@ class Dashboard_model extends CI_Model
     private function build_output_vs_capacity_from_rpa($total_pdk, $qty_rows, $fallback)
     {
         $sources = $this->heat_rpa_sources();
+        $has_db = $this->has_engage_db_data();
+
         if (
-            empty($sources['engage_32_outflow']) || !is_file($sources['engage_32_outflow']) ||
-            empty($sources['engage_32a_outflow']) || !is_file($sources['engage_32a_outflow'])
+            !$has_db &&
+            (empty($sources['engage_32a_outflow']) || !is_file($sources['engage_32a_outflow']))
         ) {
             return $fallback;
         }
 
-        $outflow_32 = $this->read_combined_engage_report($sources['engage_32_outflow'], '32_outflow');
-        $outflow_32a = $this->read_combined_engage_report($sources['engage_32a_outflow'], '32a_outflow');
-        if (!$outflow_32['headers'] || !$outflow_32a['headers']) {
+        $outflow_32a = $this->read_combined_engage_report(isset($sources['engage_32a_outflow']) ? $sources['engage_32a_outflow'] : NULL, '32a_outflow');
+        if (!$outflow_32a['headers']) {
             return $fallback;
         }
 
-        $summary = $this->merge_engage_summaries(array(
-            $this->summarize_engage_rows_by_order($outflow_32, $this->engage_filter_rules_32()),
-            $this->summarize_engage_rows_by_order($outflow_32a, $this->engage_filter_rules_32a()),
-        ));
+        $summary = $this->summarize_engage_rows_by_order($outflow_32a, $this->engage_filter_rules_32a());
 
+        $inflow_32a = $this->read_combined_engage_report(isset($sources['engage_32a_inflow']) ? $sources['engage_32a_inflow'] : NULL, '32a_inflow');
         $input_summary = array('daily' => array());
-        if (
-            !empty($sources['engage_32_inflow']) && is_file($sources['engage_32_inflow']) &&
-            !empty($sources['engage_32a_inflow']) && is_file($sources['engage_32a_inflow'])
-        ) {
-            $inflow_32 = $this->read_combined_engage_report($sources['engage_32_inflow'], '32_inflow');
-            $inflow_32a = $this->read_combined_engage_report($sources['engage_32a_inflow'], '32a_inflow');
-            if ($inflow_32['headers'] && $inflow_32a['headers']) {
-                $input_summary = $this->merge_engage_summaries(array(
-                    $this->summarize_engage_rows_by_order($inflow_32, $this->engage_filter_rules_32()),
-                    $this->summarize_engage_rows_by_order($inflow_32a, $this->engage_filter_rules_32a()),
-                ));
-            }
+        if ($inflow_32a['headers']) {
+            $input_summary = $this->summarize_engage_rows_by_order($inflow_32a, $this->engage_filter_rules_32a());
         }
-
 
         $items = $this->build_output_vs_capacity_from_engage_daily($summary['daily'], $qty_rows, $input_summary['daily'], $summary['daily'], $qty_rows);
         return $items ? $items : $fallback;
     }
 
-    private function build_priority_orders_from_rpa($ready_by_order, $orders, $out_orders)
+    private function build_priority_orders_from_rpa($ready_by_order, $orders, $out_orders, $jo_order_master = array())
     {
         $items = array();
         foreach ($ready_by_order as $order => $ready) {
-            $order_data = isset($orders[$order]) ? $orders[$order] : array();
+            if ($this->is_ofc_order($order)) {
+                continue;
+            }
+            $order_data = isset($orders[$order]) ? $orders[$order] : (isset($jo_order_master[$order]) ? $jo_order_master[$order] : array());
             $qty_pdk = isset($order_data['qty_pdk']) ? $order_data['qty_pdk'] : 0;
             $qty_out_aps = isset($order_data['qty_out_aps']) ? $order_data['qty_out_aps'] : 0;
             $qty_out_engage = isset($out_orders[$order]) ? $out_orders[$order]['qty'] : 0;
+
+            // Prioritas tanggal delivery asli dari JO (bukan tanggal transaksi 32A)
+            $jo_delivery = !empty($order_data['delivery']) ? $order_data['delivery'] : (!empty($ready['delivery']) ? $ready['delivery'] : '');
+            if ($jo_delivery === '') {
+                continue;
+            }
+
+            $process = isset($order_data['process']) && $order_data['process'] !== ''
+                ? $order_data['process']
+                : (isset($order_data['route']) && $order_data['route'] !== ''
+                    ? $order_data['route']
+                    : (isset($ready['process']) ? $ready['process'] : ''));
 
             $items[] = array(
                 'order' => $order,
                 'item' => isset($ready['item']) && $ready['item'] !== '' ? $ready['item'] : (isset($order_data['item']) ? $order_data['item'] : ''),
                 'style' => isset($order_data['style']) && $order_data['style'] !== '' ? $order_data['style'] : $ready['style'],
-                'delivery' => $this->format_display_date(isset($order_data['delivery']) ? $order_data['delivery'] : $ready['delivery']),
+                'process' => $process,
+                'route' => $process,
+                'delivery' => $jo_delivery !== '' ? $this->format_display_date($jo_delivery) : '-',
                 'period' => isset($ready['period']) ? $ready['period'] : (isset($order_data['period']) ? $order_data['period'] : ''),
                 'qty_pdk' => $qty_pdk,
                 'qty_ready' => $ready['qty'],
@@ -2205,8 +3566,8 @@ class Dashboard_model extends CI_Model
                 'qty_out_engage' => $qty_out_engage,
                 'qty_balance' => max(0, (int) $qty_pdk - (int) $qty_out_aps),
                 'source' => isset($ready['source']) ? $ready['source'] : '',
-                'accessories_completed' => isset($ready['accessories_completed']) ? $ready['accessories_completed'] : 0,
-                '_sort_delivery' => $this->parse_date_timestamp(isset($order_data['delivery']) ? $order_data['delivery'] : $ready['delivery']),
+                'accessories_completed' => !empty($ready['accessories_completed']) ? 1 : 0,
+                '_sort_delivery' => $jo_delivery !== '' ? $this->parse_date_timestamp($jo_delivery) : PHP_INT_MAX,
             );
         }
 
@@ -2263,6 +3624,9 @@ class Dashboard_model extends CI_Model
 
         foreach (array_slice($delivery_rows, 1) as $row) {
             $order = $this->grid_value($row, $delivery_cols['order']);
+            if ($this->is_ofc_order($order)) {
+                continue;
+            }
             $qty = $this->parse_number($this->grid_value($row, $delivery_cols['qty']));
             $period = $this->normalize_period_label($this->grid_value($row, $delivery_cols['period']));
             $route = strtoupper($this->grid_value($row, $delivery_cols['route']));
@@ -2286,12 +3650,18 @@ class Dashboard_model extends CI_Model
                     'style' => $this->grid_value($row, $delivery_cols['style']),
                     'delivery' => $this->grid_value($row, $delivery_cols['delivery_date']),
                     'period' => $period,
+                    'process' => $route,
+                    'route' => $route,
                     'qty_pdk' => $qty,
                     'qty_out_aps' => $output,
                 );
             } elseif ($order !== '') {
                 $delivery_by_order[$order]['qty_pdk'] += $qty;
                 $delivery_by_order[$order]['qty_out_aps'] += $output;
+                if (empty($delivery_by_order[$order]['process']) && $route !== '') {
+                    $delivery_by_order[$order]['process'] = $route;
+                    $delivery_by_order[$order]['route'] = $route;
+                }
             }
         }
 
@@ -2301,6 +3671,9 @@ class Dashboard_model extends CI_Model
         foreach (array_slice($database_rows, 2) as $row) {
             $key = $this->grid_value($row, $database_cols['key']);
             $order = $this->grid_value($row, $database_cols['order']);
+            if ($this->is_ofc_order($order)) {
+                continue;
+            }
             $period = $this->normalize_period_label($this->grid_value($row, $database_cols['period']));
             $qty = $this->parse_number($this->grid_value($row, $database_cols['qty_pcs']));
             $out_value = $this->grid_value($row, $database_cols['out']);
@@ -2383,15 +3756,25 @@ class Dashboard_model extends CI_Model
         $ready_to_load = array();
         foreach ($qty_pdk_vs_output as $row) {
             $period = $row['label'];
-            $ready = isset($ready_by_period[$period]) ? $ready_by_period[$period] : 0;
-            $ready_to_load[] = array('label' => $period, 'ready' => $ready);
+            $ready = isset($ready_by_period[$period]) ? (int) $ready_by_period[$period] : 0;
+            $ready_to_load[] = array(
+                'label' => $period,
+                'ready' => $ready,
+                'completed' => $ready,
+                'uncompleted' => 0,
+            );
         }
 
         $selected_ready_to_load = array();
         foreach ($selected_qty_pdk_vs_output as $row) {
             $period = $row['label'];
-            $ready = isset($ready_by_period[$period]) ? $ready_by_period[$period] : 0;
-            $selected_ready_to_load[] = array('label' => $period, 'ready' => $ready);
+            $ready = isset($ready_by_period[$period]) ? (int) $ready_by_period[$period] : 0;
+            $selected_ready_to_load[] = array(
+                'label' => $period,
+                'ready' => $ready,
+                'completed' => $ready,
+                'uncompleted' => 0,
+            );
         }
 
         $top_priority_orders = $this->build_priority_orders_from_source($ready_by_order, $delivery_by_order, $output_keys);
@@ -2406,10 +3789,10 @@ class Dashboard_model extends CI_Model
             'total_output_balance' => $total_output,
             'balance_qty' => $balance_qty,
             'prod_days_left' => $this->source_prod_days_left($selected_qty_pdk_vs_output),
-            'qty_pdk_vs_output' => $qty_pdk_vs_output,
+            'qty_pdk_vs_output' => $selected_qty_pdk_vs_output,
             'selected_qty_pdk_vs_output' => $selected_qty_pdk_vs_output,
-            'balance_breakdown' => $balance_breakdown,
-            'ready_to_load' => $ready_to_load,
+            'balance_breakdown' => $selected_qty_pdk_vs_output,
+            'ready_to_load' => $selected_ready_to_load,
             'selected_ready_to_load' => $selected_ready_to_load,
             'output_vs_capacity' => $this->build_output_vs_capacity_from_source($daily_output_keys, $selected_qty_pdk_vs_output, $qty_pdk_vs_output),
             'list_orders' => $list_orders,
@@ -2606,7 +3989,6 @@ class Dashboard_model extends CI_Model
     {
         $calendar_days = $this->dashboard_calendar_days();
         $remaining_days = 0.0;
-        $export_prep_days = 0.0;
 
         foreach ($qty_rows ?: array() as $row) {
             $range = !empty($row['label']) ? $this->period_date_range($row['label']) : NULL;
@@ -2616,22 +3998,23 @@ class Dashboard_model extends CI_Model
 
             $start = max($as_of_date, $range['start']);
             $period_remaining = $this->count_workdays($start, $range['end'], $calendar_days);
-            $period_export_prep = min($period_remaining, $this->export_prep_workdays_per_delivery());
             $remaining_days += $period_remaining;
-            $export_prep_days += $period_export_prep;
         }
 
+        $delivery_count = $this->active_delivery_count($qty_rows);
+        $buffer_export = $this->export_prep_workdays($delivery_count);
+
         return array(
-            'remaining_days' => $remaining_days,
-            'export_prep_days' => $export_prep_days,
-            'sisa_hari_kerja' => max(0, $remaining_days - $export_prep_days),
+            'remaining_days' => round($remaining_days, 1),
+            'export_prep_days' => (float) $buffer_export,
+            'sisa_hari_kerja' => max(0, round($remaining_days - $buffer_export, 1)),
         );
     }
 
     private function source_prod_days_left($qty_rows)
     {
         $detail = $this->remaining_delivery_workdays($qty_rows, date('Y-m-d'));
-        return $detail['sisa_hari_kerja'];
+        return round($detail['sisa_hari_kerja'], 1);
     }
 
     private function source_daily_capacity($qty_rows, $daily_output = NULL)
@@ -2888,12 +4271,19 @@ class Dashboard_model extends CI_Model
                 $qty_in = (int) $ready['qty'];
             }
             $delivery = isset($order_data['delivery']) ? $order_data['delivery'] : (isset($ready['delivery']) ? $ready['delivery'] : '');
+            $process = isset($order_data['process']) && $order_data['process'] !== ''
+                ? $order_data['process']
+                : (isset($order_data['route']) && $order_data['route'] !== ''
+                    ? $order_data['route']
+                    : (isset($ready['process']) ? $ready['process'] : ''));
 
             $items[] = array(
                 'order' => $order,
                 'cost_center' => $order,
                 'cost_centre' => $order,
                 'style' => isset($order_data['style']) && $order_data['style'] !== '' ? $order_data['style'] : (isset($ready['style']) ? $ready['style'] : ''),
+                'process' => $process,
+                'route' => $process,
                 'delivery' => $this->format_display_date($delivery),
                 'period' => $active_label !== '' ? $active_label : $period,
                 'qty_pdk' => $qty_pdk,
@@ -2957,12 +4347,19 @@ class Dashboard_model extends CI_Model
             $delivery_value = isset($delivery['delivery']) ? $delivery['delivery'] : (isset($ready['delivery']) ? $ready['delivery'] : '');
             $sort_delivery = $this->parse_date_timestamp($delivery_value);
             $sort_balance = max(0, $qty_pdk - $qty_out_aps);
+            $process = isset($delivery['route']) && $delivery['route'] !== ''
+                ? $delivery['route']
+                : (isset($delivery['process']) && $delivery['process'] !== ''
+                    ? $delivery['process']
+                    : (isset($ready['process']) ? $ready['process'] : ''));
 
             $items[] = array(
                 'order' => $order,
                 'cost_center' => $order,
                 'cost_centre' => $order,
                 'style' => isset($delivery['style']) && $delivery['style'] !== '' ? $delivery['style'] : (isset($ready['style']) ? $ready['style'] : ''),
+                'process' => $process,
+                'route' => $process,
                 'delivery' => $this->format_excel_date($delivery_value),
                 'period' => $active_label !== '' ? $active_label : $period,
                 'qty_pdk' => $qty_pdk,
@@ -3457,7 +4854,21 @@ class Dashboard_model extends CI_Model
             'quarter_days' => array(),
             'work_days' => array(),
             'manual_remaining' => FALSE,
+            'is_saturday_workday' => TRUE,
+            'working_hours_saturday' => 5,
+            'working_hours_weekday' => 7,
         );
+    }
+
+    private function is_saturday_workday($calendar_days, $date = NULL)
+    {
+        $target = $date ? strtotime($date) : time();
+        $day_of_week = (int) date('w', $target);
+        $offset = $day_of_week === 0 ? -1 : (6 - $day_of_week);
+        $sat_date = date('Y-m-d', strtotime(($offset >= 0 ? '+' : '') . $offset . ' days', $target));
+
+        $holidays = isset($calendar_days['holidays']) && is_array($calendar_days['holidays']) ? $calendar_days['holidays'] : array();
+        return !in_array($sat_date, $holidays, TRUE);
     }
 
     private function build_period_calendar($label, $current_date = NULL)
@@ -3477,6 +4888,10 @@ class Dashboard_model extends CI_Model
         $export_remaining = $this->export_workdays_from_remaining($remaining);
         $elapsed = max(0, $total - $remaining);
 
+        $is_sat_workday = $this->is_saturday_workday($calendar_days, $today);
+        $working_hours_saturday = $is_sat_workday ? 5 : 0;
+        $working_hours_weekday = $is_sat_workday ? 7 : 8;
+
         return array(
             'label' => $label,
             'start_date' => $range ? $range['start'] : '',
@@ -3492,6 +4907,9 @@ class Dashboard_model extends CI_Model
             'quarter_days' => $calendar_days['quarter_days'],
             'work_days' => $calendar_days['work_days'],
             'manual_remaining' => FALSE,
+            'is_saturday_workday' => $is_sat_workday,
+            'working_hours_saturday' => $working_hours_saturday,
+            'working_hours_weekday' => $working_hours_weekday,
         );
     }
 
@@ -3514,7 +4932,17 @@ class Dashboard_model extends CI_Model
 
     private function export_prep_workdays($delivery_count = 1)
     {
-        return max(0, (int) $delivery_count) * $this->export_prep_workdays_per_delivery();
+        $count = (int) $delivery_count;
+        if ($count <= 1) {
+            return 4;
+        }
+        if ($count === 2) {
+            return 8;
+        }
+        if ($count >= 4) {
+            return 14;
+        }
+        return 4;
     }
     private function export_prep_workdays_for_qty_rows($qty_rows)
     {
@@ -3978,22 +5406,26 @@ class Dashboard_model extends CI_Model
 
     private function format_excel_date($value)
     {
-        if (!is_numeric($value)) {
-            return $value;
+        $timestamp = $this->parse_date_timestamp($value);
+        if ($timestamp) {
+            return date('d M Y', (int) $timestamp);
         }
-
-        $timestamp = ((int) $value - 25569) * 86400;
-        return gmdate('d M Y', $timestamp);
+        return $value;
     }
 
     private function format_excel_datetime($value)
     {
-        if (!is_numeric($value)) {
-            return $value;
+        if (is_numeric($value)) {
+            $timestamp = ((float) $value - 25569) * 86400;
+            return gmdate('d M Y H:i', (int) round($timestamp));
         }
 
-        $timestamp = ((float) $value - 25569) * 86400;
-        return gmdate('d M Y H:i', (int) round($timestamp));
+        $timestamp = $this->parse_date_timestamp($value);
+        if ($timestamp) {
+            return date('d M Y', (int) $timestamp);
+        }
+
+        return $value;
     }
 
     private function xlsx_sheet_name_for_hint($zip, $sheet_hint)

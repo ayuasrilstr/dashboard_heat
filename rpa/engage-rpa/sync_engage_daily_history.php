@@ -7,7 +7,26 @@ if ($input_file === '' || !is_file($input_file)) {
     exit(1);
 }
 
+$env_file = __DIR__ . '/.env';
+if (is_file($env_file)) {
+    $lines = file($env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        $line = trim($line);
+        if ($line === '' || strpos($line, '#') === 0 || strpos($line, '=') === false) {
+            continue;
+        }
+        list($k, $v) = explode('=', $line, 2);
+        $k = trim($k);
+        $v = trim($v, " \t\n\r\0\x0B\"'");
+        if (!getenv($k)) {
+            putenv("{$k}={$v}");
+            $_ENV[$k] = $v;
+        }
+    }
+}
+
 $raw = file_get_contents($input_file);
+
 $rows = json_decode($raw, true);
 if (!is_array($rows)) {
     fwrite(STDERR, "Payload JSON tidak valid.\n");
